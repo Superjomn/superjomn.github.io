@@ -8,9 +8,9 @@ draft = false
 
 ## About me {#about-me}
 
-Thanks for your interest here.
+Thank you for your interest.
 
-I am a DL architect at NVIDIA, and my current focus is high-performance AI Compiler(on GPU).
+I am a Deep Learning system architect at NVIDIA, and my current focus is high-performance AI Compiler(on GPU).
 
 Before this, I was a senior engineer in Baidu, working as an architect on PaddlePaddle (one of the most popular open-sourced deep learning frameworks in China market).
 
