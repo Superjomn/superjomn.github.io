@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Superjomn&#39;s Blog</title>
+    <link>https://superjomn.github.io/</link>
+    <description>Recent content on Superjomn&#39;s Blog</description>
+    <image>
+      <url>https://superjomn.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>https://superjomn.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+    </image>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Sat, 15 Oct 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://superjomn.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>About me</title>
+      <link>https://superjomn.github.io/posts/about/</link>
+      <pubDate>Sat, 15 Oct 2022 00:00:00 +0000</pubDate>
+      
+      <guid>https://superjomn.github.io/posts/about/</guid>
+      <description>About me Thanks for your interest here.
+I am a DL architect at NVIDIA, and my current focus is high-performance AI Compiler(on GPU).
+Before this, I was a senior engineer in Baidu, working as an architect on PaddlePaddle (one of the most popular open-sourced deep learning frameworks in China market).
+I was the creator &amp;amp; primary author &amp;amp; tech lead of the following projects in PaddlePaddle ecosystem (before 2022-6)
+Paddle-Inference - the server-class DL inference engine, Paddle-Lite - A on-device inference engine with high-performance, tiny deployment size, Paddle-CINN - A DL compiler for automatically generating high-performance kernels &amp;amp; programs for AI models, Paddle/infrt - A unified architecture for both server-class and mobile devices, powered by MLIR, highly modular design, Paddle-VisualDL - A visualization tool for AI model, Paddle/continuous_evaluation - A system that continuously traces the indicators modeling the performance of AI models.</description>
+    </item>
+    
+  </channel>
+</rss>

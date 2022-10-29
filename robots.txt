@@ -1,0 +1,3 @@
+User-agent: *
+Disallow:
+Sitemap: https://superjomn.github.io/sitemap.xml
