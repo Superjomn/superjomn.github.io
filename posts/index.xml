@@ -22,5 +22,16 @@ Before this, I was a senior engineer in Baidu, working as an architect on Paddle
 I was the creator &amp;amp; primary author &amp;amp; tech lead of the following projects in PaddlePaddle ecosystem (before 2022-6)</description>
     </item>
     
+    <item>
+      <title>Emacs essentials</title>
+      <link>https://superjomn.github.io/posts/emacs-essentials/</link>
+      <pubDate>Sat, 15 Oct 2022 00:00:00 +0000</pubDate>
+      
+      <guid>https://superjomn.github.io/posts/emacs-essentials/</guid>
+      <description>It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience
+the lisp syntax and functional programming the fragmented methods and libraries For the 1st issue, it is easy to master the syntax after writing several programs and getting used to them, but for the 2nd one, one needs to take notes or remember something.
+In this blog, I focus on the 2nd point and keep updating the notes of some methods and libraries that I think are essential for writing Emacs lisp packages.</description>
+    </item>
+    
   </channel>
 </rss>
