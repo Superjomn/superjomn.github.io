@@ -6,16 +6,6 @@ tags = ["triton;AI compiler"]
 draft = true
 +++
 
-<div class="ox-hugo-toc toc">
-
-<div class="heading">Table of Contents</div>
-
-- [OpenAI/Triton 原理理解](#openai-triton-原理理解)
-
-</div>
-<!--endtoc-->
-
-
 ## OpenAI/Triton 原理理解 {#openai-triton-原理理解}
 
 [openai/triton](https://github.com/openai/triton)（后面简称为 triton） 是一个编写 compute-bound 的面向 GPU 的高性能编程语言。
@@ -34,7 +24,7 @@ triton 的架构是一个经典的编译器的设计，目前也正在从 handcr
     -   Pass的层次：Analysis + Transform + Conversion + Translation（来自 MLIR 的概念）
 3.  硬件无关语言的设计和抽象
     -   前端语言精确但抽象描述一个 Kernel 内的 tensor 计算
-    -   user friendship &amp; 必要的 GPU 信息暴露之前的权衡
+    -   user friendliness &amp; 必要的 GPU 信息暴露之前的权衡
 
 triton 是一个很多公司组织协作的项目，我个人也只能承担其中很小一部分工作，为了避免一叶蔽目，所以会持续 dump triton 一些理解到这里。
 不出意外这里应该会有一个系列的文章，主要侧重对当前的 triton/mlir 分支的理解。
@@ -45,11 +35,12 @@ triton 是一个很多公司组织协作的项目，我个人也只能承担其�
     -   [ ] Triton Python synatx &amp; semantics
         -   control flow
         -   Triton IR
--   [ ] dynamic shape support in Triton
+-   [X] dynamic shape support in Triton
 -   [ ] Triton IR hierarchy based on MLIR
 -   Triton optimizer
     -   [ ] Alignment analysis in Triton
     -   [ ] Allocation pass in Triton
+    -   [ ] swizzling pass in Triton
     -   [ ] layout in Triton
     -   [ ] Pipeline pass in Triton
 -   Triton backend
