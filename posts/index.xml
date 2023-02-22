@@ -9,7 +9,19 @@
       <link>https://superjomn.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Sat, 15 Oct 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://superjomn.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 22 Feb 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://superjomn.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Python functools 包简要实践</title>
+      <link>https://superjomn.github.io/posts/python-functools-introduction/</link>
+      <pubDate>Wed, 22 Feb 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://superjomn.github.io/posts/python-functools-introduction/</guid>
+      <description>Python functools 包简要实践 在阅读 Pytorch 代码时，发现很多 Python 的新的用法比较有趣，之前笔者大部分时间在 C++ 上，这里整理和记录一些有趣的用法。 本文先从 functools 这个包开始。
+@total_ordering shortcut to make class orderable 为了让一个 Class 能够比较，我们正常需要定义一堆 slots， __gt__(), __ge__(),~_lt_()~, __le__(), __eq__() 等等。 但其实只需要 __eq__() 和 其他任一方法(比如 __gt__() ) 便可以组合出其他方法。
+@total_ordering 便用于这类场景的 helper，如下代码
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 from functools import total_ordering @total_ordering class Stuff: def __init__(self, x): self.x = x def __eq__(self, other:&amp;#34;Stuff&amp;#34;): return self.</description>
+    </item>
+    
     <item>
       <title>About me</title>
       <link>https://superjomn.github.io/posts/about/</link>
