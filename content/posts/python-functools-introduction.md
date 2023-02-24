@@ -37,6 +37,10 @@ b = Stuff(1)
 print(f"a < b? {a < b}")
 ```
 
+```text
+a < b? True
+```
+
 
 ### partial() to reuse a existing method by fixing some arguments {#partial-to-reuse-a-existing-method-by-fixing-some-arguments}
 
@@ -55,10 +59,16 @@ func1(b=10)
 func1(a=1, b=10)
 ```
 
+```text
+functools.partial(<function func0 at 0x7f9db00e31e0>, a=0)
+a:0, b:10
+a:1, b:10
+```
+
 从例子可以看出， `partial` 效果有点类似设定了默认值，新的函数依旧依旧可以设置被 fixed 的 argument。
 
 
-### warps() to define better decorators {#warps-to-define-better-decorators}
+### @warps to help define better decorators {#warps-to-help-define-better-decorators}
 
 之前，定义 decorator 的 naivie 的方式是
 
@@ -76,6 +86,12 @@ def greet(name):
     print(f"Hello, {name}!")
 
 greet("Martin")
+```
+
+```text
+Before Calling greet
+Hello, Martin!
+After Calling greet
 ```
 
 如上， `greet` 方法实现了既有的功能，但有一个问题，当执行
@@ -106,6 +122,10 @@ def greet(name):
     print(f"Hello, {name}!")
 
 print(greet.__name__)
+```
+
+```text
+greet
 ```
 
 哈哈，greet 还是 greet。
