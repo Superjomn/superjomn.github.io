@@ -1,3 +1,6 @@
 [submodule "themes/hugo-notepadium"]
 	path = themes/hugo-notepadium
 	url = https://github.com/cntrump/hugo-notepadium.git
+[submodule "themes/PaperMod"]
+	path = themes/PaperMod
+	url = git@github.com:Superjomn/hugo-PaperMod.git
