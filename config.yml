@@ -94,4 +94,4 @@ markup:
     codeFences: true
     guessSyntax: true
     lineNos: true
-    style: monokai
+    style: hrdark
