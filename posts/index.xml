@@ -9,7 +9,21 @@
       <link>https://superjomn.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Wed, 22 Feb 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://superjomn.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 24 Feb 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://superjomn.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Python VM 执行方式简要探索</title>
+      <link>https://superjomn.github.io/posts/python-vm-brief-introduction/</link>
+      <pubDate>Fri, 24 Feb 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://superjomn.github.io/posts/python-vm-brief-introduction/</guid>
+      <description>Python Code Object 有用的 attribute Python Bytecode 理解 Python Frame 修改 Frame 的 Code Object 总结 FYI 最近在看 TorchDynamo 的东西，里面需要对 Python 执行机制有一些了解，所以单独拆开放到了这篇文章里。
+本文会从可复现的角度，多一些可以执行的例子。
+Python Code Object 这里是简单的介绍，详细的可以参考 code objects 这本书的章节。
+Code object 用来记录 Python 的 byte code，对应的粒度是 Block，这里的 Block 可以包含从 Module 到 Class definition 到 Function body 的各类结构（有别于编译器里面的 BasicBlock）。 可以理解 Code object 是可以嵌套的。
+我们先从一个简单的函数开始
+1 2 3 4 def foo(name, age): &amp;#39;&amp;#39;&amp;#39; Get the information of a person. &amp;#39;&amp;#39;&amp;#39; born = 2023 - age return f&amp;#34;hello {name}, born at {born}!</description>
+    </item>
+    
     <item>
       <title>Python functools 包简要实践</title>
       <link>https://superjomn.github.io/posts/python-functools-introduction/</link>
