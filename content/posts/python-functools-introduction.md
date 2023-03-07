@@ -60,7 +60,7 @@ func1(a=1, b=10)
 ```
 
 ```text
-functools.partial(<function func0 at 0x7f9db00e31e0>, a=0)
+functools.partial(<function func0 at 0x7fdf180e4f70>, a=0)
 a:0, b:10
 a:1, b:10
 ```
@@ -129,6 +129,17 @@ greet
 ```
 
 哈哈，greet 还是 greet。
+
+
+## `@lru_cache` {#lru-cache}
+
+默认 `maxsize=128` ，可以设置 `maxsize=None` 来确定无限 cache。
+
+```python
+@functools.lru_cache(maxsize=1000)
+def factorial(n):
+    return n * factorial(n-1) if n else 1
+```
 
 
 ## Reference {#reference}
