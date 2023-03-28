@@ -19,7 +19,13 @@ def foo(name, age): ''' Get the information of a person. ''' born = 2023 - age r
 <a class=summary href=/posts/python-functools-introduction/><p>Python functools 包简要实践 在阅读 Pytorch 代码时，发现很多 Python 的新的用法比较有趣，之前笔者大部分时间在 C++ 上，这里整理和记录一些有趣的用法。 本文先从 functools 这个包开始。
 @total_ordering shortcut to make class orderable 为了让一个 Class 能够比较，我们正常需要定义一堆 slots， __gt__(), __ge__(),~_lt_()~, __le__(), __eq__() 等等。 但其实只需要 __eq__() 和 其他任一方法(比如 __gt__() ) 便可以组合出其他方法。
 @total_ordering 便用于这类场景的 helper，如下代码
-from functools import total_ordering @total_ordering class Stuff: def __init__(self, x): self.x = x def __eq__(self, other:"Stuff"): return self.x == other.x def __gt__(self, other:"Stuff"): return self.x > other.x a = Stuff(0) b = Stuff(1) print(f"a &lt; b?</p></a></p><p><h3><a class=title href=/posts/emacs-essentials/>Emacs essentials</a></h3><i data-feather=calendar></i> <time datetime=2022-10-15>Oct 15, 2022</time>
+from functools import total_ordering @total_ordering class Stuff: def __init__(self, x): self.x = x def __eq__(self, other:"Stuff"): return self.x == other.x def __gt__(self, other:"Stuff"): return self.x > other.x a = Stuff(0) b = Stuff(1) print(f"a &lt; b?</p></a></p><p><h3><a class=title href=/posts/triton-mlir-publish/>OpenAI/Triton MLIR 迁移工作简介</a></h3><i data-feather=calendar></i> <time datetime=2022-11-15>Nov 15, 2022</time>
+<span id=social></span><i data-feather=tag></i>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=tags/tritoncompiler>triton,compiler</a>
+<a class=summary href=/posts/triton-mlir-publish/><p>Triton 简介 定位 新代码中的架构 Python 界面之 Frontend 性能优化之 Optimizer TritonGPU Dialect TritonIR 的优化 TritonGPU IR 的优化 高性能 LLVM 生成之 Backend PTX inline asm MMA 指令生成 FYI GEMM 在 Optimizer Pass 效果 经过几个月的不懈努力，OpenAI Triton已经成功完成了面向MLIR Infra的迁移/重构工作，并将其最新的基于MLIR的代码合并至主分支。这个工作是由OpenAI和NVIDIA相关团队近几个月来深入合作完成的，而我也有幸参与其中。在这篇文章中，我将分享一些技术总结，记录一些收获和思考。
+尽管Triton目前的开源开发非常迅速，但本文将主要聚焦于基于MLIR Infra进行重构的第一个版本的代码（这应该也是两三个月前的）
+Triton 简介 OpenAI Triton paper 中的介绍是 &ldquo;An Intermediate Language and Compiler for Tiled Neural Network Computations&rdquo;，其中几个关键词应该能够代表其特点：
+Intermediate Language, 目前是基于 Python 的 DSL Compiler ，是一个经典的 Compiler 的架构 Tiled Computation，面向 GPU 体系特点，自动分析和实施 tiling 定位 由于 Triton 的开发非常迅速，这里只讨论当前 Triton 的功能。</p></a></p><p><h3><a class=title href=/posts/emacs-essentials/>Emacs essentials</a></h3><i data-feather=calendar></i> <time datetime=2022-10-15>Oct 15, 2022</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=tags/emacs>emacs</a>
 <a class=summary href=/posts/emacs-essentials/><p>It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience
