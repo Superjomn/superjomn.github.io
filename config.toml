@@ -10,7 +10,7 @@ theme = "papaya-theme"
     identifier = "home"
     name = "Home"
     pre = "home"
-    url = "/posts/"
+    url = "/"
     weight = 1
 
   [[menu.main]]
