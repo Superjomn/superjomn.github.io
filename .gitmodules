@@ -4,3 +4,6 @@
 [submodule "themes/PaperMod"]
 	path = themes/PaperMod
 	url = git@github.com:Superjomn/hugo-PaperMod.git
+[submodule "themes/papaya-theme"]
+	path = themes/papaya-theme
+	url = git@github.com:Superjomn/papaya.git

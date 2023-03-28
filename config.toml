@@ -1,0 +1,43 @@
+#baseURL = "https://example.com"
+title = "Superjomn's blog"
+
+theme = "papaya"
+
+[menu]
+
+
+  [[menu.main]]
+    identifier = "home"
+    name = "Home"
+    pre = "home"
+    url = "/posts/"
+    weight = 1
+
+  [[menu.main]]
+    identifier = "post"
+    name = "Posts"
+    pre = "pen-tool"
+    url = "/posts/"
+    weight = 1
+
+
+  [[menu.main]]
+    identifier = "tags"
+    name = "Tags"
+    pre = "tag"
+    url = "/tags/"
+    weight = 2
+
+  [[menu.main]]
+    identifier = "about"
+    name = "About"
+    pre = "info"
+    url = "/posts/about/"
+    weight = 3
+
+[taxonomies]
+  tag = "tags"
+
+[params]
+  authorName = "Chunwei Yan"
+
