@@ -1,7 +1,7 @@
 #baseURL = "https://example.com"
 title = "Superjomn's blog"
 
-theme = "papaya"
+theme = "papaya-theme"
 
 [menu]
 
