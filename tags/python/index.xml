@@ -22,48 +22,48 @@
 &lt;p>这里是简单的介绍，详细的可以参考 &lt;a href="https://leanpub.com/insidethepythonvirtualmachine/read#leanpub-auto-code-objects">code objects&lt;/a> 这本书的章节。&lt;/p>
 &lt;p>Code object 用来记录 Python 的 byte code，对应的粒度是 Block，这里的 Block 可以包含从 Module 到 Class definition 到 Function body 的各类结构（有别于编译器里面的 BasicBlock）。 可以理解 Code object 是可以嵌套的。&lt;/p>
 &lt;p>我们先从一个简单的函数开始&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">foo&lt;/span>(name, age):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;&amp;#39;&amp;#39; Get the information of a person. &amp;#39;&amp;#39;&amp;#39;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> born &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#ae81ff">2023&lt;/span> &lt;span style="color:#f92672">-&lt;/span> age
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;hello &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>name&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">, born at &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>born&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">!&amp;#34;&lt;/span>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#00f">def&lt;/span> &lt;span style="color:#000">foo&lt;/span>(&lt;span style="color:#000">name&lt;/span>, &lt;span style="color:#000">age&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;&amp;#39;&amp;#39; Get the information of a person. &amp;#39;&amp;#39;&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">born&lt;/span> = &lt;span style="color:#3af">2023&lt;/span> - &lt;span style="color:#000">age&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">return&lt;/span> &lt;span style="color:#5a2">f&lt;/span>&lt;span style="color:#5a2">&amp;#34;hello &lt;/span>&lt;span style="color:#5a2">{&lt;/span>&lt;span style="color:#000">name&lt;/span>&lt;span style="color:#5a2">}&lt;/span>&lt;span style="color:#5a2">, born at &lt;/span>&lt;span style="color:#5a2">{&lt;/span>&lt;span style="color:#000">born&lt;/span>&lt;span style="color:#5a2">}&lt;/span>&lt;span style="color:#5a2">!&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>查看其 Code object:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>foo&lt;span style="color:#f92672">.&lt;/span>__code__
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>&amp;lt;code object foo at 0x7f4da6f59500, file &amp;#34;/tmp/ipykernel_2935902/3583013317.py&amp;#34;, line 1&amp;gt;
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">foo&lt;/span>.&lt;span style="color:#000">__code__&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>&amp;lt;code object foo at 0x7f4da6f59500, file &amp;#34;/tmp/ipykernel_2935902/3583013317.py&amp;#34;, line 1&amp;gt;
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="有用的-attribute">有用的 attribute&lt;/h3>
 &lt;p>那 &lt;code>foo.__code__&lt;/code> 中包含的有用的 attribute 如下&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>dir(foo&lt;span style="color:#f92672">.&lt;/span>__code__)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">dir&lt;/span>(&lt;span style="color:#000">foo&lt;/span>.&lt;span style="color:#000">__code__&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>得到&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>[&lt;span style="color:#e6db74">&amp;#39;__class__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__delattr__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__dir__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__doc__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__eq__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__format__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__ge__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__getattribute__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__gt__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__hash__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__init__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__init_subclass__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__le__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__lt__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__ne__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__new__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__reduce__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__reduce_ex__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__repr__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__setattr__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__sizeof__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__str__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;__subclasshook__&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;co_argcount&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;co_cellvars&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">...&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;co_nlocals&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;co_posonlyargcount&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;co_stacksize&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;co_varnames&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;replace&amp;#39;&lt;/span>]
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>[&lt;span style="color:#5a2">&amp;#39;__class__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__delattr__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__dir__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__doc__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__eq__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__format__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__ge__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__getattribute__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__gt__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__hash__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__init__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__init_subclass__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__le__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__lt__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__ne__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__new__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__reduce__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__reduce_ex__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__repr__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__setattr__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__sizeof__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__str__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;__subclasshook__&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;co_argcount&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;co_cellvars&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>...
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;co_nlocals&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;co_posonlyargcount&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;co_stacksize&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;co_varnames&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#5a2">&amp;#39;replace&amp;#39;&lt;/span>]
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>其中比较多打交道的属性如下&lt;/p>
 &lt;ul>
 &lt;li>&lt;strong>&lt;code>co_names&lt;/code>&lt;/strong> is a tuple containing global attributes and methods used inside the scope,&lt;/li>
@@ -71,16 +71,16 @@
 &lt;li>&lt;strong>&lt;code>co_consts&lt;/code>&lt;/strong> returns the literals used by bytecode.&lt;/li>
 &lt;/ul>
 &lt;p>对应属性的内容如下&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>call_foo&lt;span style="color:#f92672">.&lt;/span>__code__&lt;span style="color:#f92672">.&lt;/span>co_names
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">call_foo&lt;/span>.&lt;span style="color:#000">__code__&lt;/span>.&lt;span style="color:#000">co_names&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>co_names&lt;/code> 是空的，因为 &lt;code>foo&lt;/code> 函数里面没有调用任何的外部函数或属性。&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>foo&lt;span style="color:#f92672">.&lt;/span>__code__&lt;span style="color:#f92672">.&lt;/span>co_varnames
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">foo&lt;/span>.&lt;span style="color:#000">__code__&lt;/span>.&lt;span style="color:#000">co_varnames&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>co_varnames&lt;/code> 比较丰富，看到 local scope 可以用的 variable name 都在里面，包括两个 argument： name 和 age，以及一个 local variable： born。&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>foo&lt;span style="color:#f92672">.&lt;/span>__code__&lt;span style="color:#f92672">.&lt;/span>co_consts
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">foo&lt;/span>.&lt;span style="color:#000">__code__&lt;/span>.&lt;span style="color:#000">co_consts&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>co_consts&lt;/code> 意料外有好几个，一类是 code 里面用到的 &lt;strong>2023&lt;/strong> 这个常量，另外几个字符串是 string format 里面分割开的几个字段。&lt;/p>
 &lt;h3 id="python-bytecode-理解">Python Bytecode 理解&lt;/h3>
 &lt;p>接下来我们尝试理解下简单的 Python bytecode，接着上面的例子。&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>dis&lt;span style="color:#f92672">.&lt;/span>dis(foo)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span> 2 0 LOAD_CONST 1 (2023)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">dis&lt;/span>.&lt;span style="color:#000">dis&lt;/span>(&lt;span style="color:#000">foo&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span> 2 0 LOAD_CONST 1 (2023)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 2 LOAD_FAST 1 (age)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 4 BINARY_SUBTRACT
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 6 STORE_FAST 2 (born)
@@ -129,14 +129,14 @@
 &lt;li>&lt;code>RETURN_VALUE&lt;/code> 表示将 stack 中包含的所有值返回&lt;/li>
 &lt;/ul>
 &lt;p>完整的 opcode 及对应的 Python 的处理行为可以参考 &lt;a href="https://github.com/python/cpython/blob/22b8d77b98a5944e688be0927b8139c49d4a7257/Python/generated_cases.c.h">Python/generated_cases.c.h&lt;/a>，内容非常清晰，截取 &lt;code>LOAD_FAST&lt;/code> 对应的代码：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>TARGET(LOAD_FAST) {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PyObject &lt;span style="color:#f92672">*&lt;/span>value;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> value &lt;span style="color:#f92672">=&lt;/span> GETLOCAL(oparg);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> assert(value &lt;span style="color:#f92672">!=&lt;/span> NULL);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Py_INCREF(value);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> STACK_GROW(&lt;span style="color:#ae81ff">1&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> POKE(&lt;span style="color:#ae81ff">1&lt;/span>, value);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> DISPATCH();
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">TARGET&lt;/span>(&lt;span style="color:#000">LOAD_FAST&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">PyObject&lt;/span> *&lt;span style="color:#000">value&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">value&lt;/span> = &lt;span style="color:#000">GETLOCAL&lt;/span>(&lt;span style="color:#000">oparg&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">assert&lt;/span>(&lt;span style="color:#000">value&lt;/span> != &lt;span style="color:#000">NULL&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">Py_INCREF&lt;/span>(&lt;span style="color:#000">value&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">STACK_GROW&lt;/span>(&lt;span style="color:#3af">1&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">POKE&lt;/span>(&lt;span style="color:#3af">1&lt;/span>, &lt;span style="color:#000">value&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">DISPATCH&lt;/span>();
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="python-frame">Python Frame&lt;/h2>
 &lt;p>Python Code Object 存储了待执行的 Python bytecode，但这些 bytecode 无法直接执行，还需要专门的 Interpreter 机制。
@@ -144,39 +144,39 @@
 &lt;p>为了执行 bytecode， Python 对应有 Frame Object 的数据结构，简单可以认为 Frame Object 跟 Code Object 对应，前者 hold 执行一个 Code Object 所需要的所有 runtime 的信息，而后者则记录了具体需要执行的 bytecode。
 因此，当从一个 Block 跳到另外一个 Block 时候，会有 Frame 的切换，例如，function call 时，会先 hold 住当前的 Frame，创建一个新的 Frame 接着执行该 function 对应的 Code Object； 执行完毕，则跳回先前的 Frame。&lt;/p>
 &lt;p>Frame 具体数据结构我们需要参考下 &lt;a href="https://github.com/python/cpython/blob/main/Include/internal/pycore_frame.h#L16">pycore_frame.h/_frame&lt;/a> 相关的 code：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">struct&lt;/span> &lt;span style="color:#a6e22e">_frame&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PyObject_HEAD
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PyFrameObject &lt;span style="color:#f92672">*&lt;/span>f_back; &lt;span style="color:#75715e">/* previous frame, or NULL */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">struct&lt;/span> &lt;span style="color:#a6e22e">_PyInterpreterFrame&lt;/span> &lt;span style="color:#f92672">*&lt;/span>f_frame; &lt;span style="color:#75715e">/* points to the frame data */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PyObject &lt;span style="color:#f92672">*&lt;/span>f_trace; &lt;span style="color:#75715e">/* Trace function */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">int&lt;/span> f_lineno; &lt;span style="color:#75715e">/* Current line number. Only valid if non-zero */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">char&lt;/span> f_trace_lines; &lt;span style="color:#75715e">/* Emit per-line trace events? */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">char&lt;/span> f_trace_opcodes; &lt;span style="color:#75715e">/* Emit per-opcode trace events? */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">char&lt;/span> f_fast_as_locals; &lt;span style="color:#75715e">/* Have the fast locals of this frame been converted to a dict? */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">/* The frame data, if this frame object owns the frame */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PyObject &lt;span style="color:#f92672">*&lt;/span>_f_frame_data[&lt;span style="color:#ae81ff">1&lt;/span>];
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#00f">struct&lt;/span> &lt;span style="color:#000">_frame&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">PyObject_HEAD&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">PyFrameObject&lt;/span> *&lt;span style="color:#000">f_back&lt;/span>; &lt;span style="color:#888;font-style:italic">/* previous frame, or NULL */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">struct&lt;/span> &lt;span style="color:#000">_PyInterpreterFrame&lt;/span> *&lt;span style="color:#000">f_frame&lt;/span>; &lt;span style="color:#888;font-style:italic">/* points to the frame data */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">PyObject&lt;/span> *&lt;span style="color:#000">f_trace&lt;/span>; &lt;span style="color:#888;font-style:italic">/* Trace function */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">int&lt;/span> &lt;span style="color:#000">f_lineno&lt;/span>; &lt;span style="color:#888;font-style:italic">/* Current line number. Only valid if non-zero */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">char&lt;/span> &lt;span style="color:#000">f_trace_lines&lt;/span>; &lt;span style="color:#888;font-style:italic">/* Emit per-line trace events? */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">char&lt;/span> &lt;span style="color:#000">f_trace_opcodes&lt;/span>; &lt;span style="color:#888;font-style:italic">/* Emit per-opcode trace events? */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">char&lt;/span> &lt;span style="color:#000">f_fast_as_locals&lt;/span>; &lt;span style="color:#888;font-style:italic">/* Have the fast locals of this frame been converted to a dict? */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#888;font-style:italic">/* The frame data, if this frame object owns the frame */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">PyObject&lt;/span> *&lt;span style="color:#000">_f_frame_data&lt;/span>[&lt;span style="color:#3af">1&lt;/span>];
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>其中 &lt;code>f_back&lt;/code> 指针用来 chain 多个跳转的 Frame，这样上面的 function call 才可以实施。&lt;/p>
 &lt;p>&lt;code>f_frame&lt;/code> 记录了一个 Frame 具体的信息，接着看下如下 code&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">typedef&lt;/span> &lt;span style="color:#66d9ef">struct&lt;/span> &lt;span style="color:#a6e22e">_PyInterpreterFrame&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PyCodeObject &lt;span style="color:#f92672">*&lt;/span>f_code; &lt;span style="color:#75715e">/* Strong reference */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">struct&lt;/span> &lt;span style="color:#a6e22e">_PyInterpreterFrame&lt;/span> &lt;span style="color:#f92672">*&lt;/span>previous;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PyObject &lt;span style="color:#f92672">*&lt;/span>f_funcobj; &lt;span style="color:#75715e">/* Strong reference. Only valid if not on C stack */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PyObject &lt;span style="color:#f92672">*&lt;/span>f_globals; &lt;span style="color:#75715e">/* Borrowed reference. Only valid if not on C stack */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PyObject &lt;span style="color:#f92672">*&lt;/span>f_builtins; &lt;span style="color:#75715e">/* Borrowed reference. Only valid if not on C stack */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PyObject &lt;span style="color:#f92672">*&lt;/span>f_locals; &lt;span style="color:#75715e">/* Strong reference, may be NULL. Only valid if not on C stack */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PyFrameObject &lt;span style="color:#f92672">*&lt;/span>frame_obj; &lt;span style="color:#75715e">/* Strong reference, may be NULL. Only valid if not on C stack */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// NOTE: This is not necessarily the last instruction started in the given
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// frame. Rather, it is the code unit *prior to* the *next* instruction. For
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// example, it may be an inline CACHE entry, an instruction we just jumped
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// over, or (in the case of a newly-created frame) a totally invalid value:
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> _Py_CODEUNIT &lt;span style="color:#f92672">*&lt;/span>prev_instr;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">int&lt;/span> stacktop; &lt;span style="color:#75715e">/* Offset of TOS from localsplus */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">uint16_t&lt;/span> yield_offset;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">char&lt;/span> owner;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">/* Locals and stack */&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PyObject &lt;span style="color:#f92672">*&lt;/span>localsplus[&lt;span style="color:#ae81ff">1&lt;/span>];
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>} _PyInterpreterFrame;
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#00f">typedef&lt;/span> &lt;span style="color:#00f">struct&lt;/span> &lt;span style="color:#000">_PyInterpreterFrame&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">PyCodeObject&lt;/span> *&lt;span style="color:#000">f_code&lt;/span>; &lt;span style="color:#888;font-style:italic">/* Strong reference */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">struct&lt;/span> &lt;span style="color:#000">_PyInterpreterFrame&lt;/span> *&lt;span style="color:#000">previous&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">PyObject&lt;/span> *&lt;span style="color:#000">f_funcobj&lt;/span>; &lt;span style="color:#888;font-style:italic">/* Strong reference. Only valid if not on C stack */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">PyObject&lt;/span> *&lt;span style="color:#000">f_globals&lt;/span>; &lt;span style="color:#888;font-style:italic">/* Borrowed reference. Only valid if not on C stack */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">PyObject&lt;/span> *&lt;span style="color:#000">f_builtins&lt;/span>; &lt;span style="color:#888;font-style:italic">/* Borrowed reference. Only valid if not on C stack */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">PyObject&lt;/span> *&lt;span style="color:#000">f_locals&lt;/span>; &lt;span style="color:#888;font-style:italic">/* Strong reference, may be NULL. Only valid if not on C stack */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">PyFrameObject&lt;/span> *&lt;span style="color:#000">frame_obj&lt;/span>; &lt;span style="color:#888;font-style:italic">/* Strong reference, may be NULL. Only valid if not on C stack */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#888;font-style:italic">// NOTE: This is not necessarily the last instruction started in the given
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#888;font-style:italic">&lt;/span> &lt;span style="color:#888;font-style:italic">// frame. Rather, it is the code unit *prior to* the *next* instruction. For
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#888;font-style:italic">&lt;/span> &lt;span style="color:#888;font-style:italic">// example, it may be an inline CACHE entry, an instruction we just jumped
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#888;font-style:italic">&lt;/span> &lt;span style="color:#888;font-style:italic">// over, or (in the case of a newly-created frame) a totally invalid value:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#888;font-style:italic">&lt;/span> &lt;span style="color:#000">_Py_CODEUNIT&lt;/span> *&lt;span style="color:#000">prev_instr&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">int&lt;/span> &lt;span style="color:#000">stacktop&lt;/span>; &lt;span style="color:#888;font-style:italic">/* Offset of TOS from localsplus */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">uint16_t&lt;/span> &lt;span style="color:#000">yield_offset&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">char&lt;/span> &lt;span style="color:#000">owner&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#888;font-style:italic">/* Locals and stack */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">PyObject&lt;/span> *&lt;span style="color:#000">localsplus&lt;/span>[&lt;span style="color:#3af">1&lt;/span>];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>} &lt;span style="color:#000">_PyInterpreterFrame&lt;/span>;
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这里比较明确的是&lt;/p>
 &lt;ul>
 &lt;li>&lt;code>f_code&lt;/code> 肯定是指向对应的 Code Object&lt;/li>
@@ -187,11 +187,11 @@
 &lt;p>得益于 &lt;a href="https://peps.python.org/pep-0523/">PEP 523&lt;/a>，从 Python 3.6 开始，一个 &lt;code>PyEval_EvalFrameEx()&lt;/code> 函数加入了 Python API，不同于之前的 &lt;code>PyEval_EvalFrameDefault()&lt;/code> ， 新函数允许用户自定义 Frame Object 执行过程。&lt;/p>
 &lt;p>类似 TorchDynamo，与 Python 交互最核心的也是通过这个 API。&lt;/p>
 &lt;p>API 的实现很简单：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>PyObject &lt;span style="color:#f92672">*&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">PyEval_EvalFrameEx&lt;/span>(PyFrameObject &lt;span style="color:#f92672">*&lt;/span>frame, &lt;span style="color:#66d9ef">int&lt;/span> throwflag)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">PyObject&lt;/span> *
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">PyEval_EvalFrameEx&lt;/span>(&lt;span style="color:#000">PyFrameObject&lt;/span> *&lt;span style="color:#000">frame&lt;/span>, &lt;span style="color:#00f">int&lt;/span> &lt;span style="color:#000">throwflag&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PyThreadState &lt;span style="color:#f92672">*&lt;/span>tstate &lt;span style="color:#f92672">=&lt;/span> PyThreadState_GET();
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> tstate&lt;span style="color:#f92672">-&amp;gt;&lt;/span>interp&lt;span style="color:#f92672">-&amp;gt;&lt;/span>eval_frame(frame, throwflag);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">PyThreadState&lt;/span> *&lt;span style="color:#000">tstate&lt;/span> = &lt;span style="color:#000">PyThreadState_GET&lt;/span>();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">return&lt;/span> &lt;span style="color:#000">tstate&lt;/span>-&amp;gt;&lt;span style="color:#000">interp&lt;/span>-&amp;gt;&lt;span style="color:#000">eval_frame&lt;/span>(&lt;span style="color:#000">frame&lt;/span>, &lt;span style="color:#000">throwflag&lt;/span>);
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>只要用户设置了自定义的 interpreter，那就执行自定义的 &lt;code>eval_frame&lt;/code> 逻辑，这一点也是 TorchDynamo 的核心。&lt;/p>
 &lt;h2 id="总结">总结&lt;/h2>
@@ -212,85 +212,85 @@
 &lt;p>为了让一个 Class 能够比较，我们正常需要定义一堆 slots， &lt;code>__gt__()&lt;/code>, &lt;code>__ge__()&lt;/code>,~_&lt;em>lt&lt;/em>_()~, &lt;code>__le__()&lt;/code>, &lt;code>__eq__()&lt;/code> 等等。
 但其实只需要 &lt;code>__eq__()&lt;/code> 和 其他任一方法(比如 &lt;code>__gt__()&lt;/code> ) 便可以组合出其他方法。&lt;/p>
 &lt;p>&lt;code>@total_ordering&lt;/code> 便用于这类场景的 helper，如下代码&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">from&lt;/span> functools &lt;span style="color:#f92672">import&lt;/span> total_ordering
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#00f">from&lt;/span> &lt;span style="color:#000">functools&lt;/span> &lt;span style="color:#00f">import&lt;/span> &lt;span style="color:#000">total_ordering&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">@total_ordering&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">class&lt;/span> &lt;span style="color:#a6e22e">Stuff&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">def&lt;/span> __init__(self, x):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#f92672">.&lt;/span>x &lt;span style="color:#f92672">=&lt;/span> x
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">def&lt;/span> __eq__(self, other:&lt;span style="color:#e6db74">&amp;#34;Stuff&amp;#34;&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> self&lt;span style="color:#f92672">.&lt;/span>x &lt;span style="color:#f92672">==&lt;/span> other&lt;span style="color:#f92672">.&lt;/span>x
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">def&lt;/span> __gt__(self, other:&lt;span style="color:#e6db74">&amp;#34;Stuff&amp;#34;&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> self&lt;span style="color:#f92672">.&lt;/span>x &lt;span style="color:#f92672">&amp;gt;&lt;/span> other&lt;span style="color:#f92672">.&lt;/span>x
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">@total_ordering&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#00f">class&lt;/span> &lt;span style="color:#000">Stuff&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">def&lt;/span> &lt;span style="color:#000">__init__&lt;/span>(&lt;span style="color:#000">self&lt;/span>, &lt;span style="color:#000">x&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">self&lt;/span>.&lt;span style="color:#000">x&lt;/span> = &lt;span style="color:#000">x&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">def&lt;/span> &lt;span style="color:#000">__eq__&lt;/span>(&lt;span style="color:#000">self&lt;/span>, &lt;span style="color:#000">other&lt;/span>:&lt;span style="color:#5a2">&amp;#34;Stuff&amp;#34;&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">return&lt;/span> &lt;span style="color:#000">self&lt;/span>.&lt;span style="color:#000">x&lt;/span> == &lt;span style="color:#000">other&lt;/span>.&lt;span style="color:#000">x&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">def&lt;/span> &lt;span style="color:#000">__gt__&lt;/span>(&lt;span style="color:#000">self&lt;/span>, &lt;span style="color:#000">other&lt;/span>:&lt;span style="color:#5a2">&amp;#34;Stuff&amp;#34;&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">return&lt;/span> &lt;span style="color:#000">self&lt;/span>.&lt;span style="color:#000">x&lt;/span> &amp;gt; &lt;span style="color:#000">other&lt;/span>.&lt;span style="color:#000">x&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>a &lt;span style="color:#f92672">=&lt;/span> Stuff(&lt;span style="color:#ae81ff">0&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>b &lt;span style="color:#f92672">=&lt;/span> Stuff(&lt;span style="color:#ae81ff">1&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">a&lt;/span> = &lt;span style="color:#000">Stuff&lt;/span>(&lt;span style="color:#3af">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">b&lt;/span> = &lt;span style="color:#000">Stuff&lt;/span>(&lt;span style="color:#3af">1&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;a &amp;lt; b? &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>a &lt;span style="color:#f92672">&amp;lt;&lt;/span> b&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>a &amp;lt; b? True
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">print&lt;/span>(&lt;span style="color:#5a2">f&lt;/span>&lt;span style="color:#5a2">&amp;#34;a &amp;lt; b? &lt;/span>&lt;span style="color:#5a2">{&lt;/span>&lt;span style="color:#000">a&lt;/span> &amp;lt; &lt;span style="color:#000">b&lt;/span>&lt;span style="color:#5a2">}&lt;/span>&lt;span style="color:#5a2">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>a &amp;lt; b? True
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="partial-to-reuse-a-existing-method-by-fixing-some-arguments">partial() to reuse a existing method by fixing some arguments&lt;/h3>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">from&lt;/span> functools &lt;span style="color:#f92672">import&lt;/span> partial
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#00f">from&lt;/span> &lt;span style="color:#000">functools&lt;/span> &lt;span style="color:#00f">import&lt;/span> &lt;span style="color:#000">partial&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">func0&lt;/span>(a, b):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;a:&lt;/span>&lt;span style="color:#e6db74">{&lt;/span>a&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">, b:&lt;/span>&lt;span style="color:#e6db74">{&lt;/span>b&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#00f">def&lt;/span> &lt;span style="color:#000">func0&lt;/span>(&lt;span style="color:#000">a&lt;/span>, &lt;span style="color:#000">b&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">print&lt;/span>(&lt;span style="color:#5a2">f&lt;/span>&lt;span style="color:#5a2">&amp;#34;a:&lt;/span>&lt;span style="color:#5a2">{&lt;/span>&lt;span style="color:#000">a&lt;/span>&lt;span style="color:#5a2">}&lt;/span>&lt;span style="color:#5a2">, b:&lt;/span>&lt;span style="color:#5a2">{&lt;/span>&lt;span style="color:#000">b&lt;/span>&lt;span style="color:#5a2">}&lt;/span>&lt;span style="color:#5a2">&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>func1 &lt;span style="color:#f92672">=&lt;/span> partial(func0, a &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">func1&lt;/span> = &lt;span style="color:#000">partial&lt;/span>(&lt;span style="color:#000">func0&lt;/span>, &lt;span style="color:#000">a&lt;/span> = &lt;span style="color:#3af">0&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>print(func1)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">print&lt;/span>(&lt;span style="color:#000">func1&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>func1(b&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#ae81ff">10&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># reset argument a&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>func1(a&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#ae81ff">1&lt;/span>, b&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#ae81ff">10&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>functools.partial(&amp;lt;function func0 at 0x7fdf180e4f70&amp;gt;, a=0)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">func1&lt;/span>(&lt;span style="color:#000">b&lt;/span>=&lt;span style="color:#3af">10&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#888;font-style:italic"># reset argument a&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">func1&lt;/span>(&lt;span style="color:#000">a&lt;/span>=&lt;span style="color:#3af">1&lt;/span>, &lt;span style="color:#000">b&lt;/span>=&lt;span style="color:#3af">10&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>functools.partial(&amp;lt;function func0 at 0x7fdf180e4f70&amp;gt;, a=0)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>a:0, b:10
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>a:1, b:10
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>从例子可以看出， &lt;code>partial&lt;/code> 效果有点类似设定了默认值，新的函数依旧依旧可以设置被 fixed 的 argument。&lt;/p>
 &lt;h3 id="warps-to-help-define-better-decorators">@warps to help define better decorators&lt;/h3>
 &lt;p>之前，定义 decorator 的 naivie 的方式是&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">decorator&lt;/span>(func):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">actual_func&lt;/span>(&lt;span style="color:#f92672">*&lt;/span>args, &lt;span style="color:#f92672">**&lt;/span>kwargs):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;Before Calling &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>func&lt;span style="color:#f92672">.&lt;/span>__name__&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> func(&lt;span style="color:#f92672">*&lt;/span>args, &lt;span style="color:#f92672">**&lt;/span>kwargs)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;After Calling &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>func&lt;span style="color:#f92672">.&lt;/span>__name__&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#00f">def&lt;/span> &lt;span style="color:#000">decorator&lt;/span>(&lt;span style="color:#000">func&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">def&lt;/span> &lt;span style="color:#000">actual_func&lt;/span>(*&lt;span style="color:#000">args&lt;/span>, **&lt;span style="color:#000">kwargs&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">print&lt;/span>(&lt;span style="color:#5a2">f&lt;/span>&lt;span style="color:#5a2">&amp;#34;Before Calling &lt;/span>&lt;span style="color:#5a2">{&lt;/span>&lt;span style="color:#000">func&lt;/span>.&lt;span style="color:#000">__name__&lt;/span>&lt;span style="color:#5a2">}&lt;/span>&lt;span style="color:#5a2">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">func&lt;/span>(*&lt;span style="color:#000">args&lt;/span>, **&lt;span style="color:#000">kwargs&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">print&lt;/span>(&lt;span style="color:#5a2">f&lt;/span>&lt;span style="color:#5a2">&amp;#34;After Calling &lt;/span>&lt;span style="color:#5a2">{&lt;/span>&lt;span style="color:#000">func&lt;/span>.&lt;span style="color:#000">__name__&lt;/span>&lt;span style="color:#5a2">}&lt;/span>&lt;span style="color:#5a2">&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> actual_func
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">return&lt;/span> &lt;span style="color:#000">actual_func&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">@decorator&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">greet&lt;/span>(name):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;Hello, &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>name&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">!&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">@decorator&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#00f">def&lt;/span> &lt;span style="color:#000">greet&lt;/span>(&lt;span style="color:#000">name&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">print&lt;/span>(&lt;span style="color:#5a2">f&lt;/span>&lt;span style="color:#5a2">&amp;#34;Hello, &lt;/span>&lt;span style="color:#5a2">{&lt;/span>&lt;span style="color:#000">name&lt;/span>&lt;span style="color:#5a2">}&lt;/span>&lt;span style="color:#5a2">!&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>greet(&lt;span style="color:#e6db74">&amp;#34;Martin&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>Before Calling greet
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">greet&lt;/span>(&lt;span style="color:#5a2">&amp;#34;Martin&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>Before Calling greet
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Hello, Martin!
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>After Calling greet
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>如上， &lt;code>greet&lt;/code> 方法实现了既有的功能，但有一个问题，当执行&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>print(greet&lt;span style="color:#f92672">.&lt;/span>__name__)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">print&lt;/span>(&lt;span style="color:#000">greet&lt;/span>.&lt;span style="color:#000">__name__&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>也就是原有的 &lt;code>greet&lt;/code> 的属性都变化了（其实是 greet 替换成了 actual_func），这个不是我们希望的。
 &lt;code>warps&lt;/code> 方法就用来将 &lt;code>actual_func&lt;/code> 伪装回 &lt;code>greet&lt;/code> ，让装饰器看起来没有改变表象的东西。&lt;/p>
 &lt;p>简单用法如下&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">from&lt;/span> functools &lt;span style="color:#f92672">import&lt;/span> wraps
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#00f">from&lt;/span> &lt;span style="color:#000">functools&lt;/span> &lt;span style="color:#00f">import&lt;/span> &lt;span style="color:#000">wraps&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">decorator&lt;/span>(func):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">@wraps&lt;/span>(func)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">actual_func&lt;/span>(&lt;span style="color:#f92672">*&lt;/span>args, &lt;span style="color:#f92672">**&lt;/span>kwargs):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;Before Calling &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>func&lt;span style="color:#f92672">.&lt;/span>__name__&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> func(&lt;span style="color:#f92672">*&lt;/span>args, &lt;span style="color:#f92672">**&lt;/span>kwargs)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;After Calling &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>func&lt;span style="color:#f92672">.&lt;/span>__name__&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#00f">def&lt;/span> &lt;span style="color:#000">decorator&lt;/span>(&lt;span style="color:#000">func&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">@wraps&lt;/span>(&lt;span style="color:#000">func&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">def&lt;/span> &lt;span style="color:#000">actual_func&lt;/span>(*&lt;span style="color:#000">args&lt;/span>, **&lt;span style="color:#000">kwargs&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">print&lt;/span>(&lt;span style="color:#5a2">f&lt;/span>&lt;span style="color:#5a2">&amp;#34;Before Calling &lt;/span>&lt;span style="color:#5a2">{&lt;/span>&lt;span style="color:#000">func&lt;/span>.&lt;span style="color:#000">__name__&lt;/span>&lt;span style="color:#5a2">}&lt;/span>&lt;span style="color:#5a2">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">func&lt;/span>(*&lt;span style="color:#000">args&lt;/span>, **&lt;span style="color:#000">kwargs&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">print&lt;/span>(&lt;span style="color:#5a2">f&lt;/span>&lt;span style="color:#5a2">&amp;#34;After Calling &lt;/span>&lt;span style="color:#5a2">{&lt;/span>&lt;span style="color:#000">func&lt;/span>.&lt;span style="color:#000">__name__&lt;/span>&lt;span style="color:#5a2">}&lt;/span>&lt;span style="color:#5a2">&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> actual_func
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">return&lt;/span> &lt;span style="color:#000">actual_func&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">@decorator&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">greet&lt;/span>(name):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;Hello, &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>name&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">!&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">@decorator&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#00f">def&lt;/span> &lt;span style="color:#000">greet&lt;/span>(&lt;span style="color:#000">name&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">print&lt;/span>(&lt;span style="color:#5a2">f&lt;/span>&lt;span style="color:#5a2">&amp;#34;Hello, &lt;/span>&lt;span style="color:#5a2">{&lt;/span>&lt;span style="color:#000">name&lt;/span>&lt;span style="color:#5a2">}&lt;/span>&lt;span style="color:#5a2">!&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>print(greet&lt;span style="color:#f92672">.&lt;/span>__name__)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>greet
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">print&lt;/span>(&lt;span style="color:#000">greet&lt;/span>.&lt;span style="color:#000">__name__&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>greet
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>哈哈，greet 还是 greet。&lt;/p>
 &lt;h2 id="lru-cache">&lt;code>@lru_cache&lt;/code>&lt;/h2>
 &lt;p>默认 &lt;code>maxsize=128&lt;/code> ，可以设置 &lt;code>maxsize=None&lt;/code> 来确定无限 cache。&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">@functools.lru_cache&lt;/span>(maxsize&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#ae81ff">1000&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">factorial&lt;/span>(n):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> n &lt;span style="color:#f92672">*&lt;/span> factorial(n&lt;span style="color:#f92672">-&lt;/span>&lt;span style="color:#ae81ff">1&lt;/span>) &lt;span style="color:#66d9ef">if&lt;/span> n &lt;span style="color:#66d9ef">else&lt;/span> &lt;span style="color:#ae81ff">1&lt;/span>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000">@functools.lru_cache&lt;/span>(&lt;span style="color:#000">maxsize&lt;/span>=&lt;span style="color:#3af">1000&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#00f">def&lt;/span> &lt;span style="color:#000">factorial&lt;/span>(&lt;span style="color:#000">n&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00f">return&lt;/span> &lt;span style="color:#000">n&lt;/span> * &lt;span style="color:#000">factorial&lt;/span>(&lt;span style="color:#000">n&lt;/span>-&lt;span style="color:#3af">1&lt;/span>) &lt;span style="color:#00f">if&lt;/span> &lt;span style="color:#000">n&lt;/span> &lt;span style="color:#00f">else&lt;/span> &lt;span style="color:#3af">1&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="reference">Reference&lt;/h2>
 &lt;ul>
 &lt;li>&lt;a href="https://dzone.com/articles/functools-useful-decorators-amp-functions-1">Useful Decorators and Functions in Python&amp;rsquo;s Functools&lt;/a>&lt;/li>
