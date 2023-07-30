@@ -1,4 +1,58 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>emacs on Superjomn's blog</title><link>/tags/emacs/</link><description>Recent content in emacs on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><lastBuildDate>Sat, 15 Oct 2022 00:00:00 +0000</lastBuildDate><atom:link href="/tags/emacs/index.xml" rel="self" type="application/rss+xml"/><item><title>Emacs essentials</title><link>/posts/emacs-essentials/</link><pubDate>Sat, 15 Oct 2022 00:00:00 +0000</pubDate><guid>/posts/emacs-essentials/</guid><description>&lt;p>It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience&lt;/p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>emacs on Superjomn's blog</title><link>/tags/emacs/</link><description>Recent content in emacs on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Sat, 15 Oct 2022 00:00:00 +0000</lastBuildDate><atom:link href="/tags/emacs/index.xml" rel="self" type="application/rss+xml"/><item><title>Emacs essentials</title><link>/posts/emacs-essentials/</link><pubDate>Sat, 15 Oct 2022 00:00:00 +0000</pubDate><guid>/posts/emacs-essentials/</guid><description>&lt;!-- raw HTML omitted -->
+&lt;!-- raw HTML omitted -->
+&lt;ul>
+&lt;li>&lt;a href="#builtin-methods">builtin methods&lt;/a>
+&lt;ul>
+&lt;li>&lt;a href="#buffer">buffer&lt;/a>
+&lt;ul>
+&lt;li>&lt;a href="#current-buffer-get-the-current-buffer">current-buffer: get the current buffer&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#get-buffer-get-a-buffer-by-name">get-buffer: get a buffer by name&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#get-buffer-create-create-the-buffer-if-not-exist">get-buffer-create: create the buffer if not exist&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#changing-the-current-buffer">changing the current buffer&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#goto-a-buffer">Goto a buffer&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#changing-the-current-buffer-safely">Changing the current buffer safely&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#working-with-file-buffers">Working with file buffers&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#loading-a-file-into-a-buffer-without-display-it">Loading a file into a buffer without display it&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#get-all-buffer-names">Get all buffer names&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;a href="#point">point&lt;/a>
+&lt;ul>
+&lt;li>&lt;a href="#moving-the-point">Moving the point&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#preserving-the-point">Preserving the point&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#examining-buffer-text">Examining buffer text&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#the-thing">The Thing&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#serching-for-text">Serching for text&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#inserting-text">Inserting text&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#deleting-text">Deleting text&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#saving-a-buffer">Saving a buffer&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;a href="#org-element">org-element&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#file-and-path">file and path&lt;/a>
+&lt;ul>
+&lt;li>&lt;a href="#get-the-path-of-the-current-file">Get the path of the current file&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#get-path-without-suffix">Get path without suffix&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#write-to-file">Write to file&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;a href="#execute-shell-command">execute shell command&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;a href="#modern-libraries">Modern libraries&lt;/a>
+&lt;ul>
+&lt;li>&lt;a href="#ht-dot-el-for-hashtables">ht.el for hashtables&lt;/a>
+&lt;ul>
+&lt;li>&lt;a href="#creating-a-hash-table">creating a hash table&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#accessing-the-hash-table">accessing the hash table&lt;/a>&lt;/li>
+&lt;li>&lt;a href="#iterating-over-the-hash-table">Iterating over the hash table&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;!-- raw HTML omitted -->
+&lt;p>It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience&lt;/p>
 &lt;ol>
 &lt;li>the lisp syntax and functional programming&lt;/li>
 &lt;li>the fragmented methods and libraries&lt;/li>
@@ -17,6 +71,10 @@
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">progn&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">set-buffer&lt;/span> (&lt;span style="color:#000">get-buffer&lt;/span> &lt;span style="color:#5a2">&amp;#34;*scratch*&amp;#34;&lt;/span>))
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">current-buffer&lt;/span>))
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="goto-a-buffer">Goto a buffer&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">with-current-buffer&lt;/span> &lt;span style="color:#5a2">&amp;#34;*BUF*&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#888;font-style:italic">;; do something like progn&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="changing-the-current-buffer-safely">Changing the current buffer safely&lt;/h4>
 &lt;p>It will return to the original buffer after the operation finished.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">progn&lt;/span>
@@ -79,6 +137,21 @@
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="saving-a-buffer">Saving a buffer&lt;/h4>
 &lt;p>To save the contents of a buffer back to the file it is associated with&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">save-buffer&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="org-element">org-element&lt;/h3>
+&lt;h3 id="file-and-path">file and path&lt;/h3>
+&lt;h4 id="get-the-path-of-the-current-file">Get the path of the current file&lt;/h4>
+&lt;p>The &lt;code>buffer-file-name&lt;/code> is a buffer builtin variable holding the file name of the current buffer.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">file-truename&lt;/span> &lt;span style="color:#000">buffer-file-name&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="get-path-without-suffix">Get path without suffix&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">file-name-sans-extension&lt;/span> &lt;span style="color:#5a2">&amp;#34;/tmp/a.org&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="write-to-file">Write to file&lt;/h4>
+&lt;p>Overwrite the content:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">with-temp-file&lt;/span> &lt;span style="color:#5a2">&amp;#34;/tmp/1.org&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">insert&lt;/span> &lt;span style="color:#5a2">&amp;#34;hello world&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">message&lt;/span> &lt;span style="color:#5a2">&amp;#34;file content: %s&amp;#34;&lt;/span> (&lt;span style="color:#000">buffer-string&lt;/span>))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="execute-shell-command">execute shell command&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">shell-command&lt;/span> &lt;span style="color:#5a2">&amp;#34;echo hello&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="modern-libraries">Modern libraries&lt;/h2>
 &lt;h3 id="ht-dot-el-for-hashtables">ht.el for hashtables&lt;/h3>
 &lt;p>Reference &lt;a href="https://github.com/Wilfred/ht.el">ht.el&lt;/a> for more details.&lt;/p>
