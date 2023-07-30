@@ -6,6 +6,45 @@ tags = ["emacs"]
 draft = false
 +++
 
+<div class="ox-hugo-toc toc">
+
+<div class="heading">Table of Contents</div>
+
+- [builtin methods](#builtin-methods)
+    - [buffer](#buffer)
+        - [current-buffer: get the current buffer](#current-buffer-get-the-current-buffer)
+        - [get-buffer: get a buffer by name](#get-buffer-get-a-buffer-by-name)
+        - [get-buffer-create: create the buffer if not exist](#get-buffer-create-create-the-buffer-if-not-exist)
+        - [changing the current buffer](#changing-the-current-buffer)
+        - [Goto a buffer](#goto-a-buffer)
+        - [Changing the current buffer safely](#changing-the-current-buffer-safely)
+        - [Working with file buffers](#working-with-file-buffers)
+        - [Loading a file into a buffer without display it](#loading-a-file-into-a-buffer-without-display-it)
+        - [Get all buffer names](#get-all-buffer-names)
+    - [point](#point)
+        - [Moving the point](#moving-the-point)
+        - [Preserving the point](#preserving-the-point)
+        - [Examining buffer text](#examining-buffer-text)
+        - [The Thing](#the-thing)
+        - [Serching for text](#serching-for-text)
+        - [Inserting text](#inserting-text)
+        - [Deleting text](#deleting-text)
+        - [Saving a buffer](#saving-a-buffer)
+    - [org-element](#org-element)
+    - [file and path](#file-and-path)
+        - [Get the path of the current file](#get-the-path-of-the-current-file)
+        - [Get path without suffix](#get-path-without-suffix)
+        - [Write to file](#write-to-file)
+    - [execute shell command](#execute-shell-command)
+- [Modern libraries](#modern-libraries)
+    - [ht.el for hashtables](#ht-dot-el-for-hashtables)
+        - [creating a hash table](#creating-a-hash-table)
+        - [accessing the hash table](#accessing-the-hash-table)
+        - [Iterating over the hash table](#iterating-over-the-hash-table)
+
+</div>
+<!--endtoc-->
+
 It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience
 
 1.  the lisp syntax and functional programming
@@ -49,6 +88,15 @@ In this blog, I focus on the 2nd point and keep updating the notes of some metho
 (progn
   (set-buffer (get-buffer "*scratch*"))
   (current-buffer))
+```
+
+
+#### Goto a buffer {#goto-a-buffer}
+
+```emacs-lisp
+(with-current-buffer "*BUF*"
+  ;; do something like progn
+  )
 ```
 
 
@@ -198,6 +246,47 @@ To save the contents of a buffer back to the file it is associated with
 
 ```emacs-lisp
 (save-buffer)
+```
+
+
+### org-element {#org-element}
+
+
+### file and path {#file-and-path}
+
+
+#### Get the path of the current file {#get-the-path-of-the-current-file}
+
+The `buffer-file-name` is a buffer builtin variable holding the file name of the current buffer.
+
+```emacs-lisp
+(file-truename buffer-file-name)
+```
+
+
+#### Get path without suffix {#get-path-without-suffix}
+
+```emacs-lisp
+(file-name-sans-extension "/tmp/a.org")
+```
+
+
+#### Write to file {#write-to-file}
+
+Overwrite the content:
+
+```emacs-lisp
+(with-temp-file "/tmp/1.org"
+  (insert "hello world")
+  (message "file content: %s" (buffer-string))
+  )
+```
+
+
+### execute shell command {#execute-shell-command}
+
+```emacs-lisp
+(shell-command "echo hello")
 ```
 
 
