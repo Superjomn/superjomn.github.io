@@ -1,58 +1,4 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>emacs on Superjomn's blog</title><link>/tags/emacs/</link><description>Recent content in emacs on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Sat, 15 Oct 2022 00:00:00 +0000</lastBuildDate><atom:link href="/tags/emacs/index.xml" rel="self" type="application/rss+xml"/><item><title>Emacs essentials</title><link>/posts/emacs-essentials/</link><pubDate>Sat, 15 Oct 2022 00:00:00 +0000</pubDate><guid>/posts/emacs-essentials/</guid><description>&lt;!-- raw HTML omitted -->
-&lt;!-- raw HTML omitted -->
-&lt;ul>
-&lt;li>&lt;a href="#builtin-methods">builtin methods&lt;/a>
-&lt;ul>
-&lt;li>&lt;a href="#buffer">buffer&lt;/a>
-&lt;ul>
-&lt;li>&lt;a href="#current-buffer-get-the-current-buffer">current-buffer: get the current buffer&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#get-buffer-get-a-buffer-by-name">get-buffer: get a buffer by name&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#get-buffer-create-create-the-buffer-if-not-exist">get-buffer-create: create the buffer if not exist&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#changing-the-current-buffer">changing the current buffer&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#goto-a-buffer">Goto a buffer&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#changing-the-current-buffer-safely">Changing the current buffer safely&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#working-with-file-buffers">Working with file buffers&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#loading-a-file-into-a-buffer-without-display-it">Loading a file into a buffer without display it&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#get-all-buffer-names">Get all buffer names&lt;/a>&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>&lt;a href="#point">point&lt;/a>
-&lt;ul>
-&lt;li>&lt;a href="#moving-the-point">Moving the point&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#preserving-the-point">Preserving the point&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#examining-buffer-text">Examining buffer text&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#the-thing">The Thing&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#serching-for-text">Serching for text&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#inserting-text">Inserting text&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#deleting-text">Deleting text&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#saving-a-buffer">Saving a buffer&lt;/a>&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>&lt;a href="#org-element">org-element&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#file-and-path">file and path&lt;/a>
-&lt;ul>
-&lt;li>&lt;a href="#get-the-path-of-the-current-file">Get the path of the current file&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#get-path-without-suffix">Get path without suffix&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#write-to-file">Write to file&lt;/a>&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>&lt;a href="#execute-shell-command">execute shell command&lt;/a>&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>&lt;a href="#modern-libraries">Modern libraries&lt;/a>
-&lt;ul>
-&lt;li>&lt;a href="#ht-dot-el-for-hashtables">ht.el for hashtables&lt;/a>
-&lt;ul>
-&lt;li>&lt;a href="#creating-a-hash-table">creating a hash table&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#accessing-the-hash-table">accessing the hash table&lt;/a>&lt;/li>
-&lt;li>&lt;a href="#iterating-over-the-hash-table">Iterating over the hash table&lt;/a>&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ul>
-&lt;!-- raw HTML omitted -->
-&lt;p>It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience&lt;/p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>emacs on Superjomn's blog</title><link>/tags/emacs/</link><description>Recent content in emacs on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Sat, 15 Oct 2022 00:00:00 +0000</lastBuildDate><atom:link href="/tags/emacs/index.xml" rel="self" type="application/rss+xml"/><item><title>Emacs Essentials</title><link>/posts/emacs-essentials/</link><pubDate>Sat, 15 Oct 2022 00:00:00 +0000</pubDate><guid>/posts/emacs-essentials/</guid><description>&lt;p>It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience&lt;/p>
 &lt;ol>
 &lt;li>the lisp syntax and functional programming&lt;/li>
 &lt;li>the fragmented methods and libraries&lt;/li>
@@ -62,126 +8,126 @@
 &lt;h2 id="builtin-methods">builtin methods&lt;/h2>
 &lt;h3 id="buffer">buffer&lt;/h3>
 &lt;h4 id="current-buffer-get-the-current-buffer">current-buffer: get the current buffer&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">current-buffer&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">current-buffer&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="get-buffer-get-a-buffer-by-name">get-buffer: get a buffer by name&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">get-buffer&lt;/span> &lt;span style="color:#5a2">&amp;#34;*scratch*&amp;#34;&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">get-buffer&lt;/span> &lt;span style="color:#4070a0">&amp;#34;*scratch*&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="get-buffer-create-create-the-buffer-if-not-exist">get-buffer-create: create the buffer if not exist&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">get-buffer-create&lt;/span> &lt;span style="color:#5a2">&amp;#34;yaya&amp;#34;&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">get-buffer-create&lt;/span> &lt;span style="color:#4070a0">&amp;#34;yaya&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="changing-the-current-buffer">changing the current buffer&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">progn&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">set-buffer&lt;/span> (&lt;span style="color:#000">get-buffer&lt;/span> &lt;span style="color:#5a2">&amp;#34;*scratch*&amp;#34;&lt;/span>))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">current-buffer&lt;/span>))
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">progn&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">set-buffer&lt;/span> (&lt;span style="color:#06287e">get-buffer&lt;/span> &lt;span style="color:#4070a0">&amp;#34;*scratch*&amp;#34;&lt;/span>))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">current-buffer&lt;/span>))
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="goto-a-buffer">Goto a buffer&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">with-current-buffer&lt;/span> &lt;span style="color:#5a2">&amp;#34;*BUF*&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#888;font-style:italic">;; do something like progn&lt;/span>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">with-current-buffer&lt;/span> &lt;span style="color:#4070a0">&amp;#34;*BUF*&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">;; do something like progn&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="changing-the-current-buffer-safely">Changing the current buffer safely&lt;/h4>
 &lt;p>It will return to the original buffer after the operation finished.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">progn&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">save-current-buffer&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">set-buffer&lt;/span> &lt;span style="color:#5a2">&amp;#34;*scratch*&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">message&lt;/span> &lt;span style="color:#5a2">&amp;#34;Current buffer: %s&amp;#34;&lt;/span> (&lt;span style="color:#000">current-buffer&lt;/span>)))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">current-buffer&lt;/span>))
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">progn&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#007020">save-current-buffer&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">set-buffer&lt;/span> &lt;span style="color:#4070a0">&amp;#34;*scratch*&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">message&lt;/span> &lt;span style="color:#4070a0">&amp;#34;Current buffer: %s&amp;#34;&lt;/span> (&lt;span style="color:#06287e">current-buffer&lt;/span>)))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">current-buffer&lt;/span>))
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="working-with-file-buffers">Working with file buffers&lt;/h4>
 &lt;p>To get the full file path for the file that the buffer represents&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">buffer-file-name&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">buffer-file-name&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>To find a buffer that represents a particular file&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">get-file-buffer&lt;/span> &lt;span style="color:#5a2">&amp;#34;/Users/yanchunwei/project/myblog2022/content-org/emacs-essentials.org&amp;#34;&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">get-file-buffer&lt;/span> &lt;span style="color:#4070a0">&amp;#34;/Users/yanchunwei/project/myblog2022/content-org/emacs-essentials.org&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="loading-a-file-into-a-buffer-without-display-it">Loading a file into a buffer without display it&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">find-file-noselect&lt;/span> &lt;span style="color:#5a2">&amp;#34;xx.org&amp;#34;&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">find-file-noselect&lt;/span> &lt;span style="color:#4070a0">&amp;#34;xx.org&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="get-all-buffer-names">Get all buffer names&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">mapcar&lt;/span> &lt;span style="color:#000">#&amp;#39;buffer-name&lt;/span> (&lt;span style="color:#000">buffer-list&lt;/span>))
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">mapcar&lt;/span> &lt;span style="color:#06287e">#&amp;#39;buffer-name&lt;/span> (&lt;span style="color:#06287e">buffer-list&lt;/span>))
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="point">point&lt;/h3>
 &lt;p>The &amp;ldquo;point&amp;rdquo; is the location of the cursor in the buffer.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">point&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">point-max&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">point-min&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">point&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">point-max&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">point-min&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="moving-the-point">Moving the point&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">goto-char&lt;/span> &lt;span style="color:#3af">1&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">goto-char&lt;/span> (&lt;span style="color:#000">point-max&lt;/span>))
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">goto-char&lt;/span> &lt;span style="color:#40a070">1&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">goto-char&lt;/span> (&lt;span style="color:#06287e">point-max&lt;/span>))
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#888;font-style:italic">;; goto the begining of the buffer&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">beginning-of-buffer&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">;; goto the begining of the buffer&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">beginning-of-buffer&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#888;font-style:italic">;; goto the end of the buffer&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">end-of-buffer&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">;; goto the end of the buffer&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">end-of-buffer&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">forward-char&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">forward-char&lt;/span> &lt;span style="color:#3af">5&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">forward-char&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">forward-char&lt;/span> &lt;span style="color:#40a070">5&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">forward-word&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">backward-word&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">forward-word&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">backward-word&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="preserving-the-point">Preserving the point&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">save-excursion&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">goto-char&lt;/span> (&lt;span style="color:#000">point-max&lt;/span>))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">point&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">save-excursion&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">goto-char&lt;/span> (&lt;span style="color:#06287e">point-max&lt;/span>))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">point&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="examining-buffer-text">Examining buffer text&lt;/h4>
 &lt;p>To look at text in the buffer.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">char-after&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">char-after&lt;/span> (&lt;span style="color:#000">point&lt;/span>))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">char-after&lt;/span> (&lt;span style="color:#000">point-min&lt;/span>))
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">char-after&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">char-after&lt;/span> (&lt;span style="color:#06287e">point&lt;/span>))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">char-after&lt;/span> (&lt;span style="color:#06287e">point-min&lt;/span>))
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="the-thing">The Thing&lt;/h4>
 &lt;p>The &lt;code>thing-at-point&lt;/code> function is very useful for grabbing the text at the point if it matches a particular type of &amp;ldquo;thing&amp;rdquo;.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">thing-at-point&lt;/span> &lt;span style="color:#5a2">&amp;#39;word&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">thing-at-point&lt;/span> &lt;span style="color:#5a2">&amp;#39;sentence&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">thing-at-point&lt;/span> &lt;span style="color:#5a2">&amp;#39;sentence&lt;/span> &lt;span style="color:#000">t&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">thing-at-point&lt;/span> &lt;span style="color:#517918">&amp;#39;word&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">thing-at-point&lt;/span> &lt;span style="color:#517918">&amp;#39;sentence&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">thing-at-point&lt;/span> &lt;span style="color:#517918">&amp;#39;sentence&lt;/span> &lt;span style="color:#60add5">t&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="serching-for-text">Serching for text&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">search-forward&lt;/span> &lt;span style="color:#5a2">&amp;#34;thing&amp;#34;&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">search-forward&lt;/span> &lt;span style="color:#4070a0">&amp;#34;thing&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="inserting-text">Inserting text&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">insert&lt;/span> &lt;span style="color:#5a2">&amp;#34;000&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">insert&lt;/span> &lt;span style="color:#5a2">&amp;#34;\n&amp;#34;&lt;/span> &lt;span style="color:#5a2">&amp;#34;This is&amp;#34;&lt;/span> &lt;span style="color:#5a2">?\s&lt;/span> &lt;span style="color:#5a2">?\n&lt;/span> &lt;span style="color:#5a2">&amp;#34;Sparta!&amp;#34;&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">insert&lt;/span> &lt;span style="color:#4070a0">&amp;#34;000&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">insert&lt;/span> &lt;span style="color:#4070a0">&amp;#34;\n&amp;#34;&lt;/span> &lt;span style="color:#4070a0">&amp;#34;This is&amp;#34;&lt;/span> &lt;span style="color:#4070a0">?\s&lt;/span> &lt;span style="color:#4070a0">?\n&lt;/span> &lt;span style="color:#4070a0">&amp;#34;Sparta!&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="deleting-text">Deleting text&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">with-current-buffer&lt;/span> &lt;span style="color:#5a2">&amp;#34;.gitignore&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">delete-region&lt;/span> (&lt;span style="color:#000">point&lt;/span>) (&lt;span style="color:#000">point-max&lt;/span>)))
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">with-current-buffer&lt;/span> &lt;span style="color:#4070a0">&amp;#34;.gitignore&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">delete-region&lt;/span> (&lt;span style="color:#06287e">point&lt;/span>) (&lt;span style="color:#06287e">point-max&lt;/span>)))
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="saving-a-buffer">Saving a buffer&lt;/h4>
 &lt;p>To save the contents of a buffer back to the file it is associated with&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">save-buffer&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">save-buffer&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="org-element">org-element&lt;/h3>
 &lt;h3 id="file-and-path">file and path&lt;/h3>
 &lt;h4 id="get-the-path-of-the-current-file">Get the path of the current file&lt;/h4>
 &lt;p>The &lt;code>buffer-file-name&lt;/code> is a buffer builtin variable holding the file name of the current buffer.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">file-truename&lt;/span> &lt;span style="color:#000">buffer-file-name&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">file-truename&lt;/span> &lt;span style="color:#06287e">buffer-file-name&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="get-path-without-suffix">Get path without suffix&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">file-name-sans-extension&lt;/span> &lt;span style="color:#5a2">&amp;#34;/tmp/a.org&amp;#34;&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">file-name-sans-extension&lt;/span> &lt;span style="color:#4070a0">&amp;#34;/tmp/a.org&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="write-to-file">Write to file&lt;/h4>
 &lt;p>Overwrite the content:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">with-temp-file&lt;/span> &lt;span style="color:#5a2">&amp;#34;/tmp/1.org&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">insert&lt;/span> &lt;span style="color:#5a2">&amp;#34;hello world&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">message&lt;/span> &lt;span style="color:#5a2">&amp;#34;file content: %s&amp;#34;&lt;/span> (&lt;span style="color:#000">buffer-string&lt;/span>))
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">with-temp-file&lt;/span> &lt;span style="color:#4070a0">&amp;#34;/tmp/1.org&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">insert&lt;/span> &lt;span style="color:#4070a0">&amp;#34;hello world&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">message&lt;/span> &lt;span style="color:#4070a0">&amp;#34;file content: %s&amp;#34;&lt;/span> (&lt;span style="color:#06287e">buffer-string&lt;/span>))
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="execute-shell-command">execute shell command&lt;/h3>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">shell-command&lt;/span> &lt;span style="color:#5a2">&amp;#34;echo hello&amp;#34;&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">shell-command&lt;/span> &lt;span style="color:#4070a0">&amp;#34;echo hello&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="modern-libraries">Modern libraries&lt;/h2>
 &lt;h3 id="ht-dot-el-for-hashtables">ht.el for hashtables&lt;/h3>
 &lt;p>Reference &lt;a href="https://github.com/Wilfred/ht.el">ht.el&lt;/a> for more details.&lt;/p>
 &lt;h4 id="creating-a-hash-table">creating a hash table&lt;/h4>
 &lt;p>Create an empty hash table&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">let*&lt;/span> ((&lt;span style="color:#000">the-dic&lt;/span> (&lt;span style="color:#000">ht-create&lt;/span>)))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">the-dic&lt;/span>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">let*&lt;/span> ((&lt;span style="color:#bb60d5">the-dic&lt;/span> (&lt;span style="color:#bb60d5">ht-create&lt;/span>)))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#bb60d5">the-dic&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Create a hash table with initial records&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">let*&lt;/span> ((&lt;span style="color:#000">the-dic&lt;/span> (&lt;span style="color:#000">ht&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#5a2">&amp;#34;name&amp;#34;&lt;/span> &lt;span style="color:#5a2">&amp;#34;Tom&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#5a2">&amp;#34;sex&amp;#34;&lt;/span> &lt;span style="color:#5a2">&amp;#39;male&lt;/span>))))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">the-dic&lt;/span>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">let*&lt;/span> ((&lt;span style="color:#bb60d5">the-dic&lt;/span> (&lt;span style="color:#bb60d5">ht&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#4070a0">&amp;#34;name&amp;#34;&lt;/span> &lt;span style="color:#4070a0">&amp;#34;Tom&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#4070a0">&amp;#34;sex&amp;#34;&lt;/span> &lt;span style="color:#517918">&amp;#39;male&lt;/span>))))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#bb60d5">the-dic&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="accessing-the-hash-table">accessing the hash table&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">let*&lt;/span> ((&lt;span style="color:#000">the-dic&lt;/span> (&lt;span style="color:#000">ht&lt;/span> (&lt;span style="color:#5a2">&amp;#34;name&amp;#34;&lt;/span> &lt;span style="color:#5a2">&amp;#34;Tom&amp;#34;&lt;/span>) (&lt;span style="color:#5a2">&amp;#34;sex&amp;#34;&lt;/span> &lt;span style="color:#5a2">&amp;#39;male&lt;/span>))))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#888;font-style:italic">;; get a record&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#888;font-style:italic">;; returns &amp;#34;Tom&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">ht-get&lt;/span> &lt;span style="color:#000">the-dic&lt;/span> &lt;span style="color:#5a2">&amp;#34;name&amp;#34;&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">let*&lt;/span> ((&lt;span style="color:#bb60d5">the-dic&lt;/span> (&lt;span style="color:#bb60d5">ht&lt;/span> (&lt;span style="color:#4070a0">&amp;#34;name&amp;#34;&lt;/span> &lt;span style="color:#4070a0">&amp;#34;Tom&amp;#34;&lt;/span>) (&lt;span style="color:#4070a0">&amp;#34;sex&amp;#34;&lt;/span> &lt;span style="color:#517918">&amp;#39;male&lt;/span>))))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">;; get a record&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">;; returns &amp;#34;Tom&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#bb60d5">ht-get&lt;/span> &lt;span style="color:#bb60d5">the-dic&lt;/span> &lt;span style="color:#4070a0">&amp;#34;name&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="iterating-over-the-hash-table">Iterating over the hash table&lt;/h4>
 &lt;p>Readonly mapping:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">let*&lt;/span> ((&lt;span style="color:#000">the-dic&lt;/span> (&lt;span style="color:#000">ht&lt;/span> (&lt;span style="color:#5a2">&amp;#34;name&amp;#34;&lt;/span> &lt;span style="color:#5a2">&amp;#34;Tom&amp;#34;&lt;/span>) (&lt;span style="color:#5a2">&amp;#34;sex&amp;#34;&lt;/span> &lt;span style="color:#5a2">&amp;#39;male&lt;/span>) (&lt;span style="color:#5a2">&amp;#34;age&amp;#34;&lt;/span> &lt;span style="color:#3af">18&lt;/span>))))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">ht-map&lt;/span> (&lt;span style="color:#000">lambda&lt;/span> (&lt;span style="color:#000">key&lt;/span> &lt;span style="color:#000">value&lt;/span>) (&lt;span style="color:#000">message&lt;/span> &lt;span style="color:#5a2">&amp;#34;%S: %S&amp;#34;&lt;/span> &lt;span style="color:#000">key&lt;/span> &lt;span style="color:#000">value&lt;/span>)) &lt;span style="color:#000">the-dic&lt;/span>)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">let*&lt;/span> ((&lt;span style="color:#bb60d5">the-dic&lt;/span> (&lt;span style="color:#bb60d5">ht&lt;/span> (&lt;span style="color:#4070a0">&amp;#34;name&amp;#34;&lt;/span> &lt;span style="color:#4070a0">&amp;#34;Tom&amp;#34;&lt;/span>) (&lt;span style="color:#4070a0">&amp;#34;sex&amp;#34;&lt;/span> &lt;span style="color:#517918">&amp;#39;male&lt;/span>) (&lt;span style="color:#4070a0">&amp;#34;age&amp;#34;&lt;/span> &lt;span style="color:#40a070">18&lt;/span>))))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#bb60d5">ht-map&lt;/span> (&lt;span style="color:#007020">lambda&lt;/span> (&lt;span style="color:#bb60d5">key&lt;/span> &lt;span style="color:#bb60d5">value&lt;/span>) (&lt;span style="color:#06287e">message&lt;/span> &lt;span style="color:#4070a0">&amp;#34;%S: %S&amp;#34;&lt;/span> &lt;span style="color:#bb60d5">key&lt;/span> &lt;span style="color:#bb60d5">value&lt;/span>)) &lt;span style="color:#bb60d5">the-dic&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Mutable mapping:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#000">let*&lt;/span> ((&lt;span style="color:#000">the-dic&lt;/span> (&lt;span style="color:#000">ht&lt;/span> (&lt;span style="color:#5a2">&amp;#34;name&amp;#34;&lt;/span> &lt;span style="color:#5a2">&amp;#34;Tom&amp;#34;&lt;/span>) (&lt;span style="color:#5a2">&amp;#34;sex&amp;#34;&lt;/span> &lt;span style="color:#5a2">&amp;#39;male&lt;/span>) (&lt;span style="color:#5a2">&amp;#34;age&amp;#34;&lt;/span> &lt;span style="color:#3af">18&lt;/span>))))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">ht-map&lt;/span> (&lt;span style="color:#000">lambda&lt;/span> (&lt;span style="color:#000">key&lt;/span> &lt;span style="color:#000">value&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#888;font-style:italic">;; modify the value if is string&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">setf&lt;/span> &lt;span style="color:#000">value&lt;/span> (&lt;span style="color:#000">if&lt;/span> (&lt;span style="color:#000">stringp&lt;/span> &lt;span style="color:#000">value&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#000">concat&lt;/span> &lt;span style="color:#5a2">&amp;#34;modified &amp;#34;&lt;/span> &lt;span style="color:#000">value&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#000">value&lt;/span>))) &lt;span style="color:#000">the-dic&lt;/span>))
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">let*&lt;/span> ((&lt;span style="color:#bb60d5">the-dic&lt;/span> (&lt;span style="color:#bb60d5">ht&lt;/span> (&lt;span style="color:#4070a0">&amp;#34;name&amp;#34;&lt;/span> &lt;span style="color:#4070a0">&amp;#34;Tom&amp;#34;&lt;/span>) (&lt;span style="color:#4070a0">&amp;#34;sex&amp;#34;&lt;/span> &lt;span style="color:#517918">&amp;#39;male&lt;/span>) (&lt;span style="color:#4070a0">&amp;#34;age&amp;#34;&lt;/span> &lt;span style="color:#40a070">18&lt;/span>))))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#bb60d5">ht-map&lt;/span> (&lt;span style="color:#007020">lambda&lt;/span> (&lt;span style="color:#bb60d5">key&lt;/span> &lt;span style="color:#bb60d5">value&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">;; modify the value if is string&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#007020">setf&lt;/span> &lt;span style="color:#bb60d5">value&lt;/span> (&lt;span style="color:#007020">if&lt;/span> (&lt;span style="color:#06287e">stringp&lt;/span> &lt;span style="color:#bb60d5">value&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">concat&lt;/span> &lt;span style="color:#4070a0">&amp;#34;modified &amp;#34;&lt;/span> &lt;span style="color:#bb60d5">value&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#bb60d5">value&lt;/span>))) &lt;span style="color:#bb60d5">the-dic&lt;/span>))
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item></channel></rss>

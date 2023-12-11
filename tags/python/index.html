@@ -1,24 +1,17 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel=stylesheet type=text/css href=/css/bootstrap.min.css><link rel=stylesheet type=text/css href=/css/style.css><title>Superjomn's blog | python</title><meta name=google-site-verification content="kO2XszgjIr1OyaOubGpeb0M34ADBz27vyI1dLETarCM"></head><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z60BDN3JGH"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z60BDN3JGH")</script><body><div id=nav-border class=container><nav id=nav class="nav justify-content-center"><a class=nav-link href=/><i data-feather=home></i>
-Home</a>
-<a class=nav-link href=/posts/><i data-feather=pen-tool></i>
-Posts</a>
-<a class=nav-link href=/tags/><i data-feather=tag></i>
-Tags</a>
-<a class=nav-link href=/posts/about/><i data-feather=info></i>
-About</a></nav></div><div class=container><main id=main><h1>python</h1><p><h3><a class=title href=/posts/python-vm-brief-introduction/>Python VM 执行方式简要探索</a></h3><i data-feather=calendar></i> <time datetime=2023-02-24>Feb 24, 2023</time>
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel=stylesheet type=text/css href=/css/bootstrap.min.css><link rel=stylesheet type=text/css href=/css/style.css><title>Superjomn's blog | python</title>
+<meta name=google-site-verification content="kO2XszgjIr1OyaOubGpeb0M34ADBz27vyI1dLETarCM"></head><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z60BDN3JGH"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z60BDN3JGH")</script><body><div id=nav-border class=container><nav id=nav class="nav justify-content-center"><a class=nav-link href=/><i data-feather=home></i>
+Home
+</a><a class=nav-link href=/tags/tech><i data-feather=terminal></i>
+Tech
+</a><a class=nav-link href=/tags/life><i data-feather=coffee></i>
+Life
+</a><a class=nav-link href=/posts/><i data-feather=archive></i>
+Archive
+</a><a class=nav-link href=/tags/><i data-feather=tag></i>
+Tags
+</a><a class=nav-link href=/posts/about/><i data-feather=info></i>
+About</a></nav></div><div class=container><main id=main><h1>python</h1><p><h3><a class=title href=/posts/python-functools-introduction/>Python 高端写法记录</a></h3><i data-feather=calendar></i> <time datetime=2023-02-22>Feb 22, 2023</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=tags/python>python</a>
-<a class=summary href=/posts/python-vm-brief-introduction/><p>Python Code Object 有用的 attribute Python Bytecode 理解 Python Frame 修改 Frame 的 Code Object 总结 FYI 最近在看 TorchDynamo 的东西，里面需要对 Python 执行机制有一些了解，所以单独拆开放到了这篇文章里。
-本文会从可复现的角度，多一些可以执行的例子。
-Python Code Object 这里是简单的介绍，详细的可以参考 code objects 这本书的章节。
-Code object 用来记录 Python 的 byte code，对应的粒度是 Block，这里的 Block 可以包含从 Module 到 Class definition 到 Function body 的各类结构（有别于编译器里面的 BasicBlock）。 可以理解 Code object 是可以嵌套的。
-我们先从一个简单的函数开始
-def foo(name, age): ''' Get the information of a person. ''' born = 2023 - age return f"hello {name}, born at {born}!</p></a></p><p><h3><a class=title href=/posts/python-functools-introduction/>Python functools 包简要实践</a></h3><i data-feather=calendar></i> <time datetime=2023-02-22>Feb 22, 2023</time>
-<span id=social></span><i data-feather=tag></i>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=tags/python>python</a>
-<a class=summary href=/posts/python-functools-introduction/><p>Python functools 包简要实践 在阅读 Pytorch 代码时，发现很多 Python 的新的用法比较有趣，之前笔者大部分时间在 C++ 上，这里整理和记录一些有趣的用法。 本文先从 functools 这个包开始。
-@total_ordering shortcut to make class orderable 为了让一个 Class 能够比较，我们正常需要定义一堆 slots， __gt__(), __ge__(),~_lt_()~, __le__(), __eq__() 等等。 但其实只需要 __eq__() 和 其他任一方法(比如 __gt__() ) 便可以组合出其他方法。
-@total_ordering 便用于这类场景的 helper，如下代码
-from functools import total_ordering @total_ordering class Stuff: def __init__(self, x): self.x = x def __eq__(self, other:"Stuff"): return self.x == other.x def __gt__(self, other:"Stuff"): return self.x > other.x a = Stuff(0) b = Stuff(1) print(f"a &lt; b?</p></a></p><p class="footer text-center">Copyright (c) 2023 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script>
-<script>feather.replace()</script></body></html>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=tags/tech>tech</a>
+<a class=summary href=/posts/python-functools-introduction/><p><p>在阅读 Pytorch 代码时，发现很多 Python 的新的用法比较有趣，这里整理和记录一些有趣的用法。</p><p>这篇文章会持续更新 :-)</p></p></a></p><p class="footer text-center">Copyright (c) 2023 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script></body></html>
