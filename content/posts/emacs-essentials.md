@@ -1,49 +1,10 @@
 +++
-title = "Emacs essentials"
+title = "Emacs Essentials"
 author = ["Chunwei Yan"]
 date = 2022-10-15
-tags = ["emacs"]
+tags = ["emacs", "tech"]
 draft = false
 +++
-
-<div class="ox-hugo-toc toc">
-
-<div class="heading">Table of Contents</div>
-
-- [builtin methods](#builtin-methods)
-    - [buffer](#buffer)
-        - [current-buffer: get the current buffer](#current-buffer-get-the-current-buffer)
-        - [get-buffer: get a buffer by name](#get-buffer-get-a-buffer-by-name)
-        - [get-buffer-create: create the buffer if not exist](#get-buffer-create-create-the-buffer-if-not-exist)
-        - [changing the current buffer](#changing-the-current-buffer)
-        - [Goto a buffer](#goto-a-buffer)
-        - [Changing the current buffer safely](#changing-the-current-buffer-safely)
-        - [Working with file buffers](#working-with-file-buffers)
-        - [Loading a file into a buffer without display it](#loading-a-file-into-a-buffer-without-display-it)
-        - [Get all buffer names](#get-all-buffer-names)
-    - [point](#point)
-        - [Moving the point](#moving-the-point)
-        - [Preserving the point](#preserving-the-point)
-        - [Examining buffer text](#examining-buffer-text)
-        - [The Thing](#the-thing)
-        - [Serching for text](#serching-for-text)
-        - [Inserting text](#inserting-text)
-        - [Deleting text](#deleting-text)
-        - [Saving a buffer](#saving-a-buffer)
-    - [org-element](#org-element)
-    - [file and path](#file-and-path)
-        - [Get the path of the current file](#get-the-path-of-the-current-file)
-        - [Get path without suffix](#get-path-without-suffix)
-        - [Write to file](#write-to-file)
-    - [execute shell command](#execute-shell-command)
-- [Modern libraries](#modern-libraries)
-    - [ht.el for hashtables](#ht-dot-el-for-hashtables)
-        - [creating a hash table](#creating-a-hash-table)
-        - [accessing the hash table](#accessing-the-hash-table)
-        - [Iterating over the hash table](#iterating-over-the-hash-table)
-
-</div>
-<!--endtoc-->
 
 It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience
 

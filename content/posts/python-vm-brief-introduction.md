@@ -3,7 +3,7 @@ title = "Python VM 执行方式简要探索"
 author = ["Chunwei Yan"]
 date = 2023-02-24
 tags = ["python"]
-draft = false
+draft = true
 +++
 
 <div class="ox-hugo-toc toc">
@@ -33,6 +33,8 @@ draft = false
 Code object 用来记录 Python 的 byte code，对应的粒度是 Block，这里的 Block 可以包含从 Module 到 Class definition 到 Function body 的各类结构（有别于编译器里面的 BasicBlock）。 可以理解 Code object 是可以嵌套的。
 
 我们先从一个简单的函数开始
+
+<!--more-->
 
 ```python
 def foo(name, age):

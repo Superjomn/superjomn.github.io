@@ -1,15 +1,19 @@
 +++
-title = "Python functools 包简要实践"
+title = "Python 高端写法记录"
 author = ["Chunwei Yan"]
 date = 2023-02-22
-tags = ["python"]
+tags = ["python", "tech"]
 draft = false
 +++
 
-## Python functools 包简要实践 {#python-functools-包简要实践}
+在阅读 Pytorch 代码时，发现很多 Python 的新的用法比较有趣，这里整理和记录一些有趣的用法。
 
-在阅读 Pytorch 代码时，发现很多 Python 的新的用法比较有趣，之前笔者大部分时间在 C++ 上，这里整理和记录一些有趣的用法。
-本文先从 functools 这个包开始。
+这篇文章会持续更新 :-)
+
+<!--more-->
+
+
+## `functools` - Misc 功能 {#functools-misc-功能}
 
 
 ### @total_ordering shortcut to make class orderable {#total-ordering-shortcut-to-make-class-orderable}
@@ -60,7 +64,7 @@ func1(a=1, b=10)
 ```
 
 ```text
-functools.partial(<function func0 at 0x7fdf180e4f70>, a=0)
+functools.partial(<function func0 at 0x7f8cb00e31e0>, a=0)
 a:0, b:10
 a:1, b:10
 ```
@@ -89,6 +93,7 @@ greet("Martin")
 ```
 
 ```text
+import codecs, os;__pyfile = codecs.open('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyaTjbBA''', encoding='''utf-8''');__code = __pyfile.read().encode('''utf-8''');__pyfile.close();os.remove('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyaTjbBA''');exec(compile(__code, '''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyaTjbBA''', 'exec'));
 Before Calling greet
 Hello, Martin!
 After Calling greet
@@ -98,6 +103,11 @@ After Calling greet
 
 ```python
 print(greet.__name__)
+```
+
+```text
+import codecs, os;__pyfile = codecs.open('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pym2LOKm''', encoding='''utf-8''');__code = __pyfile.read().encode('''utf-8''');__pyfile.close();os.remove('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pym2LOKm''');exec(compile(__code, '''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pym2LOKm''', 'exec'));
+actual_func
 ```
 
 也就是原有的 `greet` 的属性都变化了（其实是 greet 替换成了 actual_func），这个不是我们希望的。
@@ -131,7 +141,7 @@ greet
 哈哈，greet 还是 greet。
 
 
-## `@lru_cache` {#lru-cache}
+### `@lru_cache` {#lru-cache}
 
 默认 `maxsize=128` ，可以设置 `maxsize=None` 来确定无限 cache。
 

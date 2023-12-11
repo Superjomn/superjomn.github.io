@@ -2,34 +2,15 @@
 title = "OpenAI/Triton MLIR 迁移工作简介"
 author = ["Chunwei Yan"]
 date = 2022-11-15
-tags = ["triton,compiler"]
+tags = ["triton", "system", "tech"]
 draft = false
 +++
-
-<div class="ox-hugo-toc toc">
-
-<div class="heading">Table of Contents</div>
-
-- [Triton 简介](#triton-简介)
-    - [定位](#定位)
-    - [新代码中的架构](#新代码中的架构)
-- [Python 界面之 Frontend](#python-界面之-frontend)
-- [性能优化之 Optimizer](#性能优化之-optimizer)
-    - [TritonGPU Dialect](#tritongpu-dialect)
-    - [TritonIR 的优化](#tritonir-的优化)
-    - [TritonGPU IR 的优化](#tritongpu-ir-的优化)
-- [高性能 LLVM 生成之 Backend](#高性能-llvm-生成之-backend)
-    - [PTX inline asm](#ptx-inline-asm)
-    - [MMA 指令生成](#mma-指令生成)
-- [FYI](#fyi)
-    - [GEMM 在 Optimizer Pass 效果](#gemm-在-optimizer-pass-效果)
-
-</div>
-<!--endtoc-->
 
 经过几个月的不懈努力，OpenAI Triton已经成功完成了面向MLIR Infra的迁移/重构工作，并将其最新的基于MLIR的代码合并至主分支。这个工作是由OpenAI和NVIDIA相关团队近几个月来深入合作完成的，而我也有幸参与其中。在这篇文章中，我将分享一些技术总结，记录一些收获和思考。
 
 尽管Triton目前的开源开发非常迅速，但本文将主要聚焦于基于MLIR Infra进行重构的第一个版本的[代码](https://github.com/openai/triton/tree/ca05ef8e5b0b4d4834957bc31e7581b09d35c530)（这应该也是两三个月前的）
+
+<!--more-->
 
 
 ## Triton 简介 {#triton-简介}
@@ -418,7 +399,7 @@ Triton 的 Backend 是比较经典的 MLIR 的 Lowering，主要内容就是将 
 Triton 中使用 Inline asm 大致几个原因：
 
 -   一些指令对应的操作在现有的 `gpu` 和 `nvgpu` 的 dialect 还不太完善
--   性能原因，比如浮点类型间的变换，一小块汇编足以
+-   性能原因，比如浮点类型间的变换，一小块汇编足以；借助一个很长的 workflow 还不太可控
 
 Triton 里面针对 Inline asm 的封装有个简单的 wrapper，类似最简单的 `cp.async.wait_group` 的调用
 

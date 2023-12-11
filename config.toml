@@ -1,4 +1,3 @@
-#baseURL = "https://example.com"
 title = "Superjomn's blog"
 
 theme = "papaya-theme"
@@ -14,29 +13,43 @@ theme = "papaya-theme"
     weight = 1
 
   [[menu.main]]
-    identifier = "post"
-    name = "Posts"
-    pre = "pen-tool"
-    url = "/posts/"
-    weight = 1
-
-
-  [[menu.main]]
-    identifier = "tags"
-    name = "Tags"
-    pre = "tag"
-    url = "/tags/"
+    identifier = "Tech"
+    name = "Tech"
+    pre = "terminal"
+    url = "/tags/tech"
     weight = 2
 
   [[menu.main]]
-    identifier = "about"
+    identifier = "Life"
+    name = "Life"
+    pre = "coffee"
+    url = "/tags/life"
+    weight = 3
+
+  [[menu.main]]
+    identifier = "Archive"
+    name = "Archive"
+    pre = "archive"
+    url = "/posts/"
+    weight = 4
+
+  [[menu.main]]
+    identifier = "Tags"
+    name = "Tags"
+    pre = "tag"
+    url = "/tags/"
+    weight = 5
+
+  [[menu.main]]
+    identifier = "About"
     name = "About"
     pre = "info"
     url = "/posts/about/"
-    weight = 3
+    weight = 6
 
 [taxonomies]
   tag = "tags"
+  category = 'categories'
 
 [params]
   authorName = "Chunwei Yan"
@@ -54,6 +67,10 @@ theme = "papaya-theme"
     lineNumbersInTable = true
     noClasses = true
     noHl = false
-    style = 'abap'
+    style = 'friendly'
     tabWidth = 4
 
+  [markup.tableOfContents]
+    endLevel = 3
+    ordered = false
+    startLevel = 2
