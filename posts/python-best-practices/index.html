@@ -1,0 +1,131 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel=stylesheet type=text/css href=/css/bootstrap.min.css><link rel=stylesheet type=text/css href=/css/style.css><title>Superjomn's blog | Best Practices for Python Programming (Continuously Updated)</title>
+<meta name=google-site-verification content="kO2XszgjIr1OyaOubGpeb0M34ADBz27vyI1dLETarCM"></head><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z60BDN3JGH"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z60BDN3JGH")</script><body><div id=nav-border class=container><nav id=nav class="nav justify-content-center"><a class=nav-link href=/><i data-feather=home></i>
+Home
+</a><a class=nav-link href=/tags/tech><i data-feather=terminal></i>
+Tech
+</a><a class=nav-link href=/tags/life><i data-feather=coffee></i>
+Life
+</a><a class=nav-link href=/posts/><i data-feather=archive></i>
+Archive
+</a><a class=nav-link href=/tags/><i data-feather=tag></i>
+Tags
+</a><a class=nav-link href=/posts/about/><i data-feather=info></i>
+About</a></nav></div><div class=container><main id=main><main><article><h1>Best Practices for Python Programming (Continuously Updated)</h1><i data-feather=calendar></i> <time datetime=2023-02-22>Feb 22, 2023</time>
+<span id=social></span><i data-feather=tag></i>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=tags/python>python</a>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=tags/tech>tech</a><br><br><p><b>Table of Contents</b></p><aside><nav id=TableOfContents><ol><li><a href=#basics>Basics</a><ol><li><a href=#new><code>__new__</code></a><ol><li><a href=#singleton-pattern>Singleton Pattern</a></li><li><a href=#subclassing-immutable-types>Subclassing Immutable Types</a></li><li><a href=#factory-methods>Factory Methods</a></li></ol></li></ol></li><li><a href=#handy-modules-or-packages>Handy modules or packages</a><ol><li><a href=#functools><code>functools</code></a><ol><li><a href=#partial-to-get-new-function-by-partially-fixing-some-arguments-of-an-existing-one><code>partial</code> to get new function by partially fixing some arguments of an existing one</a></li><li><a href=#warps-to-help-define-better-decorators><code>@warps</code> to help define better decorators</a></li><li><a href=#lru-cache-decorator-to-wrap-a-function-with-a-lru-cache><code>@lru_cache</code> : decorator to wrap a function with a LRU cache</a></li></ol></li></ol></li></ol></nav></aside><br><p>When delving into the codebases of some successful large Python projects such as PyTorch, I am consistently impressed by their code &ndash; whether it&rsquo;s clean yet precise, or leveraging lesser-known built-in or third-party packages to significantly enhance functionality.</p><p>High-quality code snippets, handy packages, and modules have greatly facilitated my work. In this blog, I&rsquo;ll be sharing noteworthy findings and insights learned from the open-source codebase.</p><h2 id=basics>Basics</h2><h3 id=new><code>__new__</code></h3><p>The <code>__new__</code> method is used for creating a new instance of a class. It is a static method that gets called before the <code>__init__</code> method.</p><p>The default <code>__new__</code> method could be</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>class</span> <span style=color:#0e84b5;font-weight:700>MyClass</span>:
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>def</span> __new__(cls, <span style=color:#666>*</span>args, <span style=color:#666>**</span>kwargs):
+</span></span><span style=display:flex><span>        instance <span style=color:#666>=</span> <span style=color:#007020>super</span>(MyClass, cls)<span style=color:#666>.</span>__new__(cls, <span style=color:#666>*</span>args, <span style=color:#666>**</span>kwargs)
+</span></span><span style=display:flex><span>        <span style=color:#007020;font-weight:700>return</span> instance
+</span></span></code></pre></div><p>Note that, different from <code>__init__</code>, whose first argument is an instance <code>self</code>, <code>__new__</code>&rsquo;s first argument is a class.</p><p>You can override <code>__new__</code> if something special need to be done with the object creation.</p><p>There are some classical use cases for the <code>__new__</code> method:</p><h4 id=singleton-pattern>Singleton Pattern</h4><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>class</span> <span style=color:#0e84b5;font-weight:700>Singleton</span>:
+</span></span><span style=display:flex><span>    _instance <span style=color:#666>=</span> <span style=color:#007020;font-weight:700>None</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>def</span> __new__(cls):
+</span></span><span style=display:flex><span>        <span style=color:#007020;font-weight:700>if</span> cls<span style=color:#666>.</span>_instance <span style=color:#007020;font-weight:700>is</span> <span style=color:#007020;font-weight:700>None</span>:
+</span></span><span style=display:flex><span>            cls<span style=color:#666>.</span>_instance <span style=color:#666>=</span> <span style=color:#007020>super</span>()<span style=color:#666>.</span>__new__(cls)
+</span></span><span style=display:flex><span>        <span style=color:#007020;font-weight:700>return</span> cls<span style=color:#666>.</span>_instance
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic># Usage</span>
+</span></span><span style=display:flex><span>singleton1 <span style=color:#666>=</span> Singleton()
+</span></span><span style=display:flex><span>singleton2 <span style=color:#666>=</span> Singleton()
+</span></span><span style=display:flex><span><span style=color:#007020>print</span>(singleton1 <span style=color:#007020;font-weight:700>is</span> singleton2)
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>True
+</span></span></code></pre></div><h4 id=subclassing-immutable-types>Subclassing Immutable Types</h4><p>When subclassing immutable types like <code>str</code>, <code>int</code>, <code>unicode</code> or <code>tuple</code>, the properties of immutable cannot be changed after they are created, you can override <code>__new__</code> instead:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>class</span> <span style=color:#0e84b5;font-weight:700>UpperStr</span>(<span style=color:#007020>str</span>):
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>def</span> __new__(cls, value):
+</span></span><span style=display:flex><span>        <span style=color:#007020;font-weight:700>return</span> <span style=color:#007020>str</span><span style=color:#666>.</span>__new__(cls, value<span style=color:#666>.</span>upper())
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic># Usage</span>
+</span></span><span style=display:flex><span>upper_string <span style=color:#666>=</span> UpperStr(<span style=color:#4070a0>&#34;hello&#34;</span>)
+</span></span><span style=display:flex><span><span style=color:#007020>print</span>(upper_string)  <span style=color:#60a0b0;font-style:italic># Output: HELLO</span>
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>HELLO
+</span></span></code></pre></div><h4 id=factory-methods>Factory Methods</h4><p><code>__new__</code> can be used to implement factory methods that return instances of different classes based on input parameters.</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>class</span> <span style=color:#0e84b5;font-weight:700>Shape</span>:
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>def</span> __new__(cls, <span style=color:#666>*</span>args, <span style=color:#666>**</span>kwargs):
+</span></span><span style=display:flex><span>        <span style=color:#007020;font-weight:700>if</span> cls <span style=color:#007020;font-weight:700>is</span> Shape:
+</span></span><span style=display:flex><span>            shape_type <span style=color:#666>=</span> args[<span style=color:#40a070>0</span>]
+</span></span><span style=display:flex><span>            <span style=color:#007020;font-weight:700>if</span> shape_type <span style=color:#666>==</span> <span style=color:#4070a0>&#39;circle&#39;</span>:
+</span></span><span style=display:flex><span>                <span style=color:#007020;font-weight:700>return</span> Circle()
+</span></span><span style=display:flex><span>            <span style=color:#007020;font-weight:700>elif</span> shape_type <span style=color:#666>==</span> <span style=color:#4070a0>&#39;square&#39;</span>:
+</span></span><span style=display:flex><span>                <span style=color:#007020;font-weight:700>return</span> Square()
+</span></span><span style=display:flex><span>        <span style=color:#007020;font-weight:700>return</span> <span style=color:#007020>super</span>(Shape, cls)<span style=color:#666>.</span>__new__(cls, <span style=color:#666>*</span>args, <span style=color:#666>**</span>kwargs)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>class</span> <span style=color:#0e84b5;font-weight:700>Circle</span>(Shape):
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>pass</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>class</span> <span style=color:#0e84b5;font-weight:700>Square</span>(Shape):
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>pass</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic># Usage</span>
+</span></span><span style=display:flex><span>shape <span style=color:#666>=</span> Shape(<span style=color:#4070a0>&#39;circle&#39;</span>)
+</span></span><span style=display:flex><span><span style=color:#007020>print</span>(<span style=color:#007020>isinstance</span>(shape, Circle))  <span style=color:#60a0b0;font-style:italic># Output: True</span>
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>True
+</span></span></code></pre></div><h2 id=handy-modules-or-packages>Handy modules or packages</h2><h3 id=functools><code>functools</code></h3><h4 id=partial-to-get-new-function-by-partially-fixing-some-arguments-of-an-existing-one><code>partial</code> to get new function by partially fixing some arguments of an existing one</h4><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>from</span> <span style=color:#0e84b5;font-weight:700>functools</span> <span style=color:#007020;font-weight:700>import</span> partial
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>func0</span>(a, b):
+</span></span><span style=display:flex><span>    <span style=color:#007020>print</span>(<span style=color:#4070a0>f</span><span style=color:#4070a0>&#34;a:</span><span style=color:#70a0d0>{</span>a<span style=color:#70a0d0>}</span><span style=color:#4070a0>, b:</span><span style=color:#70a0d0>{</span>b<span style=color:#70a0d0>}</span><span style=color:#4070a0>&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>func1 <span style=color:#666>=</span> partial(func0, a <span style=color:#666>=</span> <span style=color:#40a070>0</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020>print</span>(func1)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>func1(b<span style=color:#666>=</span><span style=color:#40a070>10</span>)
+</span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic># reset argument a</span>
+</span></span><span style=display:flex><span>func1(a<span style=color:#666>=</span><span style=color:#40a070>1</span>, b<span style=color:#666>=</span><span style=color:#40a070>10</span>)
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>functools.partial(&lt;function func0 at 0x7fa3980e31e0&gt;, a=0)
+</span></span><span style=display:flex><span>a:0, b:10
+</span></span><span style=display:flex><span>a:1, b:10
+</span></span></code></pre></div><h4 id=warps-to-help-define-better-decorators><code>@warps</code> to help define better decorators</h4><p>Below is a classical way to define an decorator</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>decorator</span>(func):
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>actual_func</span>(<span style=color:#666>*</span>args, <span style=color:#666>**</span>kwargs):
+</span></span><span style=display:flex><span>        <span style=color:#4070a0>&#39;&#39;&#39; The actual func. &#39;&#39;&#39;</span>
+</span></span><span style=display:flex><span>        <span style=color:#007020>print</span>(<span style=color:#4070a0>f</span><span style=color:#4070a0>&#34;Before Calling </span><span style=color:#70a0d0>{</span>func<span style=color:#666>.</span>__name__<span style=color:#70a0d0>}</span><span style=color:#4070a0>&#34;</span>)
+</span></span><span style=display:flex><span>        func(<span style=color:#666>*</span>args, <span style=color:#666>**</span>kwargs)
+</span></span><span style=display:flex><span>        <span style=color:#007020>print</span>(<span style=color:#4070a0>f</span><span style=color:#4070a0>&#34;After Calling </span><span style=color:#70a0d0>{</span>func<span style=color:#666>.</span>__name__<span style=color:#70a0d0>}</span><span style=color:#4070a0>&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> actual_func
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#555;font-weight:700>@decorator</span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>greet</span>(name):
+</span></span><span style=display:flex><span>    <span style=color:#4070a0>&#39;&#39;&#39; The greet func. &#39;&#39;&#39;</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020>print</span>(<span style=color:#4070a0>f</span><span style=color:#4070a0>&#34;Hello, </span><span style=color:#70a0d0>{</span>name<span style=color:#70a0d0>}</span><span style=color:#4070a0>!&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>greet(<span style=color:#4070a0>&#34;Martin&#34;</span>)
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>import codecs, os;__pyfile = codecs.open(&#39;&#39;&#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyNDoRTx&#39;&#39;&#39;, encoding=&#39;&#39;&#39;utf-8&#39;&#39;&#39;);__code = __pyfile.read().encode(&#39;&#39;&#39;utf-8&#39;&#39;&#39;);__pyfile.close();os.remove(&#39;&#39;&#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyNDoRTx&#39;&#39;&#39;);exec(compile(__code, &#39;&#39;&#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyNDoRTx&#39;&#39;&#39;, &#39;exec&#39;));
+</span></span><span style=display:flex><span>Before Calling greet
+</span></span><span style=display:flex><span>Hello, Martin!
+</span></span><span style=display:flex><span>After Calling greet
+</span></span></code></pre></div><p>The name and docstring of the decorated function will be hidden in the decorator function, and this makes the usage a bit opaque when debugging.</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020>print</span>(greet<span style=color:#666>.</span>__name__)
+</span></span><span style=display:flex><span><span style=color:#007020>print</span>(greet<span style=color:#666>.</span>__doc__)
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>import codecs, os;__pyfile = codecs.open(&#39;&#39;&#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/py7wwbdu&#39;&#39;&#39;, encoding=&#39;&#39;&#39;utf-8&#39;&#39;&#39;);__code = __pyfile.read().encode(&#39;&#39;&#39;utf-8&#39;&#39;&#39;);__pyfile.close();os.remove(&#39;&#39;&#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/py7wwbdu&#39;&#39;&#39;);exec(compile(__code, &#39;&#39;&#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/py7wwbdu&#39;&#39;&#39;, &#39;exec&#39;));
+</span></span><span style=display:flex><span>actual_func
+</span></span><span style=display:flex><span> The actual func.
+</span></span></code></pre></div><p>In other words, the name and the docstring of the decorated function is overwritten by the decorator, which is not expected.</p><p>We can fix such issue with <code>@wraps</code>, for example, the original code could be replaced with</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>from</span> <span style=color:#0e84b5;font-weight:700>functools</span> <span style=color:#007020;font-weight:700>import</span> wraps
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>decorator</span>(func):
+</span></span><span style=display:flex><span>    <span style=color:#555;font-weight:700>@wraps</span>(func)
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>actual_func</span>(<span style=color:#666>*</span>args, <span style=color:#666>**</span>kwargs):
+</span></span><span style=display:flex><span>        <span style=color:#007020>print</span>(<span style=color:#4070a0>f</span><span style=color:#4070a0>&#34;Before Calling </span><span style=color:#70a0d0>{</span>func<span style=color:#666>.</span>__name__<span style=color:#70a0d0>}</span><span style=color:#4070a0>&#34;</span>)
+</span></span><span style=display:flex><span>        func(<span style=color:#666>*</span>args, <span style=color:#666>**</span>kwargs)
+</span></span><span style=display:flex><span>        <span style=color:#007020>print</span>(<span style=color:#4070a0>f</span><span style=color:#4070a0>&#34;After Calling </span><span style=color:#70a0d0>{</span>func<span style=color:#666>.</span>__name__<span style=color:#70a0d0>}</span><span style=color:#4070a0>&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> actual_func
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#555;font-weight:700>@decorator</span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>greet</span>(name):
+</span></span><span style=display:flex><span>    <span style=color:#4070a0>&#39;&#39;&#39; The greet func. &#39;&#39;&#39;</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020>print</span>(<span style=color:#4070a0>f</span><span style=color:#4070a0>&#34;Hello, </span><span style=color:#70a0d0>{</span>name<span style=color:#70a0d0>}</span><span style=color:#4070a0>!&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020>print</span>(greet<span style=color:#666>.</span>__name__)
+</span></span><span style=display:flex><span><span style=color:#007020>print</span>(greet<span style=color:#666>.</span>__doc__)
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>greet
+</span></span><span style=display:flex><span> The greet func.
+</span></span></code></pre></div><h4 id=lru-cache-decorator-to-wrap-a-function-with-a-lru-cache><code>@lru_cache</code> : decorator to wrap a function with a LRU cache</h4><ul><li><p>Accelerating DP-like recursive function call</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#555;font-weight:700>@functools.lru_cache</span>(maxsize<span style=color:#666>=</span><span style=color:#40a070>1000</span>)
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>factorial</span>(n):
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> n <span style=color:#666>*</span> factorial(n<span style=color:#666>-</span><span style=color:#40a070>1</span>) <span style=color:#007020;font-weight:700>if</span> n <span style=color:#007020;font-weight:700>else</span> <span style=color:#40a070>1</span>
+</span></span></code></pre></div></li></ul><ul><li><p>Initialization for some heavy states without introducing global variables</p><p>Suppose we have some global states that should be initialized only once, the naive way to do it is by introducing some global variables,</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span>state <span style=color:#666>=</span> <span style=color:#007020;font-weight:700>None</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>get_state</span>(args):
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>if</span> state <span style=color:#007020;font-weight:700>is</span> <span style=color:#007020;font-weight:700>None</span>:
+</span></span><span style=display:flex><span>        state <span style=color:#666>=</span> construct_state(args)
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> state
+</span></span></code></pre></div><p>We can eliminate the need for a global variable with a cache:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#555;font-weight:700>@lru_cache</span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>get_state</span>(args):
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> construct_state(args)
+</span></span></code></pre></div></li></ul><script src=https://utteranc.es/client.js repo=superjomn/superjomn.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></article></main><p class="footer text-center">Copyright (c) 2023 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script></body></html>

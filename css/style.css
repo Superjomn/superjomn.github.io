@@ -1,72 +1,75 @@
 @font-face {
-    font-family: 'Norican';
-    src: url(../fonts/Norican/Norican-Regular.otf);
-    src: url(../fonts/Norican/Norican-Regular.ttf) format("truetype");
+  font-family: "Norican";
+  src: url(../fonts/Norican/Norican-Regular.otf);
+  src: url(../fonts/Norican/Norican-Regular.ttf) format("truetype");
 }
 
 .container {
-    max-width: 800px;
+  max-width: 800px;
 }
 
 #nav a {
-    font-weight: bold;
-    color: inherit;
+  font-weight: bold;
+  color: inherit;
 }
 
 #nav-border {
-    border-bottom: 1px solid #212529;
+  border-bottom: 1px solid #212529;
 }
 
 #main {
-    margin-top: 1em;
-    margin-bottom: 4em;
+  margin-top: 1em;
+  margin-bottom: 4em;
 }
 
 #home-jumbotron {
-    background-color: inherit;
+  background-color: inherit;
 }
 
 h1.title {
-    font-family: 'Norican';
-    font-size: 400%;
+  font-family: "Norican";
+  font-size: 400%;
 }
 
 .font-125 {
-    font-size: 125%;
+  font-size: 125%;
 }
 
 .feather-16 {
-    width: 16px;
-    height: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 .tag-btn {
-    margin-bottom: 0.3em;
-    padding-bottom: 0.3em;
+  margin-bottom: 0.3em;
+  padding-bottom: 0.3em;
 }
 
 .share-btn {
-    margin-bottom: 0.3em;
-    padding-bottom: 0.3em;
+  margin-bottom: 0.3em;
+  padding-bottom: 0.3em;
 }
 
 img {
-    max-width: 100%;
+  max-width: 100%;
 }
 
 a {
-    color: #a00000;
-    text-decoration: none;
+  color: #a00000;
+  text-decoration: none;
 }
 
 h3 a.title {
-    color: #a00000;
-    text-decoration: none;
+  color: #a00000;
+  text-decoration: none;
 }
 
-a.title:link, a.title:visited, a.title:hover, a.title:active {
-    color: black;
-    text-decoration: none;
+a.title:link,
+a.title:visited,
+a.title:hover,
+a.title:active {
+  color: black;
+  text-decoration: none;
 }
 
 /* a.summary:link, a.summary:visited, a.summary:hover, a.summary:active { */
@@ -75,15 +78,78 @@ a.title:link, a.title:visited, a.title:hover, a.title:active {
 /* } */
 
 aside a {
-    color: #a00000;
-    text-decoration: none;
+  color: #a00000;
+  text-decoration: none;
 }
 
 .footer {
-    color: darkgrey;
+  color: darkgrey;
 }
 
 body {
   background-color: #fffff8;
+}
 
+/* Add section number */
+body {
+  counter-reset: h2;
+}
+
+h2 {
+  counter-reset: h3;
+}
+
+h3 {
+  counter-reset: h4;
+}
+
+h4 {
+  counter-reset: h5;
+}
+
+h5 {
+  counter-reset: h6;
+}
+
+article h2:before {
+  content: counter(h2, decimal) ". ";
+  counter-increment: h2;
+}
+
+article h3:before {
+  content: counter(h2, decimal) "." counter(h3, decimal) ". ";
+  counter-increment: h3;
+}
+
+article h4:before {
+  content: counter(h2, decimal) "." counter(h3, decimal) "."
+    counter(h4, decimal) ". ";
+  counter-increment: h4;
+}
+
+article h5:before {
+  content: counter(h2, decimal) "." counter(h3, decimal) "."
+    counter(h4, decimal) "." counter(h5, decimal) ". ";
+  counter-increment: h5;
+}
+
+article h6:before {
+  content: counter(h2, decimal) "." counter(h3, decimal) "."
+    counter(h4, decimal) "." counter(h5, decimal) "." counter(h6, decimal) ". ";
+  counter-increment: h6;
+}
+
+h2.nocount:before,
+h3.nocount:before,
+h4.nocount:before,
+h5.nocount:before,
+h6.nocount:before {
+  content: "";
+  counter-increment: none;
+}
+
+article h2,
+article h3,
+article h4 {
+  line-height: 1.4em;
 }
