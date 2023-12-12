@@ -71,6 +71,6 @@ theme = "papaya-theme"
     tabWidth = 4
 
   [markup.tableOfContents]
-    endLevel = 3
-    ordered = false
+    endLevel = 4
+    ordered = true
     startLevel = 2
