@@ -107,7 +107,40 @@ True
 ```
 
 
-## Handy modules or packages {#handy-modules-or-packages}
+## Handy builtin utilities {#handy-builtin-utilities}
+
+
+### setter and getter {#setter-and-getter}
+
+When there is some logic bound to a member when it is got or updated, then the getter and setter could be used.
+
+```python
+class App:
+    def __init__(self):
+        self.update_count = 0
+        self._name = ""
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, v:str):
+        self._name = v
+        self.update_count += 1
+
+app = App()
+app.name = 'a'
+app.name = 'b'
+
+print('name:', app.name) # b
+print('update_count:', app.update_count) # 2
+```
+
+```text
+name: b
+update_count: 2
+```
 
 
 ### `functools` {#functools}
@@ -131,7 +164,7 @@ func1(a=1, b=10)
 ```
 
 ```text
-functools.partial(<function func0 at 0x7fa3980e31e0>, a=0)
+functools.partial(<function func0 at 0x7ff3e80831e0>, a=0)
 a:0, b:10
 a:1, b:10
 ```
@@ -160,7 +193,7 @@ greet("Martin")
 ```
 
 ```text
-import codecs, os;__pyfile = codecs.open('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyNDoRTx''', encoding='''utf-8''');__code = __pyfile.read().encode('''utf-8''');__pyfile.close();os.remove('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyNDoRTx''');exec(compile(__code, '''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyNDoRTx''', 'exec'));
+import codecs, os;__pyfile = codecs.open('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyuHcYWN''', encoding='''utf-8''');__code = __pyfile.read().encode('''utf-8''');__pyfile.close();os.remove('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyuHcYWN''');exec(compile(__code, '''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyuHcYWN''', 'exec'));
 Before Calling greet
 Hello, Martin!
 After Calling greet
@@ -174,7 +207,7 @@ print(greet.__doc__)
 ```
 
 ```text
-import codecs, os;__pyfile = codecs.open('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/py7wwbdu''', encoding='''utf-8''');__code = __pyfile.read().encode('''utf-8''');__pyfile.close();os.remove('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/py7wwbdu''');exec(compile(__code, '''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/py7wwbdu''', 'exec'));
+import codecs, os;__pyfile = codecs.open('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pymYDV8o''', encoding='''utf-8''');__code = __pyfile.read().encode('''utf-8''');__pyfile.close();os.remove('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pymYDV8o''');exec(compile(__code, '''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pymYDV8o''', 'exec'));
 actual_func
  The actual func.
 ```
@@ -244,3 +277,6 @@ greet
     def get_state(args):
         return construct_state(args)
     ```
+
+
+## Handy third-party packages {#handy-third-party-packages}
