@@ -56,8 +56,32 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>shape &lt;span style="color:#666">=&lt;/span> Shape(&lt;span style="color:#4070a0">&amp;#39;circle&amp;#39;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#007020">isinstance&lt;/span>(shape, Circle)) &lt;span style="color:#60a0b0;font-style:italic"># Output: True&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>True
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="handy-modules-or-packages">Handy modules or packages&lt;/h2>
-&lt;h3 id="functools">&lt;code>functools&lt;/code>&lt;/h3>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="handy-builtin-utilities">Handy builtin utilities&lt;/h2>
+&lt;h3 id="setter-and-getter">setter and getter&lt;/h3>
+&lt;p>When there is some logic bound to a member when it is got or updated, then the getter and setter could be used.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">App&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __init__(self):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>update_count &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>_name &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#4070a0">&amp;#34;&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#555;font-weight:bold">@property&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">name&lt;/span>(self) &lt;span style="color:#666">-&amp;gt;&lt;/span> &lt;span style="color:#007020">str&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> self&lt;span style="color:#666">.&lt;/span>_name
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#555;font-weight:bold">@name.setter&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">name&lt;/span>(self, v:&lt;span style="color:#007020">str&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>_name &lt;span style="color:#666">=&lt;/span> v
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>update_count &lt;span style="color:#666">+=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>app &lt;span style="color:#666">=&lt;/span> App()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>app&lt;span style="color:#666">.&lt;/span>name &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#4070a0">&amp;#39;a&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>app&lt;span style="color:#666">.&lt;/span>name &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#4070a0">&amp;#39;b&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#39;name:&amp;#39;&lt;/span>, app&lt;span style="color:#666">.&lt;/span>name) &lt;span style="color:#60a0b0;font-style:italic"># b&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#39;update_count:&amp;#39;&lt;/span>, app&lt;span style="color:#666">.&lt;/span>update_count) &lt;span style="color:#60a0b0;font-style:italic"># 2&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>name: b
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>update_count: 2
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="functools">&lt;code>functools&lt;/code>&lt;/h3>
 &lt;h4 id="partial-to-get-new-function-by-partially-fixing-some-arguments-of-an-existing-one">&lt;code>partial&lt;/code> to get new function by partially fixing some arguments of an existing one&lt;/h4>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">functools&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> partial
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
@@ -71,7 +95,7 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>func1(b&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">10&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># reset argument a&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>func1(a&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">1&lt;/span>, b&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">10&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>functools.partial(&amp;lt;function func0 at 0x7fa3980e31e0&amp;gt;, a=0)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>functools.partial(&amp;lt;function func0 at 0x7ff3e80831e0&amp;gt;, a=0)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>a:0, b:10
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>a:1, b:10
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="warps-to-help-define-better-decorators">&lt;code>@warps&lt;/code> to help define better decorators&lt;/h4>
@@ -91,14 +115,14 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Hello, &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>name&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">!&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>greet(&lt;span style="color:#4070a0">&amp;#34;Martin&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>import codecs, os;__pyfile = codecs.open(&amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyNDoRTx&amp;#39;&amp;#39;&amp;#39;, encoding=&amp;#39;&amp;#39;&amp;#39;utf-8&amp;#39;&amp;#39;&amp;#39;);__code = __pyfile.read().encode(&amp;#39;&amp;#39;&amp;#39;utf-8&amp;#39;&amp;#39;&amp;#39;);__pyfile.close();os.remove(&amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyNDoRTx&amp;#39;&amp;#39;&amp;#39;);exec(compile(__code, &amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyNDoRTx&amp;#39;&amp;#39;&amp;#39;, &amp;#39;exec&amp;#39;));
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>import codecs, os;__pyfile = codecs.open(&amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyuHcYWN&amp;#39;&amp;#39;&amp;#39;, encoding=&amp;#39;&amp;#39;&amp;#39;utf-8&amp;#39;&amp;#39;&amp;#39;);__code = __pyfile.read().encode(&amp;#39;&amp;#39;&amp;#39;utf-8&amp;#39;&amp;#39;&amp;#39;);__pyfile.close();os.remove(&amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyuHcYWN&amp;#39;&amp;#39;&amp;#39;);exec(compile(__code, &amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyuHcYWN&amp;#39;&amp;#39;&amp;#39;, &amp;#39;exec&amp;#39;));
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Before Calling greet
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Hello, Martin!
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>After Calling greet
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The name and docstring of the decorated function will be hidden in the decorator function, and this makes the usage a bit opaque when debugging.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>__name__)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>__doc__)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>import codecs, os;__pyfile = codecs.open(&amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/py7wwbdu&amp;#39;&amp;#39;&amp;#39;, encoding=&amp;#39;&amp;#39;&amp;#39;utf-8&amp;#39;&amp;#39;&amp;#39;);__code = __pyfile.read().encode(&amp;#39;&amp;#39;&amp;#39;utf-8&amp;#39;&amp;#39;&amp;#39;);__pyfile.close();os.remove(&amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/py7wwbdu&amp;#39;&amp;#39;&amp;#39;);exec(compile(__code, &amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/py7wwbdu&amp;#39;&amp;#39;&amp;#39;, &amp;#39;exec&amp;#39;));
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>import codecs, os;__pyfile = codecs.open(&amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pymYDV8o&amp;#39;&amp;#39;&amp;#39;, encoding=&amp;#39;&amp;#39;&amp;#39;utf-8&amp;#39;&amp;#39;&amp;#39;);__code = __pyfile.read().encode(&amp;#39;&amp;#39;&amp;#39;utf-8&amp;#39;&amp;#39;&amp;#39;);__pyfile.close();os.remove(&amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pymYDV8o&amp;#39;&amp;#39;&amp;#39;);exec(compile(__code, &amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pymYDV8o&amp;#39;&amp;#39;&amp;#39;, &amp;#39;exec&amp;#39;));
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>actual_func
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> The actual func.
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>In other words, the name and the docstring of the decorated function is overwritten by the decorator, which is not expected.&lt;/p>
@@ -149,4 +173,5 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">get_state&lt;/span>(args):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> construct_state(args)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
-&lt;/ul></description></item></channel></rss>
+&lt;/ul>
+&lt;h2 id="handy-third-party-packages">Handy third-party packages&lt;/h2></description></item></channel></rss>
