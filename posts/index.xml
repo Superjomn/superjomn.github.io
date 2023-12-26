@@ -108,8 +108,71 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#39;update_count:&amp;#39;&lt;/span>, app&lt;span style="color:#666">.&lt;/span>update_count) &lt;span style="color:#60a0b0;font-style:italic"># 2&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>name: b
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>update_count: 2
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="functools">&lt;code>functools&lt;/code>&lt;/h3>
-&lt;h4 id="partial-to-get-new-function-by-partially-fixing-some-arguments-of-an-existing-one">&lt;code>partial&lt;/code> to get new function by partially fixing some arguments of an existing one&lt;/h4>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="dataclass">&lt;code>@dataclass&lt;/code>&lt;/h3>
+&lt;p>&lt;code>@dataclass&lt;/code> is a decorator that can be used to create classes that &lt;strong>mainly store data&lt;/strong>.
+It can automatically generate some common methods for the class, such as &lt;code>__init__&lt;/code>, &lt;code>__repr__&lt;/code>, and &lt;code>__eq__&lt;/code>, based on the type hints of the class attributes.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">dataclasses&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> dataclass
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@dataclass&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Point&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> x: &lt;span style="color:#007020">float&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> y: &lt;span style="color:#007020">float&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>p &lt;span style="color:#666">=&lt;/span> Point(&lt;span style="color:#40a070">1.&lt;/span>, &lt;span style="color:#40a070">2.&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(p)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>Point(x=1.0, y=2.0)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>There are several classical practices using &lt;code>@dataclass&lt;/code>&lt;/p>
+&lt;h4 id="use-default-values-or-default-factories">Use default values or default factories&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">dataclasses&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> dataclass, field
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">random&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> randint
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">typing&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> List
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@dataclass&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">DummyContainer&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sides: &lt;span style="color:#007020">int&lt;/span> &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">6&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> value: &lt;span style="color:#007020">int&lt;/span> &lt;span style="color:#666">=&lt;/span> field(default_factory&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020;font-weight:bold">lambda&lt;/span>: randint(&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">6&lt;/span>))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> alist: List[&lt;span style="color:#007020">int&lt;/span>] &lt;span style="color:#666">=&lt;/span> field(default_factory&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020">list&lt;/span>) &lt;span style="color:#60a0b0;font-style:italic"># avoid assign [] directly&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>dummy &lt;span style="color:#666">=&lt;/span> DummyContainer()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(dummy)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>DummyContainer(sides=6, value=2, alist=[])
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="use-frozen-true-to-make-the-class-immutable">Use &lt;code>frozen=True&lt;/code> to make the class immutable&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">dataclasses&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> dataclass
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@dataclass&lt;/span>(frozen&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020;font-weight:bold">True&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Circle&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> radius: &lt;span style="color:#007020">float&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>const_circle &lt;span style="color:#666">=&lt;/span> Circle(&lt;span style="color:#40a070">2.0&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="use-order-true-to-enable-comparison-operators-based-on-the-class-attributes">Use &lt;code>order=True&lt;/code> to enable comparison operators based on the class attributes&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">dataclasses&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> dataclass
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@dataclass&lt;/span>(order&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020;font-weight:bold">True&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Circle&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> radius: &lt;span style="color:#007020">float&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>c0 &lt;span style="color:#666">=&lt;/span> Circle(&lt;span style="color:#40a070">1.&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>c1 &lt;span style="color:#666">=&lt;/span> Circle(&lt;span style="color:#40a070">2&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(c0 &lt;span style="color:#666">&amp;gt;&lt;/span> c1)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>False
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="use-inheritance-to-create-subclasses-of-data-classes">Use inheritance to create subclasses of data classes&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">dataclasses&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> dataclass
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@dataclass&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Animal&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> name: &lt;span style="color:#007020">str&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sound: &lt;span style="color:#007020">str&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@dataclass&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Dog&lt;/span>(Animal):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># inherits name and sound from Animal&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> watch_house: &lt;span style="color:#007020">bool&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>dog &lt;span style="color:#666">=&lt;/span> Dog(name&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Huang&amp;#34;&lt;/span>, sound&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Wang&amp;#34;&lt;/span>, watch_house&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020;font-weight:bold">False&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(dog)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>Dog(name=&amp;#39;Huang&amp;#39;, sound=&amp;#39;Wang&amp;#39;, watch_house=False)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="functools-partial-to-get-new-function-by-partially-fixing-some-arguments-of-an-existing-one">functools &lt;code>partial&lt;/code> to get new function by partially fixing some arguments of an existing one&lt;/h3>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">functools&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> partial
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">func0&lt;/span>(a, b):
@@ -122,10 +185,10 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>func1(b&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">10&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># reset argument a&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>func1(a&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">1&lt;/span>, b&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">10&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>functools.partial(&amp;lt;function func0 at 0x7ff3e80831e0&amp;gt;, a=0)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>functools.partial(&amp;lt;function func0 at 0x7f8a480e31e0&amp;gt;, a=0)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>a:0, b:10
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>a:1, b:10
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="warps-to-help-define-better-decorators">&lt;code>@warps&lt;/code> to help define better decorators&lt;/h4>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="functools-warps-to-help-define-better-decorators">functools &lt;code>@warps&lt;/code> to help define better decorators&lt;/h3>
 &lt;p>Below is a classical way to define an decorator&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">decorator&lt;/span>(func):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">actual_func&lt;/span>(&lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs):
@@ -142,16 +205,14 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Hello, &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>name&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">!&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>greet(&lt;span style="color:#4070a0">&amp;#34;Martin&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>import codecs, os;__pyfile = codecs.open(&amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyuHcYWN&amp;#39;&amp;#39;&amp;#39;, encoding=&amp;#39;&amp;#39;&amp;#39;utf-8&amp;#39;&amp;#39;&amp;#39;);__code = __pyfile.read().encode(&amp;#39;&amp;#39;&amp;#39;utf-8&amp;#39;&amp;#39;&amp;#39;);__pyfile.close();os.remove(&amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyuHcYWN&amp;#39;&amp;#39;&amp;#39;);exec(compile(__code, &amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyuHcYWN&amp;#39;&amp;#39;&amp;#39;, &amp;#39;exec&amp;#39;));
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Before Calling greet
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>Before Calling greet
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Hello, Martin!
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>After Calling greet
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The name and docstring of the decorated function will be hidden in the decorator function, and this makes the usage a bit opaque when debugging.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>__name__)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>__doc__)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>import codecs, os;__pyfile = codecs.open(&amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pymYDV8o&amp;#39;&amp;#39;&amp;#39;, encoding=&amp;#39;&amp;#39;&amp;#39;utf-8&amp;#39;&amp;#39;&amp;#39;);__code = __pyfile.read().encode(&amp;#39;&amp;#39;&amp;#39;utf-8&amp;#39;&amp;#39;&amp;#39;);__pyfile.close();os.remove(&amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pymYDV8o&amp;#39;&amp;#39;&amp;#39;);exec(compile(__code, &amp;#39;&amp;#39;&amp;#39;/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pymYDV8o&amp;#39;&amp;#39;&amp;#39;, &amp;#39;exec&amp;#39;));
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>actual_func
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> The actual func.
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>actual_func
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>The actual func.
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>In other words, the name and the docstring of the decorated function is overwritten by the decorator, which is not expected.&lt;/p>
 &lt;p>We can fix such issue with &lt;code>@wraps&lt;/code>, for example, the original code could be replaced with&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">functools&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> wraps
@@ -174,20 +235,12 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>__doc__)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>greet
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> The greet func.
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="lru-cache-decorator-to-wrap-a-function-with-a-lru-cache">&lt;code>@lru_cache&lt;/code> : decorator to wrap a function with a LRU cache&lt;/h4>
-&lt;!-- raw HTML omitted -->
-&lt;ul>
-&lt;li>
-&lt;p>Accelerating DP-like recursive function call&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="functools-lru-cache-decorator-to-wrap-a-function-with-a-lru-cache">functools &lt;code>@lru_cache&lt;/code> : decorator to wrap a function with a LRU cache&lt;/h3>
+&lt;h4 id="accelerating-dp-like-recursive-function-call">Accelerating DP-like recursive function call&lt;/h4>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@functools.lru_cache&lt;/span>(maxsize&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">1000&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">factorial&lt;/span>(n):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> n &lt;span style="color:#666">*&lt;/span> factorial(n&lt;span style="color:#666">-&lt;/span>&lt;span style="color:#40a070">1&lt;/span>) &lt;span style="color:#007020;font-weight:bold">if&lt;/span> n &lt;span style="color:#007020;font-weight:bold">else&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
-&lt;/ul>
-&lt;!-- raw HTML omitted -->
-&lt;ul>
-&lt;li>
-&lt;p>Initialization for some heavy states without introducing global variables&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="initialization-for-some-heavy-states-without-introducing-global-variables">Initialization for some heavy states without introducing global variables&lt;/h4>
 &lt;p>Suppose we have some global states that should be initialized only once, the naive way to do it is by introducing some global variables,&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>state &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020;font-weight:bold">None&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
@@ -199,9 +252,7 @@
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@lru_cache&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">get_state&lt;/span>(args):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> construct_state(args)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
-&lt;/ul>
-&lt;h2 id="handy-third-party-packages">Handy third-party packages&lt;/h2></description></item><item><title>OpenAI/Triton MLIR 迁移工作简介</title><link>/posts/triton-mlir-publish/</link><pubDate>Tue, 15 Nov 2022 00:00:00 +0000</pubDate><guid>/posts/triton-mlir-publish/</guid><description>&lt;p>经过几个月的不懈努力，OpenAI Triton已经成功完成了面向MLIR Infra的迁移/重构工作，并将其最新的基于MLIR的代码合并至主分支。这个工作是由OpenAI和NVIDIA相关团队近几个月来深入合作完成的，而我也有幸参与其中。在这篇文章中，我将分享一些技术总结，记录一些收获和思考。&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>OpenAI/Triton MLIR 迁移工作简介</title><link>/posts/triton-mlir-publish/</link><pubDate>Tue, 15 Nov 2022 00:00:00 +0000</pubDate><guid>/posts/triton-mlir-publish/</guid><description>&lt;p>经过几个月的不懈努力，OpenAI Triton已经成功完成了面向MLIR Infra的迁移/重构工作，并将其最新的基于MLIR的代码合并至主分支。这个工作是由OpenAI和NVIDIA相关团队近几个月来深入合作完成的，而我也有幸参与其中。在这篇文章中，我将分享一些技术总结，记录一些收获和思考。&lt;/p>
 &lt;p>尽管Triton目前的开源开发非常迅速，但本文将主要聚焦于基于MLIR Infra进行重构的第一个版本的&lt;a href="https://github.com/openai/triton/tree/ca05ef8e5b0b4d4834957bc31e7581b09d35c530">代码&lt;/a>（这应该也是两三个月前的）&lt;/p>
 &lt;h2 id="triton-简介">Triton 简介&lt;/h2>
 &lt;p>OpenAI Triton &lt;a href="https://www.eecs.harvard.edu/~htk/publication/2019-mapl-tillet-kung-cox.pdf">paper&lt;/a> 中的介绍是 &amp;ldquo;An Intermediate Language and Compiler for Tiled Neural Network Computations&amp;rdquo;，其中几个关键词应该能够代表其特点：&lt;/p>
