@@ -143,10 +143,110 @@ update_count: 2
 ```
 
 
-### `functools` {#functools}
+### `@dataclass` {#dataclass}
+
+`@dataclass` is a decorator that can be used to create classes that **mainly store data**.
+It can automatically generate some common methods for the class, such as `__init__`, `__repr__`, and `__eq__`, based on the type hints of the class attributes.
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class Point:
+    x: float
+    y: float
+
+p = Point(1., 2.)
+print(p)
+```
+
+```text
+Point(x=1.0, y=2.0)
+```
+
+There are several classical practices using `@dataclass`
 
 
-#### `partial` to get new function by partially fixing some arguments of an existing one {#partial-to-get-new-function-by-partially-fixing-some-arguments-of-an-existing-one}
+#### Use default values or default factories {#use-default-values-or-default-factories}
+
+```python
+from dataclasses import dataclass, field
+from random import randint
+from typing import List
+
+@dataclass
+class DummyContainer:
+    sides: int = 6
+    value: int = field(default_factory=lambda: randint(1, 6))
+    alist: List[int] = field(default_factory=list) # avoid assign [] directly
+
+dummy = DummyContainer()
+print(dummy)
+```
+
+```text
+DummyContainer(sides=6, value=2, alist=[])
+```
+
+
+#### Use `frozen=True` to make the class immutable {#use-frozen-true-to-make-the-class-immutable}
+
+```python
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class Circle:
+    radius: float
+
+const_circle = Circle(2.0)
+```
+
+
+#### Use `order=True` to enable comparison operators based on the class attributes {#use-order-true-to-enable-comparison-operators-based-on-the-class-attributes}
+
+```python
+from dataclasses import dataclass
+
+@dataclass(order=True)
+class Circle:
+    radius: float
+
+c0 = Circle(1.)
+c1 = Circle(2)
+
+print(c0 > c1)
+```
+
+```text
+False
+```
+
+
+#### Use inheritance to create subclasses of data classes {#use-inheritance-to-create-subclasses-of-data-classes}
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class Animal:
+    name: str
+    sound: str
+
+@dataclass
+class Dog(Animal):
+    # inherits name and sound from Animal
+    watch_house: bool
+
+dog = Dog(name="Huang", sound="Wang", watch_house=False)
+print(dog)
+```
+
+```text
+Dog(name='Huang', sound='Wang', watch_house=False)
+```
+
+
+### functools `partial` to get new function by partially fixing some arguments of an existing one {#functools-partial-to-get-new-function-by-partially-fixing-some-arguments-of-an-existing-one}
 
 ```python
 from functools import partial
@@ -164,13 +264,13 @@ func1(a=1, b=10)
 ```
 
 ```text
-functools.partial(<function func0 at 0x7ff3e80831e0>, a=0)
+functools.partial(<function func0 at 0x7f8a480e31e0>, a=0)
 a:0, b:10
 a:1, b:10
 ```
 
 
-#### `@warps` to help define better decorators {#warps-to-help-define-better-decorators}
+### functools `@warps` to help define better decorators {#functools-warps-to-help-define-better-decorators}
 
 Below is a classical way to define an decorator
 
@@ -193,7 +293,6 @@ greet("Martin")
 ```
 
 ```text
-import codecs, os;__pyfile = codecs.open('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyuHcYWN''', encoding='''utf-8''');__code = __pyfile.read().encode('''utf-8''');__pyfile.close();os.remove('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyuHcYWN''');exec(compile(__code, '''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pyuHcYWN''', 'exec'));
 Before Calling greet
 Hello, Martin!
 After Calling greet
@@ -207,9 +306,8 @@ print(greet.__doc__)
 ```
 
 ```text
-import codecs, os;__pyfile = codecs.open('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pymYDV8o''', encoding='''utf-8''');__code = __pyfile.read().encode('''utf-8''');__pyfile.close();os.remove('''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pymYDV8o''');exec(compile(__code, '''/var/folders/41/6sd124ws3t982vl6bmw1gvjxdmh6b5/T/pymYDV8o''', 'exec'));
 actual_func
- The actual func.
+The actual func.
 ```
 
 In other words, the name and the docstring of the decorated function is overwritten by the decorator, which is not expected.
@@ -243,40 +341,35 @@ greet
 ```
 
 
-#### `@lru_cache` : decorator to wrap a function with a LRU cache {#lru-cache-decorator-to-wrap-a-function-with-a-lru-cache}
-
-<!--list-separator-->
-
--  Accelerating DP-like recursive function call
-
-    ```python
-    @functools.lru_cache(maxsize=1000)
-    def factorial(n):
-        return n * factorial(n-1) if n else 1
-    ```
-
-<!--list-separator-->
-
--  Initialization for some heavy states without introducing global variables
-
-    Suppose we have some global states that should be initialized only once, the naive way to do it is by introducing some global variables,
-
-    ```python
-    state = None
-
-    def get_state(args):
-        if state is None:
-            state = construct_state(args)
-        return state
-    ```
-
-    We can eliminate the need for a global variable with a cache:
-
-    ```python
-    @lru_cache
-    def get_state(args):
-        return construct_state(args)
-    ```
+### functools `@lru_cache` : decorator to wrap a function with a LRU cache {#functools-lru-cache-decorator-to-wrap-a-function-with-a-lru-cache}
 
 
-## Handy third-party packages {#handy-third-party-packages}
+#### Accelerating DP-like recursive function call {#accelerating-dp-like-recursive-function-call}
+
+```python
+@functools.lru_cache(maxsize=1000)
+def factorial(n):
+    return n * factorial(n-1) if n else 1
+```
+
+
+#### Initialization for some heavy states without introducing global variables {#initialization-for-some-heavy-states-without-introducing-global-variables}
+
+Suppose we have some global states that should be initialized only once, the naive way to do it is by introducing some global variables,
+
+```python
+state = None
+
+def get_state(args):
+    if state is None:
+        state = construct_state(args)
+    return state
+```
+
+We can eliminate the need for a global variable with a cache:
+
+```python
+@lru_cache
+def get_state(args):
+    return construct_state(args)
+```
