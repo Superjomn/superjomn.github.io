@@ -28,6 +28,10 @@ In this blog, I focus on the 2nd point and keep updating the notes of some metho
 (current-buffer)
 ```
 
+```text
+#<buffer emacs-essentials.org>
+```
+
 
 #### get-buffer: get a buffer by name {#get-buffer-get-a-buffer-by-name}
 
@@ -35,11 +39,19 @@ In this blog, I focus on the 2nd point and keep updating the notes of some metho
 (get-buffer "*scratch*")
 ```
 
+```text
+#<buffer *scratch*>
+```
+
 
 #### get-buffer-create: create the buffer if not exist {#get-buffer-create-create-the-buffer-if-not-exist}
 
 ```emacs-lisp
 (get-buffer-create "yaya")
+```
+
+```text
+#<buffer yaya>
 ```
 
 
@@ -73,6 +85,10 @@ It will return to the original buffer after the operation finished.
   (current-buffer))
 ```
 
+```text
+#<buffer 20210801162858-emacs_lisp.org>
+```
+
 
 #### Working with file buffers {#working-with-file-buffers}
 
@@ -82,10 +98,18 @@ To get the full file path for the file that the buffer represents
 (buffer-file-name)
 ```
 
+```text
+/Users/yanchunwei/project/myblog2022/content-org/emacs-essentials.org
+```
+
 To find a buffer that represents a particular file
 
 ```emacs-lisp
 (get-file-buffer "/Users/yanchunwei/project/myblog2022/content-org/emacs-essentials.org")
+```
+
+```text
+#<buffer emacs-essentials.org>
 ```
 
 
@@ -111,12 +135,24 @@ The "point" is the location of the cursor in the buffer.
 (point)
 ```
 
+```text
+7508
+```
+
 ```emacs-lisp
 (point-max)
 ```
 
+```text
+8010
+```
+
 ```emacs-lisp
 (point-min)
+```
+
+```text
+1
 ```
 
 
@@ -149,6 +185,10 @@ The "point" is the location of the cursor in the buffer.
   )
 ```
 
+```text
+8471
+```
+
 
 #### Examining buffer text {#examining-buffer-text}
 
@@ -158,6 +198,10 @@ To look at text in the buffer.
 (char-after)
 (char-after (point))
 (char-after (point-min))
+```
+
+```text
+58
 ```
 
 
@@ -173,8 +217,18 @@ The `thing-at-point` function is very useful for grabbing the text at the point 
 (thing-at-point 'sentence)
 ```
 
+```text
+(thing-at-point 'sentence)
+#+END_SRC
+```
+
 ```emacs-lisp
 (thing-at-point 'sentence t)
+```
+
+```text
+(thing-at-point 'sentence t)
+#+END_SRC
 ```
 
 
@@ -224,11 +278,19 @@ The `buffer-file-name` is a buffer builtin variable holding the file name of the
 (file-truename buffer-file-name)
 ```
 
+```text
+/tmp/emacs-essentials.org
+```
+
 
 #### Get path without suffix {#get-path-without-suffix}
 
 ```emacs-lisp
 (file-name-sans-extension "/tmp/a.org")
+```
+
+```text
+/tmp/a
 ```
 
 
@@ -243,11 +305,36 @@ Overwrite the content:
   )
 ```
 
+```text
+file content: hello world
+```
+
 
 ### execute shell command {#execute-shell-command}
 
 ```emacs-lisp
 (shell-command "echo hello")
+```
+
+```text
+0
+```
+
+
+### condition-case: try-catch in elisp {#condition-case-try-catch-in-elisp}
+
+Like the try-catch in Python, where a try-catch can launch some unsafe function and catch the error.
+
+```emacs-lisp
+(condition-case err
+    (progn
+      (message "No error"))
+  (error "some error")
+  )
+```
+
+```text
+No error
 ```
 
 
@@ -269,6 +356,10 @@ Create an empty hash table
   )
 ```
 
+```text
+#s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data ())
+```
+
 Create a hash table with initial records
 
 ```emacs-lisp
@@ -277,6 +368,10 @@ Create a hash table with initial records
                  ("sex" 'male))))
   the-dic
   )
+```
+
+```text
+#s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data ("name" "Tom" "sex" male))
 ```
 
 
@@ -290,6 +385,10 @@ Create a hash table with initial records
   )
 ```
 
+```text
+Tom
+```
+
 
 #### Iterating over the hash table {#iterating-over-the-hash-table}
 
@@ -301,6 +400,10 @@ Readonly mapping:
   )
 ```
 
+|           |             |               |
+|-----------|-------------|---------------|
+| "age": 18 | "sex": male | "name": "Tom" |
+
 Mutable mapping:
 
 ```emacs-lisp
@@ -311,3 +414,12 @@ Mutable mapping:
                             (concat "modified " value)
                           value))) the-dic))
 ```
+
+|    |      |              |
+|----|------|--------------|
+| 18 | male | modified Tom |
+
+
+## Debug and development in Elisp {#debug-and-development-in-elisp}
+
+One handly tool is `toggle-debug-on-error`, it will print the error stack.
