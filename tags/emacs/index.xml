@@ -43,6 +43,17 @@
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">find-file-noselect&lt;/span> &lt;span style="color:#4070a0">&amp;#34;xx.org&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="get-all-buffer-names">Get all buffer names&lt;/h4>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">mapcar&lt;/span> &lt;span style="color:#06287e">#&amp;#39;buffer-name&lt;/span> (&lt;span style="color:#06287e">buffer-list&lt;/span>))
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="save-execution-operate-on-other-buffers-without-altering-the-current-context">save-execution: Operate on other buffers without altering the current context&lt;/h4>
+&lt;p>Buffer is a core data structure in elisp, so it is normial to switch to other buffers, do some operations and return back. &lt;code>save-execution&lt;/code> helps to restore the previous context when switching to other buffers.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">save-excursion&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#007020">progn&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">;; do anything on other buffers&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">;; Return to the previous context: buffer and point&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="point">point&lt;/h3>
 &lt;p>The &amp;ldquo;point&amp;rdquo; is the location of the cursor in the buffer.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">point&lt;/span>)
@@ -98,7 +109,48 @@
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="saving-a-buffer">Saving a buffer&lt;/h4>
 &lt;p>To save the contents of a buffer back to the file it is associated with&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">save-buffer&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="org-element">org-element&lt;/h3>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="org-model-programming">org-model programming&lt;/h3>
+&lt;h4 id="tags-related">Tags related&lt;/h4>
+&lt;p>Tags in org-mode are as below:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-org" data-lang="org">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000080;font-weight:bold">*&lt;/span>&lt;span style="font-weight:bold"> heading&lt;/span>&lt;span style="font-style:italic"> :tag0:tag1:&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;!-- raw HTML omitted -->
+&lt;ul>
+&lt;li>
+&lt;p>Get tags&lt;/p>
+&lt;p>To get tags on the current entry:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">org-get-tags&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ul>
+&lt;!-- raw HTML omitted -->
+&lt;ul>
+&lt;li>
+&lt;p>Set tags&lt;/p>
+&lt;p>To set tags on the current entry:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">org-set-tags&lt;/span> &lt;span style="color:#666">&amp;#39;&lt;/span>(&lt;span style="color:#4070a0">&amp;#34;hello&amp;#34;&lt;/span>)) &lt;span style="color:#007020">:hello:&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ul>
+&lt;h4 id="properties-related">Properties related&lt;/h4>
+&lt;p>Properties in org-mode is as follows, where a property called &amp;ldquo;prop&amp;rdquo; has a &amp;ldquo;value&amp;rdquo;. It is handy to store some meta data using properties.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-org" data-lang="org">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000080;font-weight:bold">*&lt;/span>&lt;span style="font-weight:bold"> headline&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">:PROPERTIES:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span>&lt;span style="color:#60a0b0;background-color:#fff0f0">:prop: value
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;background-color:#fff0f0">&lt;/span>&lt;span style="color:#60a0b0;font-style:italic">:END:&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;!-- raw HTML omitted -->
+&lt;ul>
+&lt;li>
+&lt;p>Get properties&lt;/p>
+&lt;p>Get properties of the current entry:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">org-entry-properties&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ul>
+&lt;!-- raw HTML omitted -->
+&lt;ul>
+&lt;li>
+&lt;p>Set property&lt;/p>
+&lt;p>To set a property on the current entry:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">org-set-property&lt;/span> &lt;span style="color:#4070a0">&amp;#34;name&amp;#34;&lt;/span> &lt;span style="color:#4070a0">&amp;#34;tom&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ul>
 &lt;h3 id="file-and-path">file and path&lt;/h3>
 &lt;h4 id="get-the-path-of-the-current-file">Get the path of the current file&lt;/h4>
 &lt;p>The &lt;code>buffer-file-name&lt;/code> is a buffer builtin variable holding the file name of the current buffer.&lt;/p>
