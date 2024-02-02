@@ -1218,10 +1218,13 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;h3 id="buffer">buffer&lt;/h3>
 &lt;h4 id="current-buffer-get-the-current-buffer">current-buffer: get the current buffer&lt;/h4>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">current-buffer&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>#&amp;lt;buffer emacs-essentials.org&amp;gt;
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="get-buffer-get-a-buffer-by-name">get-buffer: get a buffer by name&lt;/h4>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">get-buffer&lt;/span> &lt;span style="color:#4070a0">&amp;#34;*scratch*&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>#&amp;lt;buffer *scratch*&amp;gt;
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="get-buffer-create-create-the-buffer-if-not-exist">get-buffer-create: create the buffer if not exist&lt;/h4>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">get-buffer-create&lt;/span> &lt;span style="color:#4070a0">&amp;#34;yaya&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>#&amp;lt;buffer yaya&amp;gt;
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="changing-the-current-buffer">changing the current buffer&lt;/h4>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">progn&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">set-buffer&lt;/span> (&lt;span style="color:#06287e">get-buffer&lt;/span> &lt;span style="color:#4070a0">&amp;#34;*scratch*&amp;#34;&lt;/span>))
@@ -1237,11 +1240,14 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">set-buffer&lt;/span> &lt;span style="color:#4070a0">&amp;#34;*scratch*&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">message&lt;/span> &lt;span style="color:#4070a0">&amp;#34;Current buffer: %s&amp;#34;&lt;/span> (&lt;span style="color:#06287e">current-buffer&lt;/span>)))
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">current-buffer&lt;/span>))
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>#&amp;lt;buffer 20210801162858-emacs_lisp.org&amp;gt;
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="working-with-file-buffers">Working with file buffers&lt;/h4>
 &lt;p>To get the full file path for the file that the buffer represents&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">buffer-file-name&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>/Users/yanchunwei/project/myblog2022/content-org/emacs-essentials.org
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>To find a buffer that represents a particular file&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">get-file-buffer&lt;/span> &lt;span style="color:#4070a0">&amp;#34;/Users/yanchunwei/project/myblog2022/content-org/emacs-essentials.org&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>#&amp;lt;buffer emacs-essentials.org&amp;gt;
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="loading-a-file-into-a-buffer-without-display-it">Loading a file into a buffer without display it&lt;/h4>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">find-file-noselect&lt;/span> &lt;span style="color:#4070a0">&amp;#34;xx.org&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="get-all-buffer-names">Get all buffer names&lt;/h4>
@@ -1249,8 +1255,11 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="point">point&lt;/h3>
 &lt;p>The &amp;ldquo;point&amp;rdquo; is the location of the cursor in the buffer.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">point&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>7508
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">point-max&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>8010
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">point-min&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>1
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="moving-the-point">Moving the point&lt;/h4>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">goto-char&lt;/span> &lt;span style="color:#40a070">1&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">goto-char&lt;/span> (&lt;span style="color:#06287e">point-max&lt;/span>))
@@ -1271,16 +1280,22 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">goto-char&lt;/span> (&lt;span style="color:#06287e">point-max&lt;/span>))
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">point&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>8471
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="examining-buffer-text">Examining buffer text&lt;/h4>
 &lt;p>To look at text in the buffer.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">char-after&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">char-after&lt;/span> (&lt;span style="color:#06287e">point&lt;/span>))
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">char-after&lt;/span> (&lt;span style="color:#06287e">point-min&lt;/span>))
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>58
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="the-thing">The Thing&lt;/h4>
 &lt;p>The &lt;code>thing-at-point&lt;/code> function is very useful for grabbing the text at the point if it matches a particular type of &amp;ldquo;thing&amp;rdquo;.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">thing-at-point&lt;/span> &lt;span style="color:#517918">&amp;#39;word&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">thing-at-point&lt;/span> &lt;span style="color:#517918">&amp;#39;sentence&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>(thing-at-point &amp;#39;sentence)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>#+END_SRC
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">thing-at-point&lt;/span> &lt;span style="color:#517918">&amp;#39;sentence&lt;/span> &lt;span style="color:#60add5">t&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>(thing-at-point &amp;#39;sentence t)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>#+END_SRC
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="serching-for-text">Serching for text&lt;/h4>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#06287e">search-forward&lt;/span> &lt;span style="color:#4070a0">&amp;#34;thing&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="inserting-text">Inserting text&lt;/h4>
@@ -1297,16 +1312,28 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;h4 id="get-the-path-of-the-current-file">Get the path of the current file&lt;/h4>
 &lt;p>The &lt;code>buffer-file-name&lt;/code> is a buffer builtin variable holding the file name of the current buffer.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">file-truename&lt;/span> &lt;span style="color:#06287e">buffer-file-name&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>/tmp/emacs-essentials.org
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="get-path-without-suffix">Get path without suffix&lt;/h4>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">file-name-sans-extension&lt;/span> &lt;span style="color:#4070a0">&amp;#34;/tmp/a.org&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>/tmp/a
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="write-to-file">Write to file&lt;/h4>
 &lt;p>Overwrite the content:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">with-temp-file&lt;/span> &lt;span style="color:#4070a0">&amp;#34;/tmp/1.org&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">insert&lt;/span> &lt;span style="color:#4070a0">&amp;#34;hello world&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">message&lt;/span> &lt;span style="color:#4070a0">&amp;#34;file content: %s&amp;#34;&lt;/span> (&lt;span style="color:#06287e">buffer-string&lt;/span>))
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>file content: hello world
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="execute-shell-command">execute shell command&lt;/h3>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">shell-command&lt;/span> &lt;span style="color:#4070a0">&amp;#34;echo hello&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>0
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="condition-case-try-catch-in-elisp">condition-case: try-catch in elisp&lt;/h3>
+&lt;p>Like the try-catch in Python, where a try-catch can launch some unsafe function and catch the error.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">condition-case&lt;/span> &lt;span style="color:#bb60d5">err&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#007020">progn&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">message&lt;/span> &lt;span style="color:#4070a0">&amp;#34;No error&amp;#34;&lt;/span>))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#007020">error&lt;/span> &lt;span style="color:#4070a0">&amp;#34;some error&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>No error
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="modern-libraries">Modern libraries&lt;/h2>
 &lt;h3 id="ht-dot-el-for-hashtables">ht.el for hashtables&lt;/h3>
 &lt;p>Reference &lt;a href="https://github.com/Wilfred/ht.el">ht.el&lt;/a> for more details.&lt;/p>
@@ -1315,28 +1342,64 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">let*&lt;/span> ((&lt;span style="color:#bb60d5">the-dic&lt;/span> (&lt;span style="color:#bb60d5">ht-create&lt;/span>)))
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#bb60d5">the-dic&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>#s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data ())
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Create a hash table with initial records&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">let*&lt;/span> ((&lt;span style="color:#bb60d5">the-dic&lt;/span> (&lt;span style="color:#bb60d5">ht&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#4070a0">&amp;#34;name&amp;#34;&lt;/span> &lt;span style="color:#4070a0">&amp;#34;Tom&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#4070a0">&amp;#34;sex&amp;#34;&lt;/span> &lt;span style="color:#517918">&amp;#39;male&lt;/span>))))
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#bb60d5">the-dic&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>#s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data (&amp;#34;name&amp;#34; &amp;#34;Tom&amp;#34; &amp;#34;sex&amp;#34; male))
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="accessing-the-hash-table">accessing the hash table&lt;/h4>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">let*&lt;/span> ((&lt;span style="color:#bb60d5">the-dic&lt;/span> (&lt;span style="color:#bb60d5">ht&lt;/span> (&lt;span style="color:#4070a0">&amp;#34;name&amp;#34;&lt;/span> &lt;span style="color:#4070a0">&amp;#34;Tom&amp;#34;&lt;/span>) (&lt;span style="color:#4070a0">&amp;#34;sex&amp;#34;&lt;/span> &lt;span style="color:#517918">&amp;#39;male&lt;/span>))))
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">;; get a record&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">;; returns &amp;#34;Tom&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#bb60d5">ht-get&lt;/span> &lt;span style="color:#bb60d5">the-dic&lt;/span> &lt;span style="color:#4070a0">&amp;#34;name&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>Tom
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="iterating-over-the-hash-table">Iterating over the hash table&lt;/h4>
 &lt;p>Readonly mapping:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">let*&lt;/span> ((&lt;span style="color:#bb60d5">the-dic&lt;/span> (&lt;span style="color:#bb60d5">ht&lt;/span> (&lt;span style="color:#4070a0">&amp;#34;name&amp;#34;&lt;/span> &lt;span style="color:#4070a0">&amp;#34;Tom&amp;#34;&lt;/span>) (&lt;span style="color:#4070a0">&amp;#34;sex&amp;#34;&lt;/span> &lt;span style="color:#517918">&amp;#39;male&lt;/span>) (&lt;span style="color:#4070a0">&amp;#34;age&amp;#34;&lt;/span> &lt;span style="color:#40a070">18&lt;/span>))))
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#bb60d5">ht-map&lt;/span> (&lt;span style="color:#007020">lambda&lt;/span> (&lt;span style="color:#bb60d5">key&lt;/span> &lt;span style="color:#bb60d5">value&lt;/span>) (&lt;span style="color:#06287e">message&lt;/span> &lt;span style="color:#4070a0">&amp;#34;%S: %S&amp;#34;&lt;/span> &lt;span style="color:#bb60d5">key&lt;/span> &lt;span style="color:#bb60d5">value&lt;/span>)) &lt;span style="color:#bb60d5">the-dic&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Mutable mapping:&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>&lt;/th>
+&lt;th>&lt;/th>
+&lt;th>&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>&amp;ldquo;age&amp;rdquo;: 18&lt;/td>
+&lt;td>&amp;ldquo;sex&amp;rdquo;: male&lt;/td>
+&lt;td>&amp;ldquo;name&amp;rdquo;: &amp;ldquo;Tom&amp;rdquo;&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>Mutable mapping:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">let*&lt;/span> ((&lt;span style="color:#bb60d5">the-dic&lt;/span> (&lt;span style="color:#bb60d5">ht&lt;/span> (&lt;span style="color:#4070a0">&amp;#34;name&amp;#34;&lt;/span> &lt;span style="color:#4070a0">&amp;#34;Tom&amp;#34;&lt;/span>) (&lt;span style="color:#4070a0">&amp;#34;sex&amp;#34;&lt;/span> &lt;span style="color:#517918">&amp;#39;male&lt;/span>) (&lt;span style="color:#4070a0">&amp;#34;age&amp;#34;&lt;/span> &lt;span style="color:#40a070">18&lt;/span>))))
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#bb60d5">ht-map&lt;/span> (&lt;span style="color:#007020">lambda&lt;/span> (&lt;span style="color:#bb60d5">key&lt;/span> &lt;span style="color:#bb60d5">value&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">;; modify the value if is string&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#007020">setf&lt;/span> &lt;span style="color:#bb60d5">value&lt;/span> (&lt;span style="color:#007020">if&lt;/span> (&lt;span style="color:#06287e">stringp&lt;/span> &lt;span style="color:#bb60d5">value&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">concat&lt;/span> &lt;span style="color:#4070a0">&amp;#34;modified &amp;#34;&lt;/span> &lt;span style="color:#bb60d5">value&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#bb60d5">value&lt;/span>))) &lt;span style="color:#bb60d5">the-dic&lt;/span>))
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item></channel></rss>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>&lt;/th>
+&lt;th>&lt;/th>
+&lt;th>&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>18&lt;/td>
+&lt;td>male&lt;/td>
+&lt;td>modified Tom&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h2 id="debug-and-development-in-elisp">Debug and development in Elisp&lt;/h2>
+&lt;p>One handly tool is &lt;code>toggle-debug-on-error&lt;/code>, it will print the error stack.&lt;/p></description></item></channel></rss>
