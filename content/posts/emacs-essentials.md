@@ -127,6 +127,23 @@ To find a buffer that represents a particular file
 ```
 
 
+#### save-execution: Operate on other buffers without altering the current context {#save-execution-operate-on-other-buffers-without-altering-the-current-context}
+
+Buffer is a core data structure in elisp, so it is normial to switch to other buffers, do some operations and return back. `save-execution` helps to restore the previous context when switching to other buffers.
+
+```emacs-lisp
+(save-excursion
+  (progn
+
+    ;; do anything on other buffers
+
+    )
+  )
+
+;; Return to the previous context: buffer and point
+```
+
+
 ### point {#point}
 
 The "point" is the location of the cursor in the buffer.
@@ -264,7 +281,68 @@ To save the contents of a buffer back to the file it is associated with
 ```
 
 
-### org-element {#org-element}
+### org-model programming {#org-model-programming}
+
+
+#### Tags related {#tags-related}
+
+Tags in org-mode are as below:
+
+```org
+* heading :tag0:tag1:
+```
+
+<!--list-separator-->
+
+-  Get tags
+
+    To get tags on the current entry:
+
+    ```emacs-lisp
+    (org-get-tags)
+    ```
+
+<!--list-separator-->
+
+-  Set tags
+
+    To set tags on the current entry:
+
+    ```emacs-lisp
+    (org-set-tags '("hello"))  :hello:
+    ```
+
+
+#### Properties related {#properties-related}
+
+Properties in org-mode is as follows, where a property called "prop" has a "value". It is handy to store some meta data using properties.
+
+```org
+* headline
+:PROPERTIES:
+:prop: value
+:END:
+```
+
+<!--list-separator-->
+
+-  Get properties
+
+    Get properties of the current entry:
+
+    ```emacs-lisp
+    (org-entry-properties)
+    ```
+
+<!--list-separator-->
+
+-  Set property
+
+    To set a property on the current entry:
+
+    ```emacs-lisp
+    (org-set-property "name" "tom")
+    ```
 
 
 ### file and path {#file-and-path}
