@@ -107,6 +107,61 @@ True
 ```
 
 
+### `__iter__` and `__next__` {#iter-and-next}
+
+The `__iter__` is a magic method that allows an object to be iterable, its result should be an iterable, and the `__next__` method returns the next element of the iterable.
+
+A naive example:
+
+```python
+class Counter:
+    def __init__(self, n):
+        self.n = n
+        self.i = 0
+
+    def __iter__(self):
+        # Return the iterator object (self)
+        return self
+
+    def __next__(self):
+        if self.i < self.n:
+            self.i += 1
+            return self.i
+        else:
+            # signal the end
+            raise StopIteration
+```
+
+
+### `__aiter__` and `__anext__` {#aiter-and-anext}
+
+Similar to `__iter__` and `__next__`, the `__aiter__` and `__anext__` are the asynchronous version.
+The `__aiter__` allows an object to be an asynchronous iterator object, which is an object that has an `__anext__` method that returns an awaitable object that yields the next element of the sequence.
+
+```python
+import asyncio
+
+class AsyncCounter:
+    def __init__(self, n):
+        self.n = n
+        self.i = 0
+
+    def __aiter__(self):
+        # Return the iterator object (self)
+        return self
+
+    async def __anext__(self):
+        if self.i < self.n:
+            self.i += 1
+            # Simulate some delay
+            await asyncio.sleep(1)
+            return self.i
+        else:
+            # Signal the end
+            raise StopAsyncIteration
+```
+
+
 ## Handy builtin utilities {#handy-builtin-utilities}
 
 
@@ -264,7 +319,7 @@ func1(a=1, b=10)
 ```
 
 ```text
-functools.partial(<function func0 at 0x7f8a480e31e0>, a=0)
+functools.partial(<function func0 at 0x7fccb00e31e0>, a=0)
 a:0, b:10
 a:1, b:10
 ```
