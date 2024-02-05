@@ -83,6 +83,48 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>shape &lt;span style="color:#666">=&lt;/span> Shape(&lt;span style="color:#4070a0">&amp;#39;circle&amp;#39;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#007020">isinstance&lt;/span>(shape, Circle)) &lt;span style="color:#60a0b0;font-style:italic"># Output: True&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>True
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="iter-and-next">&lt;code>__iter__&lt;/code> and &lt;code>__next__&lt;/code>&lt;/h3>
+&lt;p>The &lt;code>__iter__&lt;/code> is a magic method that allows an object to be iterable, its result should be an iterable, and the &lt;code>__next__&lt;/code> method returns the next element of the iterable.&lt;/p>
+&lt;p>A naive example:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Counter&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __init__(self, n):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>n &lt;span style="color:#666">=&lt;/span> n
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __iter__(self):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Return the iterator object (self)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> self
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __next__(self):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> self&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">&amp;lt;&lt;/span> self&lt;span style="color:#666">.&lt;/span>n:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">+=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> self&lt;span style="color:#666">.&lt;/span>i
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">else&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># signal the end&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">raise&lt;/span> &lt;span style="color:#007020">StopIteration&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="aiter-and-anext">&lt;code>__aiter__&lt;/code> and &lt;code>__anext__&lt;/code>&lt;/h3>
+&lt;p>Similar to &lt;code>__iter__&lt;/code> and &lt;code>__next__&lt;/code>, the &lt;code>__aiter__&lt;/code> and &lt;code>__anext__&lt;/code> are the asynchronous version.
+The &lt;code>__aiter__&lt;/code> allows an object to be an asynchronous iterator object, which is an object that has an &lt;code>__anext__&lt;/code> method that returns an awaitable object that yields the next element of the sequence.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">asyncio&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">AsyncCounter&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __init__(self, n):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>n &lt;span style="color:#666">=&lt;/span> n
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __aiter__(self):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Return the iterator object (self)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> self
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __anext__(self):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> self&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">&amp;lt;&lt;/span> self&lt;span style="color:#666">.&lt;/span>n:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">+=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Simulate some delay&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>sleep(&lt;span style="color:#40a070">1&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> self&lt;span style="color:#666">.&lt;/span>i
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">else&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Signal the end&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">raise&lt;/span> &lt;span style="color:#007020">StopAsyncIteration&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="handy-builtin-utilities">Handy builtin utilities&lt;/h2>
 &lt;h3 id="setter-and-getter">setter and getter&lt;/h3>
 &lt;p>When there is some logic bound to a member when it is got or updated, then the getter and setter could be used.&lt;/p>
@@ -185,7 +227,7 @@ It can automatically generate some common methods for the class, such as &lt;cod
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>func1(b&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">10&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># reset argument a&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>func1(a&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">1&lt;/span>, b&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">10&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>functools.partial(&amp;lt;function func0 at 0x7f8a480e31e0&amp;gt;, a=0)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>functools.partial(&amp;lt;function func0 at 0x7fccb00e31e0&amp;gt;, a=0)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>a:0, b:10
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>a:1, b:10
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="functools-warps-to-help-define-better-decorators">functools &lt;code>@warps&lt;/code> to help define better decorators&lt;/h3>
