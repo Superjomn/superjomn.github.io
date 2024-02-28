@@ -1,4 +1,167 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Superjomn's blog</title><link>/posts/</link><description>Recent content in Posts on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Tue, 17 Oct 2023 00:00:00 +0000</lastBuildDate><atom:link href="/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>LLVM Utilities (keep updating)</title><link>/posts/llvm-utils/</link><pubDate>Tue, 17 Oct 2023 00:00:00 +0000</pubDate><guid>/posts/llvm-utils/</guid><description>&lt;p>There are many handy functions or data structures in LLVM project, which are widely used by other projects that rely on LLVM. In this page, I will introduce some common utilities that are worthy of using in your own project or frequently used in LLVM code that you should be familiar with.&lt;/p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Superjomn's blog</title><link>/posts/</link><description>Recent content in Posts on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Sun, 25 Feb 2024 00:00:00 +0000</lastBuildDate><atom:link href="/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Memory coalescing in CUDA</title><link>/posts/cuda-memory-coalescing-access/</link><pubDate>Sun, 25 Feb 2024 00:00:00 +0000</pubDate><guid>/posts/cuda-memory-coalescing-access/</guid><description>&lt;h2 id="background">Background&lt;/h2>
+&lt;p>&lt;strong>Memory coalescing&lt;/strong> is a crucial optimization technique in CUDA programming that allows optimal usage of the &lt;strong>global memory bandwidth&lt;/strong>. When threads in the same warp running the same instruction access to &lt;strong>consecutive locations&lt;/strong> in the global memory, the hardware can coalesce these accesses into a single transaction, significantly improving performance.&lt;/p>
+&lt;p>Coalescing memory access is vital for achieving high performance. Besides PCIe memory traffic, accessing global memory tends to be the largest bottleneck in GPU&amp;rsquo;s memory hierarchy.
+Non-coalesced memory access can lead to underutilization of memory bandwidth.&lt;/p>
+&lt;p>In the following post, we will delve deeper into memory coalescing with CUDA code for the classical vector adding.&lt;/p>
+&lt;h2 id="vecadd">VecAdd&lt;/h2>
+&lt;h3 id="naive-vecadd-kernel-with-memory-coalescing-enabled">Naive VecAdd kernel with memory coalescing enabled&lt;/h3>
+&lt;p>The first program is simple but follows the coalescing memory access pattern:&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>tid&lt;/th>
+&lt;th>element&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>0&lt;/td>
+&lt;td>0&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>1&lt;/td>
+&lt;td>1&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>2&lt;/td>
+&lt;td>2&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>3&lt;/td>
+&lt;td>3&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&amp;hellip;&lt;/td>
+&lt;td>&amp;hellip;&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>The thread 0,1,2,3 visits elements 0,1,2,3, which is contiguous, and results in a coalescing memory accessing.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">template&lt;/span> &lt;span style="color:#666">&amp;lt;&lt;/span>&lt;span style="color:#007020;font-weight:bold">typename&lt;/span> T&lt;span style="color:#666">&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> add_coalesced0(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">const&lt;/span> T&lt;span style="color:#666">*&lt;/span> __restrict__ a,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">const&lt;/span> T&lt;span style="color:#666">*&lt;/span> __restrict__ b,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> T&lt;span style="color:#666">*&lt;/span> __restrict__ c,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> n) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> i &lt;span style="color:#666">=&lt;/span> blockIdx.x &lt;span style="color:#666">*&lt;/span> blockDim.x &lt;span style="color:#666">+&lt;/span> threadIdx.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (i &lt;span style="color:#666">&amp;lt;&lt;/span> n) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> c[i] &lt;span style="color:#666">=&lt;/span> a[i] &lt;span style="color:#666">+&lt;/span> b[i];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The only issue is that, the number of the elements should be no larger than the number of threads, so the launching parameters of the kernel should be carefully designed.&lt;/p>
+&lt;h3 id="optimized-one-strided-with-less-threads">Optimized one: strided with less threads&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">template&lt;/span> &lt;span style="color:#666">&amp;lt;&lt;/span>&lt;span style="color:#007020;font-weight:bold">typename&lt;/span> T&lt;span style="color:#666">&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> add_coalesced1(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">const&lt;/span> T&lt;span style="color:#666">*&lt;/span> __restrict__ a,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">const&lt;/span> T&lt;span style="color:#666">*&lt;/span> __restrict__ b,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> T&lt;span style="color:#666">*&lt;/span> __restrict__ c,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> N) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> tid &lt;span style="color:#666">=&lt;/span> threadIdx.x &lt;span style="color:#666">+&lt;/span> blockIdx.x &lt;span style="color:#666">*&lt;/span> blockDim.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> num_threads &lt;span style="color:#666">=&lt;/span> blockDim.x &lt;span style="color:#666">*&lt;/span> gridDim.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">while&lt;/span> (tid &lt;span style="color:#666">&amp;lt;&lt;/span> N) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> c[tid] &lt;span style="color:#666">=&lt;/span> a[tid] &lt;span style="color:#666">+&lt;/span> b[tid];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> tid &lt;span style="color:#666">+=&lt;/span> num_threads;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This one simplifies the calculation of the launch thread number, it should fit any number of elements with a arbitrary number of threads.&lt;/p>
+&lt;h3 id="uncoalesced-memory-accessing-one">Uncoalesced memory accessing one&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">template&lt;/span> &lt;span style="color:#666">&amp;lt;&lt;/span>&lt;span style="color:#007020;font-weight:bold">typename&lt;/span> T&lt;span style="color:#666">&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> add_uncoalesced(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">const&lt;/span> T&lt;span style="color:#666">*&lt;/span> __restrict__ a,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">const&lt;/span> T&lt;span style="color:#666">*&lt;/span> __restrict__ b,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> T&lt;span style="color:#666">*&lt;/span> __restrict__ c,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> n) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> tid &lt;span style="color:#666">=&lt;/span> threadIdx.x &lt;span style="color:#666">+&lt;/span> blockIdx.x &lt;span style="color:#666">*&lt;/span> blockDim.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> num_threads &lt;span style="color:#666">=&lt;/span> blockDim.x &lt;span style="color:#666">*&lt;/span> gridDim.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> num_tasks &lt;span style="color:#666">=&lt;/span> nvceil(n, num_threads);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> (&lt;span style="color:#902000">int&lt;/span> i &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>; i &lt;span style="color:#666">&amp;lt;&lt;/span> num_tasks; &lt;span style="color:#666">++&lt;/span>i) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> idx &lt;span style="color:#666">=&lt;/span> tid &lt;span style="color:#666">*&lt;/span> num_tasks &lt;span style="color:#666">+&lt;/span> i;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (idx &lt;span style="color:#666">&amp;lt;&lt;/span> n) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> c[idx] &lt;span style="color:#666">=&lt;/span> a[idx] &lt;span style="color:#666">+&lt;/span> b[idx];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This one doesn&amp;rsquo;t follow the coalescing access pattern, lets assume that we have 4 threads with 8 elements, then the `num_tasks=2`&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>tid&lt;/th>
+&lt;th>0-th element&lt;/th>
+&lt;th>1-st element&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>0&lt;/td>
+&lt;td>0&lt;/td>
+&lt;td>1&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>1&lt;/td>
+&lt;td>2&lt;/td>
+&lt;td>3&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>2&lt;/td>
+&lt;td>4&lt;/td>
+&lt;td>5&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>3&lt;/td>
+&lt;td>6&lt;/td>
+&lt;td>7&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>In the first step of the for-loop, these four threads visit 0,2,4,6 elements, which is not contiguous, this results in an uncoalesced memory accessing.&lt;/p>
+&lt;h2 id="performance">Performance&lt;/h2>
+&lt;p>I tested the performance on GTX 3090, the clocks are fixed as below:&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>GPU clocks&lt;/th>
+&lt;th>Memory clocks&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>2100 MHZ&lt;/td>
+&lt;td>9501MHZ&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>The latency of each kernel:&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>kernel&lt;/th>
+&lt;th>latency&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>coalesced0&lt;/td>
+&lt;td>0.04&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>coalesced1&lt;/td>
+&lt;td>0.04&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>uncoalesced&lt;/td>
+&lt;td>0.14&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>The uncoalesced kernel is 3x slower than the two coalesced kernel.&lt;/p>
+&lt;p>The Nsight also report the Uncoalescing Global Accesses:&lt;/p>
+&lt;figure>&lt;img src="/ox-hugo/2024-02-28_19-37-47_screenshot.png"/>
+&lt;/figure>
+&lt;h2 id="references">References&lt;/h2>
+&lt;ul>
+&lt;li>Professional CUDA C Programming&lt;/li>
+&lt;/ul></description></item><item><title>LLVM Utilities (keep updating)</title><link>/posts/llvm-utils/</link><pubDate>Tue, 17 Oct 2023 00:00:00 +0000</pubDate><guid>/posts/llvm-utils/</guid><description>&lt;p>There are many handy functions or data structures in LLVM project, which are widely used by other projects that rely on LLVM. In this page, I will introduce some common utilities that are worthy of using in your own project or frequently used in LLVM code that you should be familiar with.&lt;/p>
 &lt;h2 id="basic-data-type">Basic data type&lt;/h2>
 &lt;h3 id="llvm-stringref">llvm::StringRef&lt;/h3>
 &lt;p>It is a lightweight, non-owning reference to a sequence of characters.
