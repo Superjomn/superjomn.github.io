@@ -4,6 +4,7 @@
 Non-coalesced memory access can lead to underutilization of memory bandwidth.&lt;/p>
 &lt;p>In the following post, we will delve deeper into memory coalescing with CUDA code for the classical vector adding.&lt;/p>
 &lt;h2 id="vecadd">VecAdd&lt;/h2>
+&lt;p>There are three kernels in below. The complete code locates &lt;a href="https://github.com/Superjomn/cuda-from-scratch/blob/dev/0-vecadd-memory-coalesce.cu">here&lt;/a>.&lt;/p>
 &lt;h3 id="naive-vecadd-kernel-with-memory-coalescing-enabled">Naive VecAdd kernel with memory coalescing enabled&lt;/h3>
 &lt;p>The first program is simple but follows the coalescing memory access pattern:&lt;/p>
 &lt;table>
@@ -116,7 +117,8 @@ Non-coalesced memory access can lead to underutilization of memory bandwidth.&lt
 &lt;/table>
 &lt;p>In the first step of the for-loop, these four threads visit 0,2,4,6 elements, which is not contiguous, this results in an uncoalesced memory accessing.&lt;/p>
 &lt;h2 id="performance">Performance&lt;/h2>
-&lt;p>I tested the performance on GTX 3090, the clocks are fixed as below:&lt;/p>
+&lt;p>All the kernels are tested with double data type, and the block size is 256, for the last kernels, each thread are setted to consume 8 elements.
+The performance is tested on GTX 3090, with the clocks locked as below:&lt;/p>
 &lt;table>
 &lt;thead>
 &lt;tr>
@@ -155,9 +157,10 @@ Non-coalesced memory access can lead to underutilization of memory bandwidth.&lt
 &lt;/tbody>
 &lt;/table>
 &lt;p>The uncoalesced kernel is 3x slower than the two coalesced kernel.&lt;/p>
-&lt;p>The Nsight also report the Uncoalescing Global Accesses:&lt;/p>
+&lt;p>The Nsight also report the Uncoalescing Global Accesses in the uncoalesced kernel:&lt;/p>
 &lt;figure>&lt;img src="/ox-hugo/2024-02-28_19-37-47_screenshot.png"/>
 &lt;/figure>
+&lt;p>It reports that 75% of the sectors are excessive, IIUC, since only 8 bytes(a double) out each 32 byte transition is valid, so the overall efficiency is \(\frac{8}{32}=25\%\) .&lt;/p>
 &lt;h2 id="references">References&lt;/h2>
 &lt;ul>
 &lt;li>Professional CUDA C Programming&lt;/li>

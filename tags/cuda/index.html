@@ -15,4 +15,16 @@ About</a></nav></div><div class=container><main id=main><h1>Cuda</h1><p><h3><a c
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/cuda>cuda</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/basics>basics</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p>Background Memory coalescing is a crucial optimization technique in CUDA programming that allows optimal usage of the global memory bandwidth. When threads in the same warp running the same instruction access to consecutive locations in the global memory, the hardware can coalesce these accesses into a single transaction, significantly improving performance.
-Coalescing memory access is vital for achieving high performance. Besides PCIe memory traffic, accessing global memory tends to be the largest bottleneck in GPU&rsquo;s memory hierarchy.</p></p><p class="footer text-center">Copyright (c) 2024 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script></body></html>
+Coalescing memory access is vital for achieving high performance. Besides PCIe memory traffic, accessing global memory tends to be the largest bottleneck in GPU&rsquo;s memory hierarchy.</p></p><p class="footer text-center">Copyright (c) 2024 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script></body></html>
