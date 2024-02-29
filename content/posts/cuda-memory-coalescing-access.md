@@ -18,6 +18,8 @@ In the following post, we will delve deeper into memory coalescing with CUDA cod
 
 ## VecAdd {#vecadd}
 
+There are three kernels in below. The complete code locates [here](https://github.com/Superjomn/cuda-from-scratch/blob/dev/0-vecadd-memory-coalesce.cu).
+
 
 ### Naive VecAdd kernel with memory coalescing enabled {#naive-vecadd-kernel-with-memory-coalescing-enabled}
 
@@ -107,7 +109,8 @@ In the first step of the for-loop, these four threads visit 0,2,4,6 elements, wh
 
 ## Performance {#performance}
 
-I tested the performance on GTX 3090, the clocks are fixed as below:
+All the kernels are tested with double data type, and the block size is 256, for the last kernels, each thread are setted to consume 8 elements.
+The performance is tested on GTX 3090, with the clocks locked as below:
 
 | GPU clocks | Memory clocks |
 |------------|---------------|
@@ -123,9 +126,11 @@ The latency of each kernel:
 
 The uncoalesced kernel is 3x slower than the two coalesced kernel.
 
-The Nsight also report the Uncoalescing Global Accesses:
+The Nsight also report the Uncoalescing Global Accesses in the uncoalesced kernel:
 
 {{< figure src="/ox-hugo/2024-02-28_19-37-47_screenshot.png" >}}
+
+It reports that 75% of the sectors are excessive, IIUC, since only 8 bytes(a double) out each 32 byte transition is valid, so the overall efficiency is \\(\frac{8}{32}=25\\%\\) .
 
 
 ## References {#references}
