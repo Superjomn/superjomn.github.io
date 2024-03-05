@@ -1,0 +1,102 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel=stylesheet type=text/css href=/css/bootstrap.min.css><link rel=stylesheet type=text/css href=/css/style.css><title>Superjomn's blog | Memory coalescing in CUDA (2) – Matrix Transpose</title>
+<meta name=google-site-verification content="kO2XszgjIr1OyaOubGpeb0M34ADBz27vyI1dLETarCM"></head><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z60BDN3JGH"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z60BDN3JGH")</script><script src=https://cdn.jsdelivr.net/npm/cash-dom/dist/cash.min.js></script><script>$(function(){$("article table").addClass("table")})</script><body><div id=nav-border class=container><nav id=nav class="nav justify-content-center"><a class=nav-link href=/><i data-feather=home></i>
+Home
+</a><a class=nav-link href=/tags/tech><i data-feather=terminal></i>
+Tech
+</a><a class=nav-link href=/tags/life><i data-feather=coffee></i>
+Life
+</a><a class=nav-link href=/posts/><i data-feather=archive></i>
+Archive
+</a><a class=nav-link href=/tags/><i data-feather=tag></i>
+Tags
+</a><a class=nav-link href=/posts/about/><i data-feather=info></i>
+About</a></nav></div><div class=container><main id=main><main><article><h1>Memory coalescing in CUDA (2) – Matrix Transpose</h1><i data-feather=calendar></i> <time datetime=2024-03-05>Mar 5, 2024</time>
+<span id=social></span><i data-feather=tag></i>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/cuda>cuda</a>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/basics>basics</a>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><br><br><p><b>Table of Contents</b></p><aside><nav id=TableOfContents><ol><li><a href=#background>Background</a></li><li><a href=#kernels>Kernels</a><ol><li><a href=#read-coalesced>Read coalesced</a></li><li><a href=#write-coalesced>Write coalesced</a></li><li><a href=#both-read-and-write-coalesced-by-tiling-with-shared-memory>Both read and write coalesced by tiling with shared memory</a><ol><li><a href=#inter-tile-transpose>Inter-tile transpose</a></li><li><a href=#intra-tile-transpose>Intra-tile transpose</a></li><li><a href=#kernel-with-constant-tile-size>Kernel with constant tile size</a></li><li><a href=#kernel-with-dynamic-tile-size>Kernel with dynamic tile size</a></li></ol></li></ol></li><li><a href=#performance>Performance</a></li><li><a href=#reference>Reference</a></li></ol></nav></aside><br><h2 id=background>Background</h2><p>In the <a href=https://superjomn.github.io/posts/cuda-memory-coalescing-access/>VecAdd</a> page, we&rsquo;ve introduced the memory coalescing in global memory access. This post will follow the topic with another interesting application: Matrix transposing.</p><p>The following content will briefly touch on the following topics:</p><ul><li>Tiles in matrix, this is the basis of optimization matrix computation</li><li>A simple trick to avoid bank conflict in shared memory access</li></ul><h2 id=kernels>Kernels</h2><p>The code for all the kernels locates in <a href=https://github.com/Superjomn/cuda-from-scratch/blob/dev/1-matrix-transpose-coalesce.cu>1-matrix-transpose-coalesce.cu</a>.</p><h3 id=read-coalesced>Read coalesced</h3><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=display:flex><span><span style=color:#007020;font-weight:700>template</span> <span style=color:#666>&lt;</span><span style=color:#007020;font-weight:700>typename</span> T<span style=color:#666>&gt;</span>
+</span></span><span style=display:flex><span>__global__ <span style=color:#902000>void</span> transpose_read_coalesce(
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>const</span> T<span style=color:#666>*</span> __restrict__ input,
+</span></span><span style=display:flex><span>    T<span style=color:#666>*</span> __restrict__ output,
+</span></span><span style=display:flex><span>    <span style=color:#902000>int</span> n,
+</span></span><span style=display:flex><span>    <span style=color:#902000>int</span> m) {
+</span></span><span style=display:flex><span>  <span style=color:#902000>int</span> i <span style=color:#666>=</span> blockIdx.x <span style=color:#666>*</span> blockDim.x <span style=color:#666>+</span> threadIdx.x; <span style=color:#60a0b0;font-style:italic>// the contiguous tid
+</span></span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic></span>  <span style=color:#902000>int</span> j <span style=color:#666>=</span> blockIdx.y <span style=color:#666>*</span> blockDim.y <span style=color:#666>+</span> threadIdx.y;
+</span></span><span style=display:flex><span>  <span style=color:#007020;font-weight:700>if</span> (i <span style=color:#666>&lt;</span> n <span style=color:#666>&amp;&amp;</span> j <span style=color:#666>&lt;</span> m) {
+</span></span><span style=display:flex><span>    output[i <span style=color:#666>*</span> m <span style=color:#666>+</span> j] <span style=color:#666>=</span> input[j <span style=color:#666>*</span> n <span style=color:#666>+</span> i];
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=write-coalesced>Write coalesced</h3><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=display:flex><span><span style=color:#007020;font-weight:700>template</span> <span style=color:#666>&lt;</span><span style=color:#007020;font-weight:700>typename</span> T<span style=color:#666>&gt;</span>
+</span></span><span style=display:flex><span>__global__ <span style=color:#902000>void</span> transpose_write_coalesce(
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>const</span> T<span style=color:#666>*</span> __restrict__ input,
+</span></span><span style=display:flex><span>    T<span style=color:#666>*</span> __restrict__ output,
+</span></span><span style=display:flex><span>    <span style=color:#902000>int</span> n,
+</span></span><span style=display:flex><span>    <span style=color:#902000>int</span> m) {
+</span></span><span style=display:flex><span>  <span style=color:#902000>int</span> i <span style=color:#666>=</span> blockIdx.x <span style=color:#666>*</span> blockDim.x <span style=color:#666>+</span> threadIdx.x; <span style=color:#60a0b0;font-style:italic>// the contiguous tid
+</span></span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic></span>  <span style=color:#902000>int</span> j <span style=color:#666>=</span> blockIdx.y <span style=color:#666>*</span> blockDim.y <span style=color:#666>+</span> threadIdx.y;
+</span></span><span style=display:flex><span>  <span style=color:#007020;font-weight:700>if</span> (i <span style=color:#666>&lt;</span> n <span style=color:#666>&amp;&amp;</span> j <span style=color:#666>&lt;</span> m) {
+</span></span><span style=display:flex><span>    output[j <span style=color:#666>*</span> n <span style=color:#666>+</span> i] <span style=color:#666>=</span> input[i <span style=color:#666>*</span> m <span style=color:#666>+</span> j];
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=both-read-and-write-coalesced-by-tiling-with-shared-memory>Both read and write coalesced by tiling with shared memory</h3><p>The tiling method is a common methodology for optimizing matrix operation. It divides the matrix into smaller, manageable blocks or &ldquo;tiles&rdquo; that can fit into shared memory.</p><p>Let&rsquo;s divide the matrix into tiles of size \(TILE \times TILE\), and the overall transpose could be decoupled into two sub-levels:</p><ol><li>the inter-tile transpose, that is move the tile to the target position; and secondly,</li><li>the intra-tile transpose, that is transpose the elements within a single tile</li></ol><h4 id=inter-tile-transpose>Inter-tile transpose</h4><figure><img src=/ox-hugo/inter-tile.png></figure><p>Each tile is processed by a thread block, so the tile coordinate is <code>(blockIdx.y, blockIdx.x)</code>, and the target coord is <code>(blockIdx.x, blockIdx.y)</code>.</p><p>We can continue to process the elements within each tile.</p><h4 id=intra-tile-transpose>Intra-tile transpose</h4><figure><img src=/ox-hugo/intra-tile.png></figure><p>Within a tile, we will read the elements, store the transposed version in the shared memory, and then store the tile in global memory, with the coord determined by the intra-tile transpose phase.</p><p>There are two copies:</p><ol><li>Copying the tile from the input matrix and storing a transposed version into shared memory</li><li>Copying the tile from shared memory into the output matrix in global memory</li></ol><p>Only one side is in global memory in both copies, so it can perform a memory coalescing access pattern. Both copies are performed by all the threads collectively within a thread block.</p><p>To make a coalesced memory access, in the first copy, a thread reads element of coord of <code>(threadIdx.y, threadIdx.x)</code>, and the memory offset <code>threadIdx.y * M + threadIdx.x</code> is contignuous for adjacent threads.
+In the second copy, the thread block needs to copy a tile to global memory, similarly, a thread should process the element of <code>(threadIdx.y, threadIdx.x)</code> in the output tile.</p><h4 id=kernel-with-constant-tile-size>Kernel with constant tile size</h4><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=display:flex><span><span style=color:#007020;font-weight:700>template</span> <span style=color:#666>&lt;</span><span style=color:#007020;font-weight:700>typename</span> T, <span style=color:#902000>int</span> TILE<span style=color:#666>&gt;</span>
+</span></span><span style=display:flex><span>__global__ <span style=color:#902000>void</span> transpose_tiled_coalesce0(
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>const</span> T<span style=color:#666>*</span> __restrict__ input,
+</span></span><span style=display:flex><span>    T<span style=color:#666>*</span> __restrict__ output,
+</span></span><span style=display:flex><span>    <span style=color:#902000>int</span> n,
+</span></span><span style=display:flex><span>    <span style=color:#902000>int</span> m) {
+</span></span><span style=display:flex><span>  assert(blockDim.x <span style=color:#666>==</span> blockDim.y <span style=color:#666>&amp;&amp;</span> blockDim.x <span style=color:#666>==</span> TILE_DIM);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#60a0b0;font-style:italic>// TILE + 1 to avoid bank conflict
+</span></span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic></span>  <span style=color:#60a0b0;font-style:italic>// By padding the shared memory array with an extra element, the consecutive threads access
+</span></span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic></span>  <span style=color:#60a0b0;font-style:italic>// memory locations that fall into different banks to avoid bank conflict
+</span></span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic></span>  __shared__ T tile[TILE][TILE <span style=color:#666>+</span> <span style=color:#40a070>1</span>];
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#902000>int</span> i <span style=color:#666>=</span> blockIdx.y <span style=color:#666>*</span> blockDim.y <span style=color:#666>+</span> threadIdx.y;
+</span></span><span style=display:flex><span>  <span style=color:#902000>int</span> j <span style=color:#666>=</span> blockIdx.x <span style=color:#666>*</span> blockDim.x <span style=color:#666>+</span> threadIdx.x;
+</span></span><span style=display:flex><span>  <span style=color:#007020;font-weight:700>if</span> (i <span style=color:#666>&lt;</span> m <span style=color:#666>&amp;&amp;</span> j <span style=color:#666>&lt;</span> n) {
+</span></span><span style=display:flex><span>    tile[threadIdx.x][threadIdx.y] <span style=color:#666>=</span> input[i <span style=color:#666>*</span> n <span style=color:#666>+</span> j];
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  __syncthreads();
+</span></span><span style=display:flex><span>  i <span style=color:#666>=</span> blockIdx.x <span style=color:#666>*</span> blockDim.x <span style=color:#666>+</span> threadIdx.y;
+</span></span><span style=display:flex><span>  j <span style=color:#666>=</span> blockIdx.y <span style=color:#666>*</span> blockDim.y <span style=color:#666>+</span> threadIdx.x;
+</span></span><span style=display:flex><span>  <span style=color:#007020;font-weight:700>if</span> (i <span style=color:#666>&lt;</span> n <span style=color:#666>&amp;&amp;</span> j <span style=color:#666>&lt;</span> m) {
+</span></span><span style=display:flex><span>    output[i <span style=color:#666>*</span> m <span style=color:#666>+</span> j] <span style=color:#666>=</span> tile[threadIdx.y][threadIdx.x];
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Note that, since each thread processes only one element, so both <code>blockDim.x</code> and <code>blockDim.y</code> should equal to <code>TILE</code>, and <code>TILE</code> is a constant value.</p><h4 id=kernel-with-dynamic-tile-size>Kernel with dynamic tile size</h4><p>It is possible to allocate the shared memory dynamically, making the <code>TILE</code> a variable that could be assigned with <code>blockDim.x</code> or <code>blockDim.y</code> on the fly.</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=display:flex><span><span style=color:#007020;font-weight:700>template</span> <span style=color:#666>&lt;</span><span style=color:#007020;font-weight:700>typename</span> T<span style=color:#666>&gt;</span>
+</span></span><span style=display:flex><span>__global__ <span style=color:#902000>void</span> transpose_tiled_coalesce1(
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>const</span> T<span style=color:#666>*</span> __restrict__ input,
+</span></span><span style=display:flex><span>    T<span style=color:#666>*</span> __restrict__ output,
+</span></span><span style=display:flex><span>    <span style=color:#902000>int</span> n,
+</span></span><span style=display:flex><span>    <span style=color:#902000>int</span> m) {
+</span></span><span style=display:flex><span>  <span style=color:#007020;font-weight:700>const</span> size_t TILE <span style=color:#666>=</span> blockDim.x;
+</span></span><span style=display:flex><span>  assert(blockDim.x <span style=color:#666>==</span> blockDim.y);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#007020;font-weight:700>extern</span> __shared__ T tile[];
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#902000>int</span> i <span style=color:#666>=</span> blockIdx.y <span style=color:#666>*</span> blockDim.y <span style=color:#666>+</span> threadIdx.y;
+</span></span><span style=display:flex><span>  <span style=color:#902000>int</span> j <span style=color:#666>=</span> blockIdx.x <span style=color:#666>*</span> blockDim.x <span style=color:#666>+</span> threadIdx.x;
+</span></span><span style=display:flex><span>  <span style=color:#007020;font-weight:700>if</span> (i <span style=color:#666>&lt;</span> m <span style=color:#666>&amp;&amp;</span> j <span style=color:#666>&lt;</span> n) {
+</span></span><span style=display:flex><span>    tile[threadIdx.x <span style=color:#666>*</span> (TILE <span style=color:#666>+</span> <span style=color:#40a070>1</span>) <span style=color:#666>+</span> threadIdx.y] <span style=color:#666>=</span> input[i <span style=color:#666>*</span> n <span style=color:#666>+</span> j];
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  __syncthreads();
+</span></span><span style=display:flex><span>  i <span style=color:#666>=</span> blockIdx.x <span style=color:#666>*</span> blockDim.x <span style=color:#666>+</span> threadIdx.y;
+</span></span><span style=display:flex><span>  j <span style=color:#666>=</span> blockIdx.y <span style=color:#666>*</span> blockDim.y <span style=color:#666>+</span> threadIdx.x;
+</span></span><span style=display:flex><span>  <span style=color:#007020;font-weight:700>if</span> (i <span style=color:#666>&lt;</span> n <span style=color:#666>&amp;&amp;</span> j <span style=color:#666>&lt;</span> m) {
+</span></span><span style=display:flex><span>    output[i <span style=color:#666>*</span> m <span style=color:#666>+</span> j] <span style=color:#666>=</span> tile[threadIdx.y <span style=color:#666>*</span> (TILE <span style=color:#666>+</span> <span style=color:#40a070>1</span>) <span style=color:#666>+</span> threadIdx.x];
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h2 id=performance>Performance</h2><p>In NVIDIA GTX 3080, these kernels have a pretty close performance:</p><table><thead><tr><th>Kernel</th><th>Latency</th></tr></thead><tbody><tr><td>Read coalesced</td><td>0.0476</td></tr><tr><td>Write coalesced</td><td>0.0474</td></tr><tr><td>tiled</td><td>0.0478</td></tr></tbody></table><h2 id=reference>Reference</h2><ul><li><a href=https://leimao.github.io/blog/CUDA-Coalesced-Memory-Access/>CUDA Coalesced Memory Access - blog of Lei Mao</a></li></ul><script src=https://utteranc.es/client.js repo=superjomn/superjomn.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></article></main><p class="footer text-center">Copyright (c) 2024 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script></body></html>
