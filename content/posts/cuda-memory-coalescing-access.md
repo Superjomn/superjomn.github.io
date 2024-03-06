@@ -1,5 +1,5 @@
 +++
-title = "Memory coalescing in CUDA"
+title = "Memory coalescing in CUDA (1) – VecAdd"
 author = ["Chunwei Yan"]
 date = 2024-02-25
 tags = ["cuda", "basics", "tech"]
