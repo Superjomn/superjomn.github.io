@@ -136,7 +136,7 @@ In the second copy, the thread block needs to copy a tile to global memory, simi
 &lt;h2 id="reference">Reference&lt;/h2>
 &lt;ul>
 &lt;li>&lt;a href="https://leimao.github.io/blog/CUDA-Coalesced-Memory-Access/">CUDA Coalesced Memory Access - blog of Lei Mao&lt;/a>&lt;/li>
-&lt;/ul></description></item><item><title>Memory coalescing in CUDA</title><link>/posts/cuda-memory-coalescing-access/</link><pubDate>Sun, 25 Feb 2024 00:00:00 +0000</pubDate><guid>/posts/cuda-memory-coalescing-access/</guid><description>&lt;h2 id="background">Background&lt;/h2>
+&lt;/ul></description></item><item><title>Memory coalescing in CUDA (1) – VecAdd</title><link>/posts/cuda-memory-coalescing-access/</link><pubDate>Sun, 25 Feb 2024 00:00:00 +0000</pubDate><guid>/posts/cuda-memory-coalescing-access/</guid><description>&lt;h2 id="background">Background&lt;/h2>
 &lt;p>&lt;strong>Memory coalescing&lt;/strong> is a crucial optimization technique in CUDA programming that allows optimal usage of the &lt;strong>global memory bandwidth&lt;/strong>. When threads in the same warp running the same instruction access to &lt;strong>consecutive locations&lt;/strong> in the global memory, the hardware can coalesce these accesses into a single transaction, significantly improving performance.&lt;/p>
 &lt;p>Coalescing memory access is vital for achieving high performance. Besides PCIe memory traffic, accessing global memory tends to be the largest bottleneck in GPU&amp;rsquo;s memory hierarchy.
 Non-coalesced memory access can lead to underutilization of memory bandwidth.&lt;/p>
