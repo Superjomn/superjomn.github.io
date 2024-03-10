@@ -72,6 +72,7 @@ The layer output demensions are as below:&lt;/p>
 &lt;li>&lt;code>bs&lt;/code> is the batch size&lt;/li>
 &lt;li>&lt;code>seq_len&lt;/code> is the max length of the sequence&lt;/li>
 &lt;li>&lt;code>H&lt;/code> is the size of the hidden state&lt;/li>
+&lt;li>&lt;code>h&lt;/code> is the number of heads&lt;/li>
 &lt;/ul>
 &lt;h3 id="reference">Reference&lt;/h3>
 &lt;ul>
