@@ -1,4 +1,166 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Superjomn's blog</title><link>/posts/</link><description>Recent content in Posts on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Tue, 05 Mar 2024 00:00:00 +0000</lastBuildDate><atom:link href="/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Memory coalescing in CUDA (2) – Matrix Transpose</title><link>/posts/cuda-memory-coalescing-access-matrix-transpose/</link><pubDate>Tue, 05 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/cuda-memory-coalescing-access-matrix-transpose/</guid><description>&lt;h2 id="background">Background&lt;/h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Superjomn's blog</title><link>/posts/</link><description>Recent content in Posts on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Sun, 10 Mar 2024 00:00:00 +0000</lastBuildDate><atom:link href="/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Notes on LLM technologies (keep updating)</title><link>/posts/llm_notes/</link><pubDate>Sun, 10 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/llm_notes/</guid><description>&lt;p>Brief notes on LLM technologies.&lt;/p>
+&lt;h2 id="models">Models&lt;/h2>
+&lt;h3 id="gpt2">GPT2&lt;/h3>
+&lt;h4 id="model-structure">Model structure&lt;/h4>
+&lt;figure>&lt;img src="/ox-hugo/GPT%20model%20structure.png"/>
+&lt;/figure>
+&lt;p>The GPT model employs a repeated structure of Transformer Blocks, each containing two sub-layers: a Masked Multi-Head Attention (MMHA) layer and a Position-wise Feed-Forward Network.&lt;/p>
+&lt;p>The MMHA is a central component of the model. It operates by splitting the input into multiple &amp;lsquo;heads&amp;rsquo;, each of which learns to attend to different positions within the input sequence, allowing the model to focus on different aspects of the input simultaneously. The output of these heads is then concatenated and linearly transformed to produce the final output.&lt;/p>
+&lt;p>The MMHA mechanism can be formally defined as follows:&lt;/p>
+&lt;p>\[
+MultiHead(Q,K,V) = Concat(head_1, \cdots, head_h)W^O
+\]&lt;/p>
+&lt;p>where each head is computed as:&lt;/p>
+&lt;p>\[
+head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)
+\]&lt;/p>
+&lt;p>The Attention function is defined as:&lt;/p>
+&lt;p>\[
+Attention(q_i, k_i, v_i) = softmax(\frac{q_i k_i^T}{\sqrt{d_k}})v_i
+\]&lt;/p>
+&lt;p>Here, \(d_k\) represents the dimension of the keys, which is calculated as \(d_k = \frac{H}{h}\), where \(H\) is the total dimension of the input and \(h\) is the number of heads.&lt;/p>
+&lt;p>To ensure the MHA mechanism works correctly with sequences of varying lengths, a Mask is applied. This Mask effectively ignores padding elements by setting their values to \(-\infty\), allowing the Softmax function to handle them appropriately.
+The layer output demensions are as below:&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>Layer&lt;/th>
+&lt;th>Dimensions&lt;/th>
+&lt;th>Note&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>Model input&lt;/td>
+&lt;td>&lt;code>[bs, seq_len]&lt;/code>&lt;/td>
+&lt;td>Token IDs&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Text &amp;amp; PosEmbed&lt;/td>
+&lt;td>&lt;code>[bs, seq_len, H]&lt;/code>&lt;/td>
+&lt;td>Text embeddings + position embeddings&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Layer Norm (0)&lt;/td>
+&lt;td>&lt;code>[bs, seq_len, H]&lt;/code>&lt;/td>
+&lt;td>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Feed Forward&lt;/td>
+&lt;td>&lt;code>[bs, seq_len, H]&lt;/code>&lt;/td>
+&lt;td>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Layer Norm (1)&lt;/td>
+&lt;td>&lt;code>[bs, seq_len, H]&lt;/code>&lt;/td>
+&lt;td>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>\(head_i\)&lt;/td>
+&lt;td>&lt;code>[bs, seq_len, H/h]&lt;/code>&lt;/td>
+&lt;td>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>MMHA&lt;/td>
+&lt;td>&lt;code>[bs, seq_len, H]&lt;/code>&lt;/td>
+&lt;td>&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>Where&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>bs&lt;/code> is the batch size&lt;/li>
+&lt;li>&lt;code>seq_len&lt;/code> is the max length of the sequence&lt;/li>
+&lt;li>&lt;code>H&lt;/code> is the size of the hidden state&lt;/li>
+&lt;/ul>
+&lt;h3 id="reference">Reference&lt;/h3>
+&lt;ul>
+&lt;li>&lt;a href="https://arxiv.org/abs/2211.17192">Leviathan, Yaniv, Matan Kalman, and Yossi Matias. &amp;ldquo;Fast inference from transformers via speculative decoding.&amp;rdquo; International Conference on Machine Learning. PMLR, 2023.&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://pytorch.org/docs/stable/generated/torch.nn.MultiheadAttention.html">Multi-head attention in Pytorch&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;h2 id="speculative-decoding">Speculative decoding&lt;/h2>
+&lt;h3 id="motivation">Motivation&lt;/h3>
+&lt;p>Consider a scenerio where we have a prefix such as &amp;ldquo;Geoffrey Hinton did his PhD at the University&amp;rdquo;, and the target suffix is &amp;ldquo;of Edinburgh&amp;rdquo;. When a LLM continues the generation, it is evident that:&lt;/p>
+&lt;ol>
+&lt;li>The word &amp;ldquo;of&amp;rdquo; is simple to generate and could be produced by a smaller model given the same prefix&lt;/li>
+&lt;li>The word &amp;ldquo;Edinburgh&amp;rdquo; is more challenging to generate and may require a larger model with more knowledge&lt;/li>
+&lt;/ol>
+&lt;p>Speculative decoding addresses this by using a smaller model to generate &amp;ldquo;easy&amp;rdquo; words like &amp;ldquo;of&amp;rdquo; for better throughput, while leaving more challenging words to a larger model for precision.&lt;/p>
+&lt;h3 id="algorithm">Algorithm&lt;/h3>
+&lt;p>Speculative decoding employs two models:&lt;/p>
+&lt;ol>
+&lt;li>A draft model, denoted as \(M_p\), which is smaller and much faster (as least 2X) to give a sub-sequence of the next K tokens.&lt;/li>
+&lt;li>A target model, denoted as \(M_q\), which is larger and more precise. It evaluates the sub-sequence generated by the draft model.&lt;/li>
+&lt;/ol>
+&lt;p>Assuming K to be 4, the prefix to be \(pf\), and the draft model generates five tokens based on \(pf\):&lt;/p>
+&lt;ol>
+&lt;li>Token \(x_1\), the probability is \(p_1(x) = M_p(pf)\)&lt;/li>
+&lt;li>Token \(x_2\) with probability of \(p_2(x) = M_p(pf, x_1)\)&lt;/li>
+&lt;li>Token \(x_3\) with probability of \(p_3(x) = M_p(pf, x_1, x_2)\)&lt;/li>
+&lt;li>Token \(x_4\) with probability of \(p_4(x) = M_p(pf, x_1, x_2, x_3)\)&lt;/li>
+&lt;/ol>
+&lt;p>The target model evalutes K tokens generated by \(M_p\) with a single model forward pass, similar to the training phase:&lt;/p>
+&lt;p>\[
+q_1(x), q_2(x), q_3(x), q_4(x) = M_q(pf, x_1, x_2, x_3, x_4)
+\]&lt;/p>
+&lt;p>Let&amp;rsquo;s consider a real example to illustrate the heuristics. Suppose the draft model generate the following sub-sequence with \(K=4\):&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>Token&lt;/th>
+&lt;th>x1&lt;/th>
+&lt;th>x2&lt;/th>
+&lt;th>x3&lt;/th>
+&lt;th>x4&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>&lt;/td>
+&lt;td>dogs&lt;/td>
+&lt;td>love&lt;/td>
+&lt;td>chasing&lt;/td>
+&lt;td>after&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>p(x)&lt;/td>
+&lt;td>0.8&lt;/td>
+&lt;td>0.7&lt;/td>
+&lt;td>0.9&lt;/td>
+&lt;td>0.8&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>q(x)&lt;/td>
+&lt;td>0.9&lt;/td>
+&lt;td>0.8&lt;/td>
+&lt;td>0.8&lt;/td>
+&lt;td>0.3&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>q(x)&amp;gt;=p(x)?&lt;/td>
+&lt;td>Y&lt;/td>
+&lt;td>Y&lt;/td>
+&lt;td>N&lt;/td>
+&lt;td>N&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>accept prob&lt;/td>
+&lt;td>1&lt;/td>
+&lt;td>1&lt;/td>
+&lt;td>0.8/0.9&lt;/td>
+&lt;td>0.3/0.8&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>The rules is as below:&lt;/p>
+&lt;ol>
+&lt;li>If \(q(x) &amp;gt;= p(x)\), then accept the token.&lt;/li>
+&lt;li>If not, the accept probability is \(\frac{q(x)}{p(x)}\), so the token &amp;ldquo;chasing&amp;rdquo; has a probability of \(\frac{0.8}{0.9}=89\%\), while the next token &amp;ldquo;after&amp;rdquo; has an accept probability of only \(\frac{0.3}{0.8}=37.5\%\).&lt;/li>
+&lt;li>If a word is unaccepted, the candidate word after it will be dropped as well. It will be resampled by target model, not the draft model.&lt;/li>
+&lt;li>Repeat the steps above from the next position&lt;/li>
+&lt;/ol>
+&lt;h3 id="reference">Reference&lt;/h3>
+&lt;p>&lt;a href="https://www.youtube.com/watch?v=S-8yr_RibJ4">Speculative Decoding: When Two LLMs are Faster than One - YouTube&lt;/a>&lt;/p></description></item><item><title>Memory coalescing in CUDA (2) – Matrix Transpose</title><link>/posts/cuda-memory-coalescing-access-matrix-transpose/</link><pubDate>Tue, 05 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/cuda-memory-coalescing-access-matrix-transpose/</guid><description>&lt;h2 id="background">Background&lt;/h2>
 &lt;p>In the &lt;a href="https://superjomn.github.io/posts/cuda-memory-coalescing-access/">VecAdd&lt;/a> page, we&amp;rsquo;ve introduced the memory coalescing in global memory access. This post will follow the topic with another interesting application: Matrix transposing.&lt;/p>
 &lt;p>The following content will briefly touch on the following topics:&lt;/p>
 &lt;ul>
