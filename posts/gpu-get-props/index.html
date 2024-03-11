@@ -1,0 +1,43 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel=stylesheet type=text/css href=/css/bootstrap.min.css><link rel=stylesheet type=text/css href=/css/style.css><title>Superjomn's blog | Get GPU Properties</title>
+<meta name=google-site-verification content="kO2XszgjIr1OyaOubGpeb0M34ADBz27vyI1dLETarCM"></head><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z60BDN3JGH"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z60BDN3JGH")</script><script src=https://cdn.jsdelivr.net/npm/cash-dom/dist/cash.min.js></script><script>$(function(){$("article table").addClass("table")})</script><body><div id=nav-border class=container><nav id=nav class="nav justify-content-center"><a class=nav-link href=/><i data-feather=home></i>
+Home
+</a><a class=nav-link href=/tags/tech><i data-feather=terminal></i>
+Tech
+</a><a class=nav-link href=/tags/life><i data-feather=coffee></i>
+Life
+</a><a class=nav-link href=/posts/><i data-feather=archive></i>
+Archive
+</a><a class=nav-link href=/tags/><i data-feather=tag></i>
+Tags
+</a><a class=nav-link href=/posts/about/><i data-feather=info></i>
+About</a></nav></div><div class=container><main id=main><main><article><h1>Get GPU Properties</h1><i data-feather=calendar></i> <time datetime=2024-03-11>Mar 11, 2024</time>
+<span id=social></span><i data-feather=tag></i>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/gpu>gpu</a>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/basics>basics</a>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><br><br><p><b>Table of Contents</b></p><aside><nav id=TableOfContents></nav></aside><br><p>In `cuda_runtime.h`, there are several APIs for retrieving properties for the installed GPU.</p><ul><li><a href=https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gb22e8256592b836df9a9cc36c9db7151>cudaDeviceGetAttribute(int* value, cudaDeviceAttr attr, int device)</a>: a C api</li><li><a href=https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1g1bf9d625a931d657e08db2b4391170f0>cudaGetDeviceProperties ( cudaDeviceProp* prop, int device ) </a>: a C++ api</li></ul><p><a href=https://github.com/Superjomn/cuda-from-scratch/blob/dev/dump-gpu-props.cpp>Here</a> is the code of the example.</p><p>On a Nvidia GTX 3080 GPU, the properties are as below:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>Device 0 properties:
+</span></span><span style=display:flex><span>  Max block dimensions: 1024 x 1024 x 64
+</span></span><span style=display:flex><span>  Max grid dimensions: 2147483647 x 65535 x 65535
+</span></span><span style=display:flex><span>  Shared memory bank size: 4 bytes
+</span></span><span style=display:flex><span>  Max shared memory per block: 49152 bytes
+</span></span><span style=display:flex><span>  Max registers per block: 65536
+</span></span><span style=display:flex><span>  Warp size: 32
+</span></span><span style=display:flex><span>  Multiprocessor count: 68
+</span></span><span style=display:flex><span>  Max resident threads per multiprocessor: 1536 = 48 warps
+</span></span><span style=display:flex><span>  L2 cache size: 5242880 bytes
+</span></span><span style=display:flex><span>  Global L1 cache supported: yes
+</span></span><span style=display:flex><span>  Total global memory: 9 GB
+</span></span><span style=display:flex><span>  Processor clock: 1 MHZ
+</span></span><span style=display:flex><span>  Memory clock: 9 MHZ
+</span></span></code></pre></div><script src=https://utteranc.es/client.js repo=superjomn/superjomn.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></article></main><p class="footer text-center">Copyright (c) 2024 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script></body></html>
