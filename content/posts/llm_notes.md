@@ -35,6 +35,14 @@ where each head is computed as:
 head\_i = Attention(QW\_i^Q, KW\_i^K, VW\_i^V)
 \\]
 
+In implementation, the computation of \\(Q,K,V\\) can be packed together with Linear operations regardless of the number of heads, like
+
+\begin{split}
+Q &= xW^Q \\\\
+K &= xW^K \\\\
+V &= xW^V
+\end{split}
+
 The Attention function is defined as:
 
 \\[
@@ -68,6 +76,36 @@ Where
 
 -   [Leviathan, Yaniv, Matan Kalman, and Yossi Matias. "Fast inference from transformers via speculative decoding." International Conference on Machine Learning. PMLR, 2023.](https://arxiv.org/abs/2211.17192)
 -   [Multi-head attention in Pytorch](https://pytorch.org/docs/stable/generated/torch.nn.MultiheadAttention.html)
+
+
+## Lora {#lora}
+
+
+### Algorithm {#algorithm}
+
+![](/ox-hugo/2024-03-17_15-41-23_screenshot.png)
+_(image borrowed from [this page](https://magazine.sebastianraschka.com/p/practical-tips-for-finetuning-llms))_
+
+A classical workflow to finetune an LLM is to learn an additional parameters denoted as \\(\delta W\\) as long as frooze the original parameters, just as the left part of the figure below.
+
+\\[
+h = W\_0 x \Rightarrow (W\_0 + \delta W) x
+\\]
+
+This could be applied on the \\(W\_q, W\_k, W\_v\\) and \\(W\_o\\) in the Transformer block, while since the Transformer blocks contains the mojority of the parameters, that workflow could result in significant increase of additional parameters.
+
+For instance, a Llama V1 7B model, the hidden size is 4096, 32 heads and 32 layers.
+The \\(W\_q, W\_k, W\_v\\), each shape is \\(4096 \times /frac{4096}{32} = 4096 \times 128=512k\\), and the \\(W\_o\\) is \\(4096\times4096=16384k\\) so on total, the additional parameters will take
+
+$32 &times; (3 &times; 512k+16384k) \* 2 = $
+
+The LoRA is for such scenarios, instead of learning the \\(\delta W\\) itself, it learns decomposed representation of \\(\delta W\\) directly during finetune training. Since the rank could be \\(8\\), that could reduce the number of trainable parameters required for adaptation to downstream tasks.
+
+
+### Reference {#reference}
+
+-   [Practical Tips for Finetuning LLMs Using LoRA (Low-Rank Adaptation)](https://magazine.sebastianraschka.com/p/practical-tips-for-finetuning-llms)
+-   Hu, Edward J., et al. "Lora: Low-rank adaptation of large language models." arXiv preprint arXiv:2106.09685 (2021).
 
 
 ## Speculative decoding {#speculative-decoding}
