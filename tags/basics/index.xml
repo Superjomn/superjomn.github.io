@@ -62,12 +62,12 @@
 &lt;li>the intra-tile transpose, that is transpose the elements within a single tile&lt;/li>
 &lt;/ol>
 &lt;h4 id="inter-tile-transpose">Inter-tile transpose&lt;/h4>
-&lt;figure>&lt;img src="/ox-hugo/inter-tile.png"/>
+&lt;figure>&lt;img src="/ox-hugo/inter-tile.png">
 &lt;/figure>
 &lt;p>Each tile is processed by a thread block, so the tile coordinate is &lt;code>(blockIdx.y, blockIdx.x)&lt;/code>, and the target coord is &lt;code>(blockIdx.x, blockIdx.y)&lt;/code>.&lt;/p>
 &lt;p>We can continue to process the elements within each tile.&lt;/p>
 &lt;h4 id="intra-tile-transpose">Intra-tile transpose&lt;/h4>
-&lt;figure>&lt;img src="/ox-hugo/intra-tile.png"/>
+&lt;figure>&lt;img src="/ox-hugo/intra-tile.png">
 &lt;/figure>
 &lt;p>Within a tile, we will read the elements, store the transposed version in the shared memory, and then store the tile in global memory, with the coord determined by the intra-tile transpose phase.&lt;/p>
 &lt;p>There are two copies:&lt;/p>
@@ -317,7 +317,7 @@ The performance is tested on GTX 3090, with the clocks locked as below:&lt;/p>
 &lt;/table>
 &lt;p>The uncoalesced kernel is 3x slower than the two coalesced kernel.&lt;/p>
 &lt;p>The Nsight also report the Uncoalescing Global Accesses in the uncoalesced kernel:&lt;/p>
-&lt;figure>&lt;img src="/ox-hugo/2024-02-28_19-37-47_screenshot.png"/>
+&lt;figure>&lt;img src="/ox-hugo/2024-02-28_19-37-47_screenshot.png">
 &lt;/figure>
 &lt;p>It reports that 75% of the sectors are excessive, IIUC, since only 8 bytes(a double) out each 32 byte transition is valid, so the overall efficiency is \(\frac{8}{32}=25\%\) .&lt;/p>
 &lt;h2 id="references">References&lt;/h2>

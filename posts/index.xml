@@ -1,4 +1,120 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Superjomn's blog</title><link>/posts/</link><description>Recent content in Posts on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Mon, 11 Mar 2024 00:00:00 +0000</lastBuildDate><atom:link href="/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Get GPU Properties</title><link>/posts/gpu-get-props/</link><pubDate>Mon, 11 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/gpu-get-props/</guid><description>&lt;p>In `cuda_runtime.h`, there are several APIs for retrieving properties for the installed GPU.&lt;/p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Superjomn's blog</title><link>/posts/</link><description>Recent content in Posts on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Thu, 21 Mar 2024 00:00:00 +0000</lastBuildDate><atom:link href="/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Count the parameters in LLaMA V1 model</title><link>/posts/count-parameters-in-llama/</link><pubDate>Thu, 21 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/count-parameters-in-llama/</guid><description>&lt;p>Let&amp;rsquo;s load the model&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">transformers&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> LlamaModel, LlamaConfig
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>model &lt;span style="color:#666">=&lt;/span> LlamaModel&lt;span style="color:#666">.&lt;/span>from_pretrained(&lt;span style="color:#4070a0">&amp;#34;llama-7b-hf-path&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">count_params&lt;/span>(model, is_human: &lt;span style="color:#007020">bool&lt;/span> &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020;font-weight:bold">False&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> params: &lt;span style="color:#007020">int&lt;/span> &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020">sum&lt;/span>(p&lt;span style="color:#666">.&lt;/span>numel() &lt;span style="color:#007020;font-weight:bold">for&lt;/span> p &lt;span style="color:#007020;font-weight:bold">in&lt;/span> model&lt;span style="color:#666">.&lt;/span>parameters() &lt;span style="color:#007020;font-weight:bold">if&lt;/span> p&lt;span style="color:#666">.&lt;/span>requires_grad)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>params &lt;span style="color:#666">/&lt;/span> &lt;span style="color:#40a070">1e6&lt;/span>&lt;span style="color:#70a0d0">:&lt;/span>&lt;span style="color:#4070a0">.2f&lt;/span>&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">M&amp;#34;&lt;/span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> is_human &lt;span style="color:#007020;font-weight:bold">else&lt;/span> params
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(model)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#34;Total # of params:&amp;#34;&lt;/span>, count_params(model, is_human&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020;font-weight:bold">True&lt;/span>))
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Print out the layers:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>LlamaModel(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (embed_tokens): Embedding(32000, 4096, padding_idx=0)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (layers): ModuleList(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (0-31): 32 x LlamaDecoderLayer(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (self_attn): LlamaSdpaAttention(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (q_proj): Linear(in_features=4096, out_features=4096, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (k_proj): Linear(in_features=4096, out_features=4096, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (v_proj): Linear(in_features=4096, out_features=4096, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (o_proj): Linear(in_features=4096, out_features=4096, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (rotary_emb): LlamaRotaryEmbedding()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (mlp): LlamaMLP(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (gate_proj): Linear(in_features=4096, out_features=11008, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (up_proj): Linear(in_features=4096, out_features=11008, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (down_proj): Linear(in_features=11008, out_features=4096, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (act_fn): SiLU()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (input_layernorm): LlamaRMSNorm()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (post_attention_layernorm): LlamaRMSNorm()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (norm): LlamaRMSNorm()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Total # of params: 6607.34M
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The transformers shows that there are 6607.34M float16 parameters, roughly 13GB, that is aligned to the actual weight size.&lt;/p>
+&lt;h2 id="the-basic-setting-of-the-7b-model">The basic setting of the 7B model&lt;/h2>
+&lt;ul>
+&lt;li>model dimension \(d_{model}=4096\)&lt;/li>
+&lt;li>number of heads \(n_{head}=32\)&lt;/li>
+&lt;li>head size \(d_{head} = \frac{d_{model}}{n_{head}}\)&lt;/li>
+&lt;li>dimension of the feed-forward network&amp;rsquo;s inner layer \(d_{ff}=11008\)&lt;/li>
+&lt;li>number of tokens \(n_{token}=32000\)&lt;/li>
+&lt;li>number of transformer layers \(n_{layer}=32\)&lt;/li>
+&lt;/ul>
+&lt;h2 id="layer-by-layer-parameter-count">Layer-by-Layer Parameter Count&lt;/h2>
+&lt;h3 id="embedding-layer">Embedding layer&lt;/h3>
+&lt;p>For vocabulary embedding, \(n_{token}\times d_{model}=131.072M\), while for position embedding, since RoPE doesn&amp;rsquo;t need a separate embedding, so that is 0.&lt;/p>
+&lt;h3 id="transformer-layers">Transformer layers&lt;/h3>
+&lt;h4 id="input-layernorm-and-post-attention-layernorm">&lt;code>input_layernorm&lt;/code> and &lt;code>post_attention_layernorm&lt;/code>&lt;/h4>
+&lt;p>Both are RMSNorm whose parameters are \(d_{model}\), so both sum to \(2\times d_{model}=8M\)&lt;/p>
+&lt;h4 id="multi-head-self-attention">multi-head self-attention&lt;/h4>
+&lt;p>For Q,K,V and O, each is a Linear layer of size \(d_{model} \times d_{model}\), so in total, there are \(4\times d_{model}^2=67.1M\).&lt;/p>
+&lt;p>There is one tiny issue here, why a linear layer could generate Q, while in the original transformer paper, each head is calculated separately, for example, \(Q_i=QW^Q_i\) where \(i\) is the head id. That is because, if we concatenate all all the heads, that is identical to a linear of \(d_{model} \times (n_{head} \times d_{head})\), that is \(d_{model} \times d_{model}\) in llama v1.&lt;/p>
+&lt;p>The self-attention doesn&amp;rsquo;t have extra parameters since they simply applies the following formula&lt;/p>
+&lt;p>\[
+Attention(Q,K,V) = softmax(\frac{QK^T}{\sqrt{d_k}})V
+\]&lt;/p>
+&lt;h4 id="mlp">mlp&lt;/h4>
+&lt;p>The LlamaMLP layer contains three separate Linear layers:&lt;/p>
+&lt;ol>
+&lt;li>&lt;code>gate_proj&lt;/code>: \(d_{model} \times d_{ff}\)&lt;/li>
+&lt;li>&lt;code>up_proj&lt;/code>: \(d_{model} \times d_{ff}\)&lt;/li>
+&lt;li>&lt;code>down_proj&lt;/code>: \(d_{ff} \times d_{model}\)&lt;/li>
+&lt;/ol>
+&lt;p>So in total, they have \(3\times d_{model} \times d_{ff} = 135.27M\) parameters.&lt;/p>
+&lt;h2 id="total-count-of-parameters">Total count of parameters&lt;/h2>
+&lt;p>The overall parameters are composed of two major parts, the vocabulary embedding, and the transformer layers, that is &lt;code>embed + 32 * (mha + mlp + norm)&lt;/code>:&lt;/p>
+&lt;ul>
+&lt;li>\(embed=n_{token}\times d_{model}=131.07M\)&lt;/li>
+&lt;li>\(mha=4* d_{model}^2=67.1M\)&lt;/li>
+&lt;li>\(mlp=3* d_{model}\times d_{ff}=135.27M\)&lt;/li>
+&lt;li>\(norm=2*d_{model}=8.19M\)&lt;/li>
+&lt;/ul>
+&lt;p>And the count of the parameters is 6607.3M, which is aligned to the Transformers.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">count_llama_params&lt;/span>(d_model, d_ff, n_tokens, n_layers):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> embed &lt;span style="color:#666">=&lt;/span> n_tokens &lt;span style="color:#666">*&lt;/span> d_model
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mha &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">4&lt;/span> &lt;span style="color:#666">*&lt;/span> d_model&lt;span style="color:#666">**&lt;/span>&lt;span style="color:#40a070">2&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mlp &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">3&lt;/span> &lt;span style="color:#666">*&lt;/span> d_moel &lt;span style="color:#666">*&lt;/span> d_ff
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> norm &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">2&lt;/span> &lt;span style="color:#666">*&lt;/span> d_model
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> embed &lt;span style="color:#666">+&lt;/span> n_layers &lt;span style="color:#666">*&lt;/span> (mha &lt;span style="color:#666">+&lt;/span> mlp &lt;span style="color:#666">+&lt;/span> norm)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>For example, the Llama 65B model&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>LlamaModel(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (embed_tokens): Embedding(32000, 8192, padding_idx=0)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (layers): ModuleList(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (0-79): 80 x LlamaDecoderLayer(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (self_attn): LlamaSdpaAttention(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (q_proj): Linear(in_features=8192, out_features=8192, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (k_proj): Linear(in_features=8192, out_features=8192, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (v_proj): Linear(in_features=8192, out_features=8192, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (o_proj): Linear(in_features=8192, out_features=8192, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (rotary_emb): LlamaRotaryEmbedding()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (mlp): LlamaMLP(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (gate_proj): Linear(in_features=8192, out_features=22016, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (up_proj): Linear(in_features=8192, out_features=22016, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (down_proj): Linear(in_features=22016, out_features=8192, bias=False)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (act_fn): SiLU()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (input_layernorm): LlamaRMSNorm()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (post_attention_layernorm): LlamaRMSNorm()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (norm): LlamaRMSNorm()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Total # of params: 65023.52M
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>And let&amp;rsquo;s use the function&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>count_llama_params(d_model&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">8192&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> d_ff&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">22016&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> n_tokens&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">32000&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> n_layers&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">80&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>It gives 65023.5M, is is roughly aligned.&lt;/p>
+&lt;h2 id="references">References&lt;/h2>
+&lt;ul>
+&lt;li>&lt;a href="https://michaelwornow.net/2024/01/18/counting-params-in-transformer">Transformer Math (Part 1) - Counting Model Parameters&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py">modeling_llama.py from huggingface transformers&lt;/a>&lt;/li>
+&lt;/ul></description></item><item><title>Get GPU Properties</title><link>/posts/gpu-get-props/</link><pubDate>Mon, 11 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/gpu-get-props/</guid><description>&lt;p>In `cuda_runtime.h`, there are several APIs for retrieving properties for the installed GPU.&lt;/p>
 &lt;ul>
 &lt;li>&lt;a href="https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gb22e8256592b836df9a9cc36c9db7151">cudaDeviceGetAttribute(int* value, cudaDeviceAttr attr, int device)&lt;/a>: a C api&lt;/li>
 &lt;li>&lt;a href="https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1g1bf9d625a931d657e08db2b4391170f0">cudaGetDeviceProperties ( cudaDeviceProp* prop, int device ) &lt;/a>: a C++ api&lt;/li>
@@ -23,7 +139,7 @@
 &lt;h2 id="models">Models&lt;/h2>
 &lt;h3 id="gpt2">GPT2&lt;/h3>
 &lt;h4 id="model-structure">Model structure&lt;/h4>
-&lt;figure>&lt;img src="/ox-hugo/GPT%20model%20structure.png"/>
+&lt;figure>&lt;img src="/ox-hugo/GPT%20model%20structure.png">
 &lt;/figure>
 &lt;p>The GPT model employs a repeated structure of Transformer Blocks, each containing two sub-layers: a Masked Multi-Head Attention (MMHA) layer and a Position-wise Feed-Forward Network.&lt;/p>
 &lt;p>The MMHA is a central component of the model. It operates by splitting the input into multiple &amp;lsquo;heads&amp;rsquo;, each of which learns to attend to different positions within the input sequence, allowing the model to focus on different aspects of the input simultaneously. The output of these heads is then concatenated and linearly transformed to produce the final output.&lt;/p>
@@ -35,6 +151,12 @@ MultiHead(Q,K,V) = Concat(head_1, \cdots, head_h)W^O
 &lt;p>\[
 head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)
 \]&lt;/p>
+&lt;p>In implementation, the computation of \(Q,K,V\) can be packed together with Linear operations regardless of the number of heads, like&lt;/p>
+&lt;p>\begin{split}
+Q &amp;amp;= xW^Q \\
+K &amp;amp;= xW^K \\
+V &amp;amp;= xW^V
+\end{split}&lt;/p>
 &lt;p>The Attention function is defined as:&lt;/p>
 &lt;p>\[
 Attention(q_i, k_i, v_i) = softmax(\frac{q_i k_i^T}{\sqrt{d_k}})v_i
@@ -99,6 +221,24 @@ The layer output demensions are as below:&lt;/p>
 &lt;ul>
 &lt;li>&lt;a href="https://arxiv.org/abs/2211.17192">Leviathan, Yaniv, Matan Kalman, and Yossi Matias. &amp;ldquo;Fast inference from transformers via speculative decoding.&amp;rdquo; International Conference on Machine Learning. PMLR, 2023.&lt;/a>&lt;/li>
 &lt;li>&lt;a href="https://pytorch.org/docs/stable/generated/torch.nn.MultiheadAttention.html">Multi-head attention in Pytorch&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;h2 id="lora">Lora&lt;/h2>
+&lt;h3 id="algorithm">Algorithm&lt;/h3>
+&lt;p>&lt;img src="/ox-hugo/2024-03-17_15-41-23_screenshot.png" alt="">
+&lt;em>(image borrowed from &lt;a href="https://magazine.sebastianraschka.com/p/practical-tips-for-finetuning-llms">this page&lt;/a>)&lt;/em>&lt;/p>
+&lt;p>A classical workflow to finetune an LLM is to learn an additional parameters denoted as \(\delta W\) as long as frooze the original parameters, just as the left part of the figure below.&lt;/p>
+&lt;p>\[
+h = W_0 x \Rightarrow (W_0 + \delta W) x
+\]&lt;/p>
+&lt;p>This could be applied on the \(W_q, W_k, W_v\) and \(W_o\) in the Transformer block, while since the Transformer blocks contains the mojority of the parameters, that workflow could result in significant increase of additional parameters.&lt;/p>
+&lt;p>For instance, a Llama V1 7B model, the hidden size is 4096, 32 heads and 32 layers.
+The \(W_q, W_k, W_v\), each shape is \(4096 \times /frac{4096}{32} = 4096 \times 128=512k\), and the \(W_o\) is \(4096\times4096=16384k\) so on total, the additional parameters will take&lt;/p>
+&lt;p>$32 × (3 × 512k+16384k) * 2 = $&lt;/p>
+&lt;p>The LoRA is for such scenarios, instead of learning the \(\delta W\) itself, it learns decomposed representation of \(\delta W\) directly during finetune training. Since the rank could be \(8\), that could reduce the number of trainable parameters required for adaptation to downstream tasks.&lt;/p>
+&lt;h3 id="reference">Reference&lt;/h3>
+&lt;ul>
+&lt;li>&lt;a href="https://magazine.sebastianraschka.com/p/practical-tips-for-finetuning-llms">Practical Tips for Finetuning LLMs Using LoRA (Low-Rank Adaptation)&lt;/a>&lt;/li>
+&lt;li>Hu, Edward J., et al. &amp;ldquo;Lora: Low-rank adaptation of large language models.&amp;rdquo; arXiv preprint arXiv:2106.09685 (2021).&lt;/li>
 &lt;/ul>
 &lt;h2 id="speculative-decoding">Speculative decoding&lt;/h2>
 &lt;h3 id="motivation">Motivation&lt;/h3>
@@ -225,12 +365,12 @@ q_1(x), q_2(x), q_3(x), q_4(x) = M_q(pf, x_1, x_2, x_3, x_4)
 &lt;li>the intra-tile transpose, that is transpose the elements within a single tile&lt;/li>
 &lt;/ol>
 &lt;h4 id="inter-tile-transpose">Inter-tile transpose&lt;/h4>
-&lt;figure>&lt;img src="/ox-hugo/inter-tile.png"/>
+&lt;figure>&lt;img src="/ox-hugo/inter-tile.png">
 &lt;/figure>
 &lt;p>Each tile is processed by a thread block, so the tile coordinate is &lt;code>(blockIdx.y, blockIdx.x)&lt;/code>, and the target coord is &lt;code>(blockIdx.x, blockIdx.y)&lt;/code>.&lt;/p>
 &lt;p>We can continue to process the elements within each tile.&lt;/p>
 &lt;h4 id="intra-tile-transpose">Intra-tile transpose&lt;/h4>
-&lt;figure>&lt;img src="/ox-hugo/intra-tile.png"/>
+&lt;figure>&lt;img src="/ox-hugo/intra-tile.png">
 &lt;/figure>
 &lt;p>Within a tile, we will read the elements, store the transposed version in the shared memory, and then store the tile in global memory, with the coord determined by the intra-tile transpose phase.&lt;/p>
 &lt;p>There are two copies:&lt;/p>
@@ -480,7 +620,7 @@ The performance is tested on GTX 3090, with the clocks locked as below:&lt;/p>
 &lt;/table>
 &lt;p>The uncoalesced kernel is 3x slower than the two coalesced kernel.&lt;/p>
 &lt;p>The Nsight also report the Uncoalescing Global Accesses in the uncoalesced kernel:&lt;/p>
-&lt;figure>&lt;img src="/ox-hugo/2024-02-28_19-37-47_screenshot.png"/>
+&lt;figure>&lt;img src="/ox-hugo/2024-02-28_19-37-47_screenshot.png">
 &lt;/figure>
 &lt;p>It reports that 75% of the sectors are excessive, IIUC, since only 8 bytes(a double) out each 32 byte transition is valid, so the overall efficiency is \(\frac{8}{32}=25\%\) .&lt;/p>
 &lt;h2 id="references">References&lt;/h2>
@@ -898,13 +1038,13 @@ It can automatically generate some common methods for the class, such as &lt;cod
 &lt;h3 id="定位">定位&lt;/h3>
 &lt;p>由于 Triton 的开发非常迅速，这里只讨论当前 Triton 的功能。&lt;/p>
 &lt;p>简而言之，Triton 提供了一套针对 GPU Kernel 的开发的 Language（基于 Python） 和 高性能 Compiler。&lt;/p>
-&lt;figure>&lt;img src="/static/triton-publish/1.png"/>
+&lt;figure>&lt;img src="/static/triton-publish/1.png">
 &lt;/figure>
 &lt;p>因此，就层次而言，Triton的 DNN 开发能力与 CUDA 的部分相对应，但与TVM、XLA等直接面向 DL 的 Domain compiler 无法完全对应。
 后者更像是面向 DL 的武器库，拥有从构图到 auto fusion 等端到端的能力，而Triton则更像一把小巧、实用的瑞士军刀，面向偏底层的也是最通用的 Kernel 开发问题。&lt;/p>
 &lt;h3 id="新代码中的架构">新代码中的架构&lt;/h3>
 &lt;p>Triton 新代码中的架构总体上可以如下呈现&lt;/p>
-&lt;figure>&lt;img src="/static/triton-publish/three-components.png"/>
+&lt;figure>&lt;img src="/static/triton-publish/three-components.png">
 &lt;/figure>
 &lt;p>即总体上可以分为三大块&lt;/p>
 &lt;ol>
@@ -926,7 +1066,7 @@ It can automatically generate some common methods for the class, such as &lt;cod
 &lt;li>&lt;code>gpu&lt;/code> dialect：printf 等少量操作&lt;/li>
 &lt;/ul>
 &lt;p>下图是 Triton 中核心表示完整的转换过程：&lt;/p>
-&lt;figure>&lt;img src="/static/2023-01-29_15-59-49_screenshot.png"/>
+&lt;figure>&lt;img src="/static/2023-01-29_15-59-49_screenshot.png">
 &lt;/figure>
 &lt;p>其中蓝色的两部分主要是 MLIR 体系涉及的部分，随后 MLIR 会转换为 LLVM IR，之后 Triton 会调用 NVPTX 转换为 PTX Assembly，随后由 CUDA 的 ptxas 编译器编译为 cubin。&lt;/p>
 &lt;h2 id="python-界面之-frontend">Python 界面之 Frontend&lt;/h2>
@@ -977,7 +1117,7 @@ It can automatically generate some common methods for the class, such as &lt;cod
 &lt;h2 id="性能优化之-optimizer">性能优化之 Optimizer&lt;/h2>
 &lt;p>Optimizer 用于分析和优化 Frontend 传入的 IR，通过各类 Transformation 和 Conversion (Pass) 策略，最终传递给 Backend 做 translate。&lt;/p>
 &lt;p>Optimizer 大致的 workflow 如下&lt;/p>
-&lt;figure>&lt;img src="/static/triton-publish/optimizer.png"/>
+&lt;figure>&lt;img src="/static/triton-publish/optimizer.png">
 &lt;/figure>
 &lt;p>主要分为三大块优化&lt;/p>
 &lt;ol>
@@ -1075,7 +1215,7 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;li>&lt;code>warpsPerCTA&lt;/code>&lt;/li>
 &lt;/ul>
 &lt;p>这里演示 FP16 精度下， &lt;code>version=2&lt;/code> 的数据排布（会映射到 &lt;code>mma.m16n8k16&lt;/code> 指令）的 Accumulators (C or D) 的 &lt;a href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-matrix-fragment-mma-16816-float">数据排布&lt;/a>。&lt;/p>
-&lt;figure>&lt;img src="/static/mma.16816.png"/>
+&lt;figure>&lt;img src="/static/mma.16816.png">
 &lt;/figure>
 &lt;/li>
 &lt;/ul>
@@ -1113,7 +1253,7 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;/li>
 &lt;li>
 &lt;p>$b, 对应的 DotOperand 的 opIdx = 1&lt;/p>
-&lt;figure>&lt;img src="/static/mma.16816.op.png"/>
+&lt;figure>&lt;img src="/static/mma.16816.op.png">
 &lt;/figure>
 &lt;/li>
 &lt;/ul>

@@ -10,13 +10,13 @@
 &lt;h3 id="定位">定位&lt;/h3>
 &lt;p>由于 Triton 的开发非常迅速，这里只讨论当前 Triton 的功能。&lt;/p>
 &lt;p>简而言之，Triton 提供了一套针对 GPU Kernel 的开发的 Language（基于 Python） 和 高性能 Compiler。&lt;/p>
-&lt;figure>&lt;img src="/static/triton-publish/1.png"/>
+&lt;figure>&lt;img src="/static/triton-publish/1.png">
 &lt;/figure>
 &lt;p>因此，就层次而言，Triton的 DNN 开发能力与 CUDA 的部分相对应，但与TVM、XLA等直接面向 DL 的 Domain compiler 无法完全对应。
 后者更像是面向 DL 的武器库，拥有从构图到 auto fusion 等端到端的能力，而Triton则更像一把小巧、实用的瑞士军刀，面向偏底层的也是最通用的 Kernel 开发问题。&lt;/p>
 &lt;h3 id="新代码中的架构">新代码中的架构&lt;/h3>
 &lt;p>Triton 新代码中的架构总体上可以如下呈现&lt;/p>
-&lt;figure>&lt;img src="/static/triton-publish/three-components.png"/>
+&lt;figure>&lt;img src="/static/triton-publish/three-components.png">
 &lt;/figure>
 &lt;p>即总体上可以分为三大块&lt;/p>
 &lt;ol>
@@ -38,7 +38,7 @@
 &lt;li>&lt;code>gpu&lt;/code> dialect：printf 等少量操作&lt;/li>
 &lt;/ul>
 &lt;p>下图是 Triton 中核心表示完整的转换过程：&lt;/p>
-&lt;figure>&lt;img src="/static/2023-01-29_15-59-49_screenshot.png"/>
+&lt;figure>&lt;img src="/static/2023-01-29_15-59-49_screenshot.png">
 &lt;/figure>
 &lt;p>其中蓝色的两部分主要是 MLIR 体系涉及的部分，随后 MLIR 会转换为 LLVM IR，之后 Triton 会调用 NVPTX 转换为 PTX Assembly，随后由 CUDA 的 ptxas 编译器编译为 cubin。&lt;/p>
 &lt;h2 id="python-界面之-frontend">Python 界面之 Frontend&lt;/h2>
@@ -89,7 +89,7 @@
 &lt;h2 id="性能优化之-optimizer">性能优化之 Optimizer&lt;/h2>
 &lt;p>Optimizer 用于分析和优化 Frontend 传入的 IR，通过各类 Transformation 和 Conversion (Pass) 策略，最终传递给 Backend 做 translate。&lt;/p>
 &lt;p>Optimizer 大致的 workflow 如下&lt;/p>
-&lt;figure>&lt;img src="/static/triton-publish/optimizer.png"/>
+&lt;figure>&lt;img src="/static/triton-publish/optimizer.png">
 &lt;/figure>
 &lt;p>主要分为三大块优化&lt;/p>
 &lt;ol>
@@ -187,7 +187,7 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;li>&lt;code>warpsPerCTA&lt;/code>&lt;/li>
 &lt;/ul>
 &lt;p>这里演示 FP16 精度下， &lt;code>version=2&lt;/code> 的数据排布（会映射到 &lt;code>mma.m16n8k16&lt;/code> 指令）的 Accumulators (C or D) 的 &lt;a href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-matrix-fragment-mma-16816-float">数据排布&lt;/a>。&lt;/p>
-&lt;figure>&lt;img src="/static/mma.16816.png"/>
+&lt;figure>&lt;img src="/static/mma.16816.png">
 &lt;/figure>
 &lt;/li>
 &lt;/ul>
@@ -225,7 +225,7 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;/li>
 &lt;li>
 &lt;p>$b, 对应的 DotOperand 的 opIdx = 1&lt;/p>
-&lt;figure>&lt;img src="/static/mma.16816.op.png"/>
+&lt;figure>&lt;img src="/static/mma.16816.op.png">
 &lt;/figure>
 &lt;/li>
 &lt;/ul>
