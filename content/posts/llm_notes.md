@@ -98,12 +98,16 @@ h = W\_0 x \Rightarrow (W\_0 + \delta W) x
 
 This could be applied on the \\(W\_q, W\_k, W\_v\\) and \\(W\_o\\) in the Transformer block, while since the Transformer blocks contains the mojority of the parameters, that workflow could result in significant increase of additional parameters.
 
-For instance, a Llama V1 7B model, the hidden size is 4096, 32 heads and 32 layers.
-The \\(W\_q, W\_k, W\_v\\), each shape is \\(4096 \times /frac{4096}{32} = 4096 \times 128=512k\\), and the \\(W\_o\\) is \\(4096\times4096=16384k\\) so on total, the additional parameters will take
+For instance, a Llama V1 7B model, whose hidden size is 4096, and the dimension of the MLP's inner layer is 11008, let's zoom into a Transformer layer, the \\(W\_q, W\_k, W\_v, W\_o\\), each contains \\(4096 \times 4096 = 4096 \times 128=16.78M\\) parameters, and the MLP contains three Linear layer of \\(135.27M\\) parameters, and two RMSNorm layers each contains \\(4096=4M\\) parameters. In total, a single Transformer layer contains \\(16.78M \times 4 + 135.27M + 4M\times 2=210.29M\\). You can refer to [Superjomn's blog | Count the parameters in LLaMA V1 model](https://superjomn.github.io/posts/count-parameters-in-llama/) for details about counting the parameters.
 
-$32 &times; (3 &times; 512k+16384k) \* 2 = $
+The LoRA is for such scenarios, instead of learning the \\(\delta W\\) itself, it learns decomposed representation of \\(\delta W\\) directly during finetune training. Since the rank could be \\(8\\), that could reduce the number of trainable parameters required for adaptation to downstream tasks. Let's revisit the Llama V1 7B example, if we apply LoRA on all the Linear layers within a Transformer layer:
 
-The LoRA is for such scenarios, instead of learning the \\(\delta W\\) itself, it learns decomposed representation of \\(\delta W\\) directly during finetune training. Since the rank could be \\(8\\), that could reduce the number of trainable parameters required for adaptation to downstream tasks.
+-   \\(W\_q, W\_k, W\_v, W\_o\\) each will take \\(4096\*8 + 8\*4096=0.065M\\) parameters
+-   MLP have \\(3 \times (4096 \times 8 + 8 \times 11008)=0.362M\\)
+
+So in total, the LoRA will bring \\(0.362+0.065\*4=0.622\\) additional parameters, that is only \\(\frac{0.622}{210.29}=0.29\\%\\) of the original parameters.
+
+So instead of fully-finetune all the original paramters, the LoRA could finetune the LLaMA 7B model with less than 1% parameters, that is quite efficient.
 
 
 ### Reference {#reference}
