@@ -234,10 +234,14 @@ The layer output demensions are as below:&lt;/p>
 h = W_0 x \Rightarrow (W_0 + \delta W) x
 \]&lt;/p>
 &lt;p>This could be applied on the \(W_q, W_k, W_v\) and \(W_o\) in the Transformer block, while since the Transformer blocks contains the mojority of the parameters, that workflow could result in significant increase of additional parameters.&lt;/p>
-&lt;p>For instance, a Llama V1 7B model, the hidden size is 4096, 32 heads and 32 layers.
-The \(W_q, W_k, W_v\), each shape is \(4096 \times /frac{4096}{32} = 4096 \times 128=512k\), and the \(W_o\) is \(4096\times4096=16384k\) so on total, the additional parameters will take&lt;/p>
-&lt;p>$32 × (3 × 512k+16384k) * 2 = $&lt;/p>
-&lt;p>The LoRA is for such scenarios, instead of learning the \(\delta W\) itself, it learns decomposed representation of \(\delta W\) directly during finetune training. Since the rank could be \(8\), that could reduce the number of trainable parameters required for adaptation to downstream tasks.&lt;/p>
+&lt;p>For instance, a Llama V1 7B model, whose hidden size is 4096, and the dimension of the MLP&amp;rsquo;s inner layer is 11008, let&amp;rsquo;s zoom into a Transformer layer, the \(W_q, W_k, W_v, W_o\), each contains \(4096 \times 4096 = 4096 \times 128=16.78M\) parameters, and the MLP contains three Linear layer of \(135.27M\) parameters, and two RMSNorm layers each contains \(4096=4M\) parameters. In total, a single Transformer layer contains \(16.78M \times 4 + 135.27M + 4M\times 2=210.29M\). You can refer to &lt;a href="https://superjomn.github.io/posts/count-parameters-in-llama/">Superjomn&amp;rsquo;s blog | Count the parameters in LLaMA V1 model&lt;/a> for details about counting the parameters.&lt;/p>
+&lt;p>The LoRA is for such scenarios, instead of learning the \(\delta W\) itself, it learns decomposed representation of \(\delta W\) directly during finetune training. Since the rank could be \(8\), that could reduce the number of trainable parameters required for adaptation to downstream tasks. Let&amp;rsquo;s revisit the Llama V1 7B example, if we apply LoRA on all the Linear layers within a Transformer layer:&lt;/p>
+&lt;ul>
+&lt;li>\(W_q, W_k, W_v, W_o\) each will take \(4096*8 + 8*4096=0.065M\) parameters&lt;/li>
+&lt;li>MLP have \(3 \times (4096 \times 8 + 8 \times 11008)=0.362M\)&lt;/li>
+&lt;/ul>
+&lt;p>So in total, the LoRA will bring \(0.362+0.065*4=0.622\) additional parameters, that is only \(\frac{0.622}{210.29}=0.29\%\) of the original parameters.&lt;/p>
+&lt;p>So instead of fully-finetune all the original paramters, the LoRA could finetune the LLaMA 7B model with less than 1% parameters, that is quite efficient.&lt;/p>
 &lt;h3 id="reference">Reference&lt;/h3>
 &lt;ul>
 &lt;li>&lt;a href="https://magazine.sebastianraschka.com/p/practical-tips-for-finetuning-llms">Practical Tips for Finetuning LLMs Using LoRA (Low-Rank Adaptation)&lt;/a>&lt;/li>
