@@ -49,7 +49,7 @@ LlamaModel(
 Total # of params: 6607.34M
 ```
 
-The transformers shows that there are 6607.34M float16 parameters, roughly 13GB, that is aligned to the actual weight size.
+The Transformers shows that there are 6607.34M float16 parameters, roughly 13GB, that is aligned to the actual weight size.
 
 
 ## The basic setting of the 7B model {#the-basic-setting-of-the-7b-model}
@@ -111,7 +111,7 @@ The overall parameters are composed of two major parts, the vocabulary embedding
 -   \\(mlp=3\* d\_{model}\times d\_{ff}=135.27M\\)
 -   \\(norm=2\*d\_{model}=8.19M\\)
 
-And the count of the parameters is 6607.3M, which is aligned to the Transformers.
+And the count of the parameters is 6607.3M, which is aligned to the number from Transformers.
 
 ```python
 def count_llama_params(d_model, d_ff, n_tokens, n_layers):

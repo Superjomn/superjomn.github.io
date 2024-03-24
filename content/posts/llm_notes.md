@@ -37,6 +37,10 @@ head\_i = Attention(QW\_i^Q, KW\_i^K, VW\_i^V)
 
 In implementation, the computation of \\(Q,K,V\\) can be packed together with Linear operations regardless of the number of heads, like
 
+{{< figure src="/ox-hugo/qkv.png" >}}
+
+And the computation is as below
+
 \begin{split}
 Q &= xW^Q \\\\
 K &= xW^K \\\\
