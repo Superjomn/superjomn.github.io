@@ -33,7 +33,7 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (norm): LlamaRMSNorm()
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Total # of params: 6607.34M
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The transformers shows that there are 6607.34M float16 parameters, roughly 13GB, that is aligned to the actual weight size.&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The Transformers shows that there are 6607.34M float16 parameters, roughly 13GB, that is aligned to the actual weight size.&lt;/p>
 &lt;h2 id="the-basic-setting-of-the-7b-model">The basic setting of the 7B model&lt;/h2>
 &lt;ul>
 &lt;li>model dimension \(d_{model}=4096\)&lt;/li>
@@ -72,7 +72,7 @@ Attention(Q,K,V) = softmax(\frac{QK^T}{\sqrt{d_k}})V
 &lt;li>\(mlp=3* d_{model}\times d_{ff}=135.27M\)&lt;/li>
 &lt;li>\(norm=2*d_{model}=8.19M\)&lt;/li>
 &lt;/ul>
-&lt;p>And the count of the parameters is 6607.3M, which is aligned to the Transformers.&lt;/p>
+&lt;p>And the count of the parameters is 6607.3M, which is aligned to the number from Transformers.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">count_llama_params&lt;/span>(d_model, d_ff, n_tokens, n_layers):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> embed &lt;span style="color:#666">=&lt;/span> n_tokens &lt;span style="color:#666">*&lt;/span> d_model
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mha &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">4&lt;/span> &lt;span style="color:#666">*&lt;/span> d_model&lt;span style="color:#666">**&lt;/span>&lt;span style="color:#40a070">2&lt;/span>
@@ -131,6 +131,9 @@ MultiHead(Q,K,V) = Concat(head_1, \cdots, head_h)W^O
 head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)
 \]&lt;/p>
 &lt;p>In implementation, the computation of \(Q,K,V\) can be packed together with Linear operations regardless of the number of heads, like&lt;/p>
+&lt;figure>&lt;img src="/ox-hugo/qkv.png">
+&lt;/figure>
+&lt;p>And the computation is as below&lt;/p>
 &lt;p>\begin{split}
 Q &amp;amp;= xW^Q \\
 K &amp;amp;= xW^K \\
