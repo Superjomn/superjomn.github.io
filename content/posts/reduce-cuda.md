@@ -8,15 +8,17 @@ draft = false
 
 ## Question definition {#question-definition}
 
-Given an array of \\(n\\) integers, get the sum of all the elements.
+Given an array of \\(n\\) integers, the goal is to compute the sum of all elements within the array.
 
 
 ## Solutions {#solutions}
 
+The implementations for all kernel versions can be found at [2-reduce.cu on GitHub](https://github.com/Superjomn/cuda-from-scratch/blob/dev/2-reduce.cu).
+
 
 ### Naive version with atomicAdd {#naive-version-with-atomicadd}
 
-The most naive way is to make all the threads trigger atomicAdd on the output.
+The simplest approach involves utilizing each thread to perform an `atomicAdd` operation on the output variable. Here's how the kernel is defined:
 
 ```C++
 __global__ void reduce_naive_atomic(int* g_idata, int* g_odata, unsigned int n)
@@ -34,7 +36,7 @@ __global__ void reduce_naive_atomic(int* g_idata, int* g_odata, unsigned int n)
 }
 ```
 
-And the kernel launcher is simple, it launches the kernel only once:
+And the kernel launcher is straightforward, invoking the kernel a single time:
 
 ```C++
 int launch_reduce(int* g_idata, int* g_odata, unsigned int n, int block_size, kernel_fn kernel, cudaStream_t stream)
@@ -60,7 +62,7 @@ int launch_reduce(int* g_idata, int* g_odata, unsigned int n, int block_size, ke
 }
 ```
 
-On GTX 4080, the throughput could get roughly 82GB/s.
+When tested on a GTX 4080, this method achieved a throughput of approximately 82GB/s.
 
 
 ### Tiled reduction with shared memory {#tiled-reduction-with-shared-memory}
