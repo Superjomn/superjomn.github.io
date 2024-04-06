@@ -1,4 +1,367 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Superjomn's blog</title><link>/posts/</link><description>Recent content in Posts on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Thu, 21 Mar 2024 00:00:00 +0000</lastBuildDate><atom:link href="/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Count the parameters in LLaMA V1 model</title><link>/posts/count-parameters-in-llama/</link><pubDate>Thu, 21 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/count-parameters-in-llama/</guid><description>&lt;p>Let&amp;rsquo;s load the model&lt;/p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Superjomn's blog</title><link>/posts/</link><description>Recent content in Posts on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Mon, 25 Mar 2024 00:00:00 +0000</lastBuildDate><atom:link href="/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Reduce kernel in CUDA</title><link>/posts/reduce-cuda/</link><pubDate>Mon, 25 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/reduce-cuda/</guid><description>&lt;h2 id="question-definition">Question definition&lt;/h2>
+&lt;p>Given an array of \(n\) integers, get the sum of all the elements.&lt;/p>
+&lt;h2 id="solutions">Solutions&lt;/h2>
+&lt;h3 id="naive-version-with-atomicadd">Naive version with atomicAdd&lt;/h3>
+&lt;p>The most naive way is to make all the threads trigger atomicAdd on the output.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_naive_atomic&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> idx &lt;span style="color:#666">=&lt;/span> blockIdx.x &lt;span style="color:#666">*&lt;/span> blockDim.x &lt;span style="color:#666">+&lt;/span> threadIdx.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> gridSize &lt;span style="color:#666">=&lt;/span> blockDim.x &lt;span style="color:#666">*&lt;/span> gridDim.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> sum &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> (&lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> i &lt;span style="color:#666">=&lt;/span> idx; i &lt;span style="color:#666">&amp;lt;&lt;/span> n; i &lt;span style="color:#666">+=&lt;/span> gridSize)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sum &lt;span style="color:#666">+=&lt;/span> g_idata[i];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> atomicAdd(g_odata, sum);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>And the kernel launcher is simple, it launches the kernel only once:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#902000">int&lt;/span> &lt;span style="color:#06287e">launch_reduce&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n, &lt;span style="color:#902000">int&lt;/span> block_size, kernel_fn kernel, cudaStream_t stream)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> idata &lt;span style="color:#666">=&lt;/span> g_idata;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> odata &lt;span style="color:#666">=&lt;/span> g_odata;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">uint32_t&lt;/span> num_warps &lt;span style="color:#666">=&lt;/span> block_size &lt;span style="color:#666">/&lt;/span> &lt;span style="color:#40a070">32&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> smem_size &lt;span style="color:#666">=&lt;/span> num_warps &lt;span style="color:#666">*&lt;/span> &lt;span style="color:#007020;font-weight:bold">sizeof&lt;/span>(&lt;span style="color:#902000">int&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> num_blocks &lt;span style="color:#666">=&lt;/span> ceil(n, block_size);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Launch the kernel
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> kernel&lt;span style="color:#666">&amp;lt;&amp;lt;&amp;lt;&lt;/span>num_blocks, block_size, smem_size, stream&lt;span style="color:#666">&amp;gt;&amp;gt;&amp;gt;&lt;/span>(idata, odata, n);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (&lt;span style="color:#666">!&lt;/span>FLAGS_profile)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cudaStreamSynchronize(stream);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Copy the final result back to the host
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#902000">int&lt;/span> h_out;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> NVCHECK(cudaMemcpyAsync(&lt;span style="color:#666">&amp;amp;&lt;/span>h_out, odata, &lt;span style="color:#007020;font-weight:bold">sizeof&lt;/span>(&lt;span style="color:#902000">int&lt;/span>), cudaMemcpyDeviceToHost, stream));
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> h_out;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>On GTX 4080, the throughput could get roughly 82GB/s.&lt;/p>
+&lt;h3 id="tiled-reduction-with-shared-memory">Tiled reduction with shared memory&lt;/h3>
+&lt;p>One classical way is to utilize the thread block to perform reduction on a tile locally on shared memory.&lt;/p>
+&lt;p>There are several kernel versions to do this.&lt;/p>
+&lt;h4 id="basic-version">Basic version&lt;/h4>
+&lt;p>The basic implementation is as below:&lt;/p>
+&lt;ol>
+&lt;li>load a tile of data into the shared memory collectively&lt;/li>
+&lt;li>perform partial reduction on the data tile inside a thread block and get the sum of the tile&lt;/li>
+&lt;li>write the sum of the tile on the corresponding place on the output slot in global memory, note that, this kernel requires a temporary buffer to write a partial result&lt;/li>
+&lt;li>shrink \(n\) to \(\frac{n}{blockSize}\), and repeat the steps above until \(n=1\)&lt;/li>
+&lt;/ol>
+&lt;!-- raw HTML omitted -->
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_smem_naive&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">extern&lt;/span> __shared__ &lt;span style="color:#902000">int&lt;/span> sdata[];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> tid &lt;span style="color:#666">=&lt;/span> threadIdx.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> i &lt;span style="color:#666">=&lt;/span> blockIdx.x &lt;span style="color:#666">*&lt;/span> blockDim.x &lt;span style="color:#666">+&lt;/span> threadIdx.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Read a block of data into shared memory collectively
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> sdata[tid] &lt;span style="color:#666">=&lt;/span> (i &lt;span style="color:#666">&amp;lt;&lt;/span> n) &lt;span style="color:#666">?&lt;/span> g_idata[i] &lt;span style="color:#666">:&lt;/span> &lt;span style="color:#40a070">0&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> __syncthreads();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> (&lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> stride &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>; stride &lt;span style="color:#666">&amp;lt;&lt;/span> blockDim.x; stride &lt;span style="color:#666">*=&lt;/span> &lt;span style="color:#40a070">2&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// ISSUE: divergent warps
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (tid &lt;span style="color:#666">%&lt;/span> (&lt;span style="color:#40a070">2&lt;/span> &lt;span style="color:#666">*&lt;/span> stride) &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sdata[tid] &lt;span style="color:#666">+=&lt;/span> sdata[tid &lt;span style="color:#666">+&lt;/span> stride];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> __syncthreads(); &lt;span style="color:#60a0b0;font-style:italic">// need to sync per level
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Write the result for this block to global memory
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (tid &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> g_odata[blockIdx.x] &lt;span style="color:#666">=&lt;/span> sdata[&lt;span style="color:#40a070">0&lt;/span>];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This kernel needs multiple times of launching, the launcher is a bit more complex:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#902000">int&lt;/span> &lt;span style="color:#06287e">launch_reduce&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n, &lt;span style="color:#902000">int&lt;/span> block_size, kernel_fn kernel, cudaStream_t stream,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">uint32_t&lt;/span> num_blocks, &lt;span style="color:#902000">uint32_t&lt;/span> smem_size)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> idata &lt;span style="color:#666">=&lt;/span> g_idata;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> odata &lt;span style="color:#666">=&lt;/span> g_odata;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (smem_size &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> smem_size &lt;span style="color:#666">=&lt;/span> block_size &lt;span style="color:#666">*&lt;/span> &lt;span style="color:#007020;font-weight:bold">sizeof&lt;/span>(&lt;span style="color:#902000">int&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Calculate the number of blocks
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> num_blocks &lt;span style="color:#666">=&lt;/span> (num_blocks &lt;span style="color:#666">&amp;gt;&lt;/span> &lt;span style="color:#40a070">0&lt;/span>) &lt;span style="color:#666">?&lt;/span> &lt;span style="color:#002070;font-weight:bold">num_blocks&lt;/span> : (n &lt;span style="color:#666">+&lt;/span> block_size &lt;span style="color:#666">-&lt;/span> &lt;span style="color:#40a070">1&lt;/span>) &lt;span style="color:#666">/&lt;/span> block_size;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (&lt;span style="color:#666">!&lt;/span>FLAGS_profile)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> printf(&lt;span style="color:#4070a0">&amp;#34;- launching: num_blocks: %d, block_size:%d, n:%d&lt;/span>&lt;span style="color:#4070a0;font-weight:bold">\n&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>, num_blocks, block_size, n);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> level &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Launch the kernel
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> kernel&lt;span style="color:#666">&amp;lt;&amp;lt;&amp;lt;&lt;/span>num_blocks, block_size, smem_size, stream&lt;span style="color:#666">&amp;gt;&amp;gt;&amp;gt;&lt;/span>(idata, odata, n);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (&lt;span style="color:#666">!&lt;/span>FLAGS_profile)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cudaStreamSynchronize(stream);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> level&lt;span style="color:#666">++&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Recursively reduce the partial sums
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#007020;font-weight:bold">while&lt;/span> (num_blocks &lt;span style="color:#666">&amp;gt;&lt;/span> &lt;span style="color:#40a070">1&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> std&lt;span style="color:#666">::&lt;/span>swap(idata, odata);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> n &lt;span style="color:#666">=&lt;/span> num_blocks;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> num_blocks &lt;span style="color:#666">=&lt;/span> (n &lt;span style="color:#666">+&lt;/span> block_size &lt;span style="color:#666">-&lt;/span> &lt;span style="color:#40a070">1&lt;/span>) &lt;span style="color:#666">/&lt;/span> block_size;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> kernel&lt;span style="color:#666">&amp;lt;&amp;lt;&amp;lt;&lt;/span>num_blocks, block_size, smem_size, stream&lt;span style="color:#666">&amp;gt;&amp;gt;&amp;gt;&lt;/span>(idata, odata, n);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (&lt;span style="color:#666">!&lt;/span>FLAGS_profile)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cudaStreamSynchronize(stream);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Copy the final result back to the host
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#902000">int&lt;/span> h_out;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> NVCHECK(cudaMemcpyAsync(&lt;span style="color:#666">&amp;amp;&lt;/span>h_out, odata, &lt;span style="color:#007020;font-weight:bold">sizeof&lt;/span>(&lt;span style="color:#902000">int&lt;/span>), cudaMemcpyDeviceToHost, stream));
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> h_out;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>All the tiled reduction kernels share the above launcher.&lt;/p>
+&lt;p>It can get a throughput of 54GB/s, worse than the atomic naive one(82GB/s).&lt;/p>
+&lt;h4 id="avoid-thread-divergence">Avoid thread divergence&lt;/h4>
+&lt;p>The basic version has a serious problem of thread divergence on &lt;code>if (tid % (2 * stride) == 0)&lt;/code>, here is an optimized version:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_smem_1_avoid_divergent_warps&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">extern&lt;/span> __shared__ &lt;span style="color:#902000">int&lt;/span> sdata[];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> tid &lt;span style="color:#666">=&lt;/span> threadIdx.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> i &lt;span style="color:#666">=&lt;/span> blockIdx.x &lt;span style="color:#666">*&lt;/span> blockDim.x &lt;span style="color:#666">+&lt;/span> threadIdx.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sdata[tid] &lt;span style="color:#666">=&lt;/span> (i &lt;span style="color:#666">&amp;lt;&lt;/span> n) &lt;span style="color:#666">?&lt;/span> g_idata[i] &lt;span style="color:#666">:&lt;/span> &lt;span style="color:#40a070">0&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> __syncthreads();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> (&lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> stride &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>; stride &lt;span style="color:#666">&amp;lt;&lt;/span> blockDim.x; stride &lt;span style="color:#666">*=&lt;/span> &lt;span style="color:#40a070">2&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> index &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">2&lt;/span> &lt;span style="color:#666">*&lt;/span> stride &lt;span style="color:#666">*&lt;/span> tid;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (index &lt;span style="color:#666">&amp;lt;&lt;/span> blockDim.x)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Issue: bank conflict
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> sdata[index] &lt;span style="color:#666">+=&lt;/span> sdata[index &lt;span style="color:#666">+&lt;/span> stride];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> __syncthreads();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (tid &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> g_odata[blockIdx.x] &lt;span style="color:#666">=&lt;/span> sdata[&lt;span style="color:#40a070">0&lt;/span>];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>It can reach 70GB/s, which is 29% improved than the basic one.&lt;/p>
+&lt;h4 id="read-two-elements-one-time">Read two elements one time&lt;/h4>
+&lt;p>The last version has a low DRAM throughput: &lt;code>DRAM Throughput [%] 20.63&lt;/code>, that may due to the following reasons:&lt;/p>
+&lt;ol>
+&lt;li>The grid size is small due to a small input, so the resource is not fully utilized with the threads&lt;/li>
+&lt;li>Each thread reads only one element, considering there are a fixed number of resident thread blocks in SMs for a specific kernel, which means a small number of LD instructions are launched each time.&lt;/li>
+&lt;/ol>
+&lt;p>To improve the DRAM Throughput, for small grid size, we can make the thread read more than one element each time.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_smem_3_read_two&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">extern&lt;/span> __shared__ &lt;span style="color:#902000">int&lt;/span> sdata[];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> tid &lt;span style="color:#666">=&lt;/span> threadIdx.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> i &lt;span style="color:#666">=&lt;/span> blockIdx.x &lt;span style="color:#666">*&lt;/span> (blockDim.x &lt;span style="color:#666">*&lt;/span> &lt;span style="color:#40a070">2&lt;/span>) &lt;span style="color:#666">+&lt;/span> threadIdx.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#define GET_ELEM(__idx) ((__idx) &amp;lt; n ? g_idata[(__idx)] : 0)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sdata[tid] &lt;span style="color:#666">=&lt;/span> GET_ELEM(i) &lt;span style="color:#666">+&lt;/span> GET_ELEM(i &lt;span style="color:#666">+&lt;/span> blockDim.x);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> __syncthreads();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> (&lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> stride &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>; stride &lt;span style="color:#666">&amp;lt;&lt;/span> blockDim.x; stride &lt;span style="color:#666">*=&lt;/span> &lt;span style="color:#40a070">2&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> index &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">2&lt;/span> &lt;span style="color:#666">*&lt;/span> stride &lt;span style="color:#666">*&lt;/span> tid;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (index &lt;span style="color:#666">&amp;lt;&lt;/span> blockDim.x)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Issue: bank conflict
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> sdata[index] &lt;span style="color:#666">+=&lt;/span> sdata[index &lt;span style="color:#666">+&lt;/span> stride];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> __syncthreads();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (tid &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> g_odata[blockIdx.x] &lt;span style="color:#666">=&lt;/span> sdata[&lt;span style="color:#40a070">0&lt;/span>];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This kernel achieves &lt;code>DRAM Throughput [%] 33.78&lt;/code>, which is 63.72% larger than the previous one.&lt;/p>
+&lt;p>The overall throughput is 96.51GB/s, which is 37.87% better than the previous one(70GB/s).&lt;/p>
+&lt;h3 id="tiled-reduction-with-warp-shlf">Tiled reduction with warp_shlf&lt;/h3>
+&lt;p>The modern GPU supports threads within a warp to exchange data directly instead of shared memory, which should be much faster by eliminating the shared memory read/write.&lt;/p>
+&lt;p>The following function helps to do a reduction on a single warp.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">// using warp shuffle instruction
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">// From book &amp;lt;Professional CUDA C Programming&amp;gt;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span>__inline__ __device__ &lt;span style="color:#902000">int&lt;/span> &lt;span style="color:#06287e">warpReduce&lt;/span>(&lt;span style="color:#902000">int&lt;/span> mySum)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">+=&lt;/span> __shfl_xor(mySum, &lt;span style="color:#40a070">16&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">+=&lt;/span> __shfl_xor(mySum, &lt;span style="color:#40a070">8&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">+=&lt;/span> __shfl_xor(mySum, &lt;span style="color:#40a070">4&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">+=&lt;/span> __shfl_xor(mySum, &lt;span style="color:#40a070">2&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">+=&lt;/span> __shfl_xor(mySum, &lt;span style="color:#40a070">1&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> mySum;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>If a thread block contains multiple warps, it requires synchronization, the shared memory is a good choice. By writing the sum within each warp into the shared memory, and then doing a reduction on the shared memory as above, we can get the sum of a thread block, and the rest logic is identical to the kernels above.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_warp_shlf&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Helps to share data between warps
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#60a0b0;font-style:italic">// size should be (blockDim.x / warpSize)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#007020;font-weight:bold">extern&lt;/span> __shared__ &lt;span style="color:#902000">int&lt;/span> sdata[];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> idx &lt;span style="color:#666">=&lt;/span> blockIdx.x &lt;span style="color:#666">*&lt;/span> blockDim.x &lt;span style="color:#666">+&lt;/span> threadIdx.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Necessary to make sure shfl instruction is not used with uninitialized data
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#902000">int&lt;/span> mySum &lt;span style="color:#666">=&lt;/span> idx &lt;span style="color:#666">&amp;lt;&lt;/span> n &lt;span style="color:#666">?&lt;/span> g_idata[idx] &lt;span style="color:#666">:&lt;/span> &lt;span style="color:#40a070">0&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> lane &lt;span style="color:#666">=&lt;/span> threadIdx.x &lt;span style="color:#666">%&lt;/span> warpSize;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> warp &lt;span style="color:#666">=&lt;/span> threadIdx.x &lt;span style="color:#666">/&lt;/span> warpSize;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">=&lt;/span> warpReduce(mySum);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (lane &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sdata[warp] &lt;span style="color:#666">=&lt;/span> mySum;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> __syncthreads();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// last warp reduce
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> mySum &lt;span style="color:#666">=&lt;/span> (threadIdx.x &lt;span style="color:#666">&amp;lt;&lt;/span> blockDim.x &lt;span style="color:#666">/&lt;/span> warpSize) &lt;span style="color:#666">?&lt;/span> sdata[lane] &lt;span style="color:#666">:&lt;/span> &lt;span style="color:#40a070">0&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (warp &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">=&lt;/span> warpReduce(mySum);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (threadIdx.x &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> g_odata[blockIdx.x] &lt;span style="color:#666">=&lt;/span> mySum;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This kernel reads a single element of thread, but it can achieve a throughput of 96GB/s (The shared memory version is 70GB/s). Of course, it can be refactored to read \(N\) element each time:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">template&lt;/span> &lt;span style="color:#666">&amp;lt;&lt;/span>&lt;span style="color:#902000">int&lt;/span> NT&lt;span style="color:#666">&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> reduce_warp_shlf_read_N(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Helps to share data between warps
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#60a0b0;font-style:italic">// size should be (blockDim.x / warpSize)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#007020;font-weight:bold">extern&lt;/span> __shared__ &lt;span style="color:#902000">int&lt;/span> sdata[];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> blockSize &lt;span style="color:#666">=&lt;/span> NT &lt;span style="color:#666">*&lt;/span> blockDim.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> idx &lt;span style="color:#666">=&lt;/span> blockIdx.x &lt;span style="color:#666">*&lt;/span> blockSize &lt;span style="color:#666">+&lt;/span> threadIdx.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">// Necessary to make sure shfl instruction is not used with uninitialized data
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span>&lt;span style="color:#007020">#define GET_ELEM(__idx) ((__idx) &amp;lt; n ? g_idata[(__idx)] : 0)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">&lt;/span> &lt;span style="color:#902000">int&lt;/span> mySum &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#pragma unroll
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">&lt;/span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> (&lt;span style="color:#902000">int&lt;/span> i &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>; i &lt;span style="color:#666">&amp;lt;&lt;/span> NT; i&lt;span style="color:#666">++&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">+=&lt;/span> GET_ELEM(idx &lt;span style="color:#666">+&lt;/span> i &lt;span style="color:#666">*&lt;/span> blockDim.x);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> lane &lt;span style="color:#666">=&lt;/span> threadIdx.x &lt;span style="color:#666">%&lt;/span> warpSize;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> warp &lt;span style="color:#666">=&lt;/span> threadIdx.x &lt;span style="color:#666">/&lt;/span> warpSize;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">=&lt;/span> warpReduce(mySum);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (lane &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sdata[warp] &lt;span style="color:#666">=&lt;/span> mySum;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> __syncthreads();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// last warp reduce
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> mySum &lt;span style="color:#666">=&lt;/span> (threadIdx.x &lt;span style="color:#666">&amp;lt;&lt;/span> blockDim.x &lt;span style="color:#666">/&lt;/span> warpSize) &lt;span style="color:#666">?&lt;/span> sdata[lane] &lt;span style="color:#666">:&lt;/span> &lt;span style="color:#40a070">0&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (warp &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">=&lt;/span> warpReduce(mySum);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (threadIdx.x &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> g_odata[blockIdx.x] &lt;span style="color:#666">=&lt;/span> mySum;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>With different \(NT\), it gets different performance:&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>NT&lt;/th>
+&lt;th>throughput (GB/s)&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>1&lt;/td>
+&lt;td>96.3187&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>2&lt;/td>
+&lt;td>96.2341&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>4&lt;/td>
+&lt;td>96.8153&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>8&lt;/td>
+&lt;td>107.226&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h3 id="warp-shuffle-with-atomic">warp shuffle with atomic&lt;/h3>
+&lt;p>Compared to the tiled solution, the atomicAdd doesn&amp;rsquo;t need a temporary buffer and the kernel needs to launch only once. Let&amp;rsquo;s take atomic together with warp shuffle.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">template&lt;/span> &lt;span style="color:#666">&amp;lt;&lt;/span>&lt;span style="color:#902000">int&lt;/span> NT&lt;span style="color:#666">&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> reduce_warp_shlf_read_N_atomic(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Helps to share data between warps
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#60a0b0;font-style:italic">// size should be (blockDim.x / warpSize)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#007020;font-weight:bold">extern&lt;/span> __shared__ &lt;span style="color:#902000">int&lt;/span> sdata[];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> blockSize &lt;span style="color:#666">=&lt;/span> NT &lt;span style="color:#666">*&lt;/span> blockDim.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> idx &lt;span style="color:#666">=&lt;/span> blockIdx.x &lt;span style="color:#666">*&lt;/span> blockSize &lt;span style="color:#666">+&lt;/span> threadIdx.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">// Necessary to make sure shfl instruction is not used with uninitialized data
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">// This only needs one turn of launch
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span>&lt;span style="color:#007020">#define GET_ELEM(__idx) ((__idx) &amp;lt; n ? g_idata[(__idx)] : 0)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">&lt;/span> &lt;span style="color:#902000">int&lt;/span> mySum &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#pragma unroll
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">&lt;/span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> (&lt;span style="color:#902000">int&lt;/span> i &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>; i &lt;span style="color:#666">&amp;lt;&lt;/span> NT; i&lt;span style="color:#666">++&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">+=&lt;/span> GET_ELEM(idx &lt;span style="color:#666">+&lt;/span> i &lt;span style="color:#666">*&lt;/span> blockDim.x);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> lane &lt;span style="color:#666">=&lt;/span> threadIdx.x &lt;span style="color:#666">%&lt;/span> warpSize;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> warp &lt;span style="color:#666">=&lt;/span> threadIdx.x &lt;span style="color:#666">/&lt;/span> warpSize;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">=&lt;/span> warpReduce(mySum);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (lane &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sdata[warp] &lt;span style="color:#666">=&lt;/span> mySum;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> __syncthreads();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// last warp reduce
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> mySum &lt;span style="color:#666">=&lt;/span> (threadIdx.x &lt;span style="color:#666">&amp;lt;&lt;/span> blockDim.x &lt;span style="color:#666">/&lt;/span> warpSize) &lt;span style="color:#666">?&lt;/span> sdata[lane] &lt;span style="color:#666">:&lt;/span> &lt;span style="color:#40a070">0&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (warp &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">=&lt;/span> warpReduce(mySum);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (threadIdx.x &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> atomicAdd(g_odata, mySum);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>It can achieve a throughput of 121.777 GB/s, which is the best on the same setting.&lt;/p>
+&lt;h2 id="benchmark">Benchmark&lt;/h2>
+&lt;figure>&lt;img src="/ox-hugo/2024-04-06_16-47-39_screenshot.png">
+&lt;/figure>
+&lt;p>Note that, in different \(n\), the optimum kernel might be different.&lt;/p>
+&lt;h2 id="reference">Reference&lt;/h2>
+&lt;ul>
+&lt;li>&lt;a href="https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf">Optimizing Parallel Reduction in CUDA&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://developer.nvidia.com/blog/faster-parallel-reductions-kepler/">Faster Parallel Reductions on Kepler | NVIDIA Technical Blog&lt;/a>&lt;/li>
+&lt;/ul></description></item><item><title>Count the parameters in LLaMA V1 model</title><link>/posts/count-parameters-in-llama/</link><pubDate>Thu, 21 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/count-parameters-in-llama/</guid><description>&lt;p>Let&amp;rsquo;s load the model&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">transformers&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> LlamaModel, LlamaConfig
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>model &lt;span style="color:#666">=&lt;/span> LlamaModel&lt;span style="color:#666">.&lt;/span>from_pretrained(&lt;span style="color:#4070a0">&amp;#34;llama-7b-hf-path&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
