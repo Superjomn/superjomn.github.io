@@ -1,9 +1,9 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Basics on Superjomn's blog</title><link>/tags/basics/</link><description>Recent content in Basics on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Mon, 25 Mar 2024 00:00:00 +0000</lastBuildDate><atom:link href="/tags/basics/index.xml" rel="self" type="application/rss+xml"/><item><title>Reduce kernel in CUDA</title><link>/posts/reduce-cuda/</link><pubDate>Mon, 25 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/reduce-cuda/</guid><description>&lt;h2 id="question-definition">Question definition&lt;/h2>
-&lt;p>Given an array of \(n\) integers, get the sum of all the elements.&lt;/p>
+&lt;p>Given an array of \(n\) integers, the goal is to compute the sum of all elements within the array.&lt;/p>
 &lt;h2 id="solutions">Solutions&lt;/h2>
-&lt;p>The code of all the kernels located at &lt;a href="https://github.com/Superjomn/cuda-from-scratch/blob/dev/2-reduce.cu">2-reduce.cu&lt;/a>.&lt;/p>
+&lt;p>The implementations for all kernel versions can be found at &lt;a href="https://github.com/Superjomn/cuda-from-scratch/blob/dev/2-reduce.cu">2-reduce.cu on GitHub&lt;/a>.&lt;/p>
 &lt;h3 id="naive-version-with-atomicadd">Naive version with atomicAdd&lt;/h3>
-&lt;p>The most naive way is to make all the threads trigger atomicAdd on the output.&lt;/p>
+&lt;p>The simplest approach involves utilizing each thread to perform an &lt;code>atomicAdd&lt;/code> operation on the output variable. Here&amp;rsquo;s how the kernel is defined:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_naive_atomic&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> idx &lt;span style="color:#666">=&lt;/span> blockIdx.x &lt;span style="color:#666">*&lt;/span> blockDim.x &lt;span style="color:#666">+&lt;/span> threadIdx.x;
@@ -17,7 +17,7 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> atomicAdd(g_odata, sum);
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>And the kernel launcher is simple, it launches the kernel only once:&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>And the kernel launcher is straightforward, invoking the kernel a single time:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#902000">int&lt;/span> &lt;span style="color:#06287e">launch_reduce&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n, &lt;span style="color:#902000">int&lt;/span> block_size, kernel_fn kernel, cudaStream_t stream)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> idata &lt;span style="color:#666">=&lt;/span> g_idata;
@@ -39,7 +39,7 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> h_out;
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>On GTX 4080, the throughput could get roughly 82GB/s.&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>When tested on a GTX 4080, this method achieved a throughput of approximately 82GB/s.&lt;/p>
 &lt;h3 id="tiled-reduction-with-shared-memory">Tiled reduction with shared memory&lt;/h3>
 &lt;p>One classical way is to utilize the thread block to perform reduction on a tile locally on shared memory.&lt;/p>
 &lt;p>There are several kernel versions to do this.&lt;/p>
