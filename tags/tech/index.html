@@ -16,7 +16,7 @@ About</a></nav></div><div class=container><main id=main><h1>Tech</h1><p><h3><a c
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/basics>basics</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p>Question definition Given an array of \(n\) integers, the goal is to compute the sum of all elements within the array.
 Solutions The implementations for all kernel versions can be found at 2-reduce.cu on GitHub.
-Naive version with atomicAdd The simplest approach involves utilizing each thread to perform an atomicAdd operation on the output variable. Here&rsquo;s how the kernel is defined:
+Naive Version with atomicAdd The simplest approach involves utilizing each thread to perform an atomicAdd operation on the output variable. Here&rsquo;s how the kernel is defined:
 __global__ void reduce_naive_atomic(int* g_idata, int* g_odata, unsigned int n) { unsigned int idx = blockIdx.</p></p><p><h3><a class=title href=/posts/count-parameters-in-llama/>Count the parameters in LLaMA V1 model</a></h3><i data-feather=calendar></i> <time datetime=2024-03-21>Mar 21, 2024</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/llm>LLM</a>

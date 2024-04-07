@@ -2,7 +2,7 @@
 &lt;p>Given an array of \(n\) integers, the goal is to compute the sum of all elements within the array.&lt;/p>
 &lt;h2 id="solutions">Solutions&lt;/h2>
 &lt;p>The implementations for all kernel versions can be found at &lt;a href="https://github.com/Superjomn/cuda-from-scratch/blob/dev/2-reduce.cu">2-reduce.cu on GitHub&lt;/a>.&lt;/p>
-&lt;h3 id="naive-version-with-atomicadd">Naive version with atomicAdd&lt;/h3>
+&lt;h3 id="naive-version-with-atomicadd">Naive Version with &lt;code>atomicAdd&lt;/code>&lt;/h3>
 &lt;p>The simplest approach involves utilizing each thread to perform an &lt;code>atomicAdd&lt;/code> operation on the output variable. Here&amp;rsquo;s how the kernel is defined:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_naive_atomic&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
@@ -40,7 +40,7 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> h_out;
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>When tested on a GTX 4080, this method achieved a throughput of approximately 82GB/s.&lt;/p>
-&lt;h3 id="tiled-reduction-with-shared-memory">Tiled reduction with shared memory&lt;/h3>
+&lt;h3 id="tiled-reduction-with-shared-memory">Tiled Reduction with Shared Memory&lt;/h3>
 &lt;p>A classical approach involves leveraging a thread block to perform local reductions on a tile within shared memory.
 This method encompasses several kernel versions, each with different optimizations.&lt;/p>
 &lt;h4 id="basic-version">Basic version&lt;/h4>
@@ -202,8 +202,7 @@ The overall throughput reaches 96.51GB/s, demonstrating 37.87% enhancement from 
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">+=&lt;/span> __shfl_xor(mySum, &lt;span style="color:#40a070">1&lt;/span>);
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> mySum;
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>When a thread block contains multiple warps, synchronization becomes essential.
-Utilizing shared memory to store the sum computed by each warp and subsequently reducing these sums as previously described enables the calculation of a thread block&amp;rsquo;s total sum.&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Utilizing shared memory to store the sum computed by each warp and subsequently reducing these sums as previously described enables the calculation of a thread block&amp;rsquo;s total sum.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_warp_shlf&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Helps to share data between warps
