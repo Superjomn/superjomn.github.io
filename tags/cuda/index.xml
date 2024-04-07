@@ -41,15 +41,15 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>When tested on a GTX 4080, this method achieved a throughput of approximately 82GB/s.&lt;/p>
 &lt;h3 id="tiled-reduction-with-shared-memory">Tiled reduction with shared memory&lt;/h3>
-&lt;p>One classical way is to utilize the thread block to perform reduction on a tile locally on shared memory.&lt;/p>
-&lt;p>There are several kernel versions to do this.&lt;/p>
+&lt;p>A classical approach involves leveraging a thread block to perform local reductions on a tile within shared memory.
+This method encompasses several kernel versions, each with different optimizations.&lt;/p>
 &lt;h4 id="basic-version">Basic version&lt;/h4>
-&lt;p>The basic implementation is as below:&lt;/p>
+&lt;p>The initial implementation is as below:&lt;/p>
 &lt;ol>
-&lt;li>load a tile of data into the shared memory collectively&lt;/li>
-&lt;li>perform partial reduction on the data tile inside a thread block and get the sum of the tile&lt;/li>
-&lt;li>write the sum of the tile on the corresponding place on the output slot in global memory, note that, this kernel requires a temporary buffer to write a partial result&lt;/li>
-&lt;li>shrink \(n\) to \(\frac{n}{blockSize}\), and repeat the steps above until \(n=1\)&lt;/li>
+&lt;li>A tile of data is collaboratively loaded into shared memory.&lt;/li>
+&lt;li>A partial reduction on this data tile is executed within a thread block, get the sum of the tile.&lt;/li>
+&lt;li>The sum is then written to a designated spot in the global memory&amp;rsquo;s output slot. It&amp;rsquo;s important to note that this kernel requires a temporary buffer for writing partial results from each thread block.&lt;/li>
+&lt;li>The process repeats with the size \(n\) reduced to \(\frac{n}{blockSize}\), continuing until \(n=1\).&lt;/li>
 &lt;/ol>
 &lt;!-- raw HTML omitted -->
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_smem_naive&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
@@ -79,7 +79,7 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> g_odata[blockIdx.x] &lt;span style="color:#666">=&lt;/span> sdata[&lt;span style="color:#40a070">0&lt;/span>];
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This kernel needs multiple times of launching, the launcher is a bit more complex:&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Launching this kernel multiple times involves a slightly more complex launcher:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#902000">int&lt;/span> &lt;span style="color:#06287e">launch_reduce&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n, &lt;span style="color:#902000">int&lt;/span> block_size, kernel_fn kernel, cudaStream_t stream,
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">uint32_t&lt;/span> num_blocks, &lt;span style="color:#902000">uint32_t&lt;/span> smem_size)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
@@ -119,10 +119,10 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> h_out;
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>All the tiled reduction kernels share the above launcher.&lt;/p>
-&lt;p>It can get a throughput of 54GB/s, worse than the atomic naive one(82GB/s).&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>All tiled reduction kenrels utilize the aforementioned launcher, achieving a throughput of 54GB/s. This is less efficient compared to the atomic naive version, which reaches 82GB/s.&lt;/p>
 &lt;h4 id="avoid-thread-divergence">Avoid thread divergence&lt;/h4>
-&lt;p>The basic version has a serious problem of thread divergence on &lt;code>if (tid % (2 * stride) == 0)&lt;/code>, here is an optimized version:&lt;/p>
+&lt;p>The basic version encounters significant thread divergence, particularly noticeable at &lt;code>if (tid % (2 * stride) == 0)&lt;/code>.
+Here is an optimized variant:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_smem_1_avoid_divergent_warps&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">extern&lt;/span> __shared__ &lt;span style="color:#902000">int&lt;/span> sdata[];
@@ -149,14 +149,14 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> g_odata[blockIdx.x] &lt;span style="color:#666">=&lt;/span> sdata[&lt;span style="color:#40a070">0&lt;/span>];
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>It can reach 70GB/s, which is 29% improved than the basic one.&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The optimization yields a 70GB/s throughput, marking a 29% improvement over the basic version.&lt;/p>
 &lt;h4 id="read-two-elements-one-time">Read two elements one time&lt;/h4>
-&lt;p>The last version has a low DRAM throughput: &lt;code>DRAM Throughput [%] 20.63&lt;/code>, that may due to the following reasons:&lt;/p>
+&lt;p>The preceding version&amp;rsquo;s DRAM throughput was only 20.63%, likely due to&lt;/p>
 &lt;ol>
-&lt;li>The grid size is small due to a small input, so the resource is not fully utilized with the threads&lt;/li>
-&lt;li>Each thread reads only one element, considering there are a fixed number of resident thread blocks in SMs for a specific kernel, which means a small number of LD instructions are launched each time.&lt;/li>
+&lt;li>Insufficient grid size for small inputs, leading to underutilized thread resources.&lt;/li>
+&lt;li>Each thread reading a single element at a time, given the fixed number of resident thread blocks per SM for a specific kernel, results in a limited number of load instructions issued.&lt;/li>
 &lt;/ol>
-&lt;p>To improve the DRAM Throughput, for small grid size, we can make the thread read more than one element each time.&lt;/p>
+&lt;p>To enhance DRAM throughput, especially for smaller grid sizes, threads can be configured to read more than one element at a time.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_smem_3_read_two&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">extern&lt;/span> __shared__ &lt;span style="color:#902000">int&lt;/span> sdata[];
@@ -186,11 +186,11 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> g_odata[blockIdx.x] &lt;span style="color:#666">=&lt;/span> sdata[&lt;span style="color:#40a070">0&lt;/span>];
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This kernel achieves &lt;code>DRAM Throughput [%] 33.78&lt;/code>, which is 63.72% larger than the previous one.&lt;/p>
-&lt;p>The overall throughput is 96.51GB/s, which is 37.87% better than the previous one(70GB/s).&lt;/p>
-&lt;h3 id="tiled-reduction-with-warp-shlf">Tiled reduction with warp_shlf&lt;/h3>
-&lt;p>The modern GPU supports threads within a warp to exchange data directly instead of shared memory, which should be much faster by eliminating the shared memory read/write.&lt;/p>
-&lt;p>The following function helps to do a reduction on a single warp.&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This approach improves the DRAM Throughput to 33.78%, a significant 63.72% increase over the previous method.
+The overall throughput reaches 96.51GB/s, demonstrating 37.87% enhancement from the 70GB/s achieved earlier.&lt;/p>
+&lt;h3 id="tiled-reduction-with-warp-shuffle">Tiled Reduction with Warp Shuffle&lt;/h3>
+&lt;p>Modern GPUs facilitate direct data exchange within a warp, bypassing the need for shared memory.&lt;/p>
+&lt;p>The function below demonstrates how to conduct a reduction within a single warp using the warp shuffle instruction, as highlighted in the book &amp;lt;Professional CUDA C Programming&amp;gt;.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">// using warp shuffle instruction
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">// From book &amp;lt;Professional CUDA C Programming&amp;gt;
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span>__inline__ __device__ &lt;span style="color:#902000">int&lt;/span> &lt;span style="color:#06287e">warpReduce&lt;/span>(&lt;span style="color:#902000">int&lt;/span> mySum)
@@ -202,7 +202,8 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mySum &lt;span style="color:#666">+=&lt;/span> __shfl_xor(mySum, &lt;span style="color:#40a070">1&lt;/span>);
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> mySum;
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>If a thread block contains multiple warps, it requires synchronization, the shared memory is a good choice. By writing the sum within each warp into the shared memory, and then doing a reduction on the shared memory as above, we can get the sum of a thread block, and the rest logic is identical to the kernels above.&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>When a thread block contains multiple warps, synchronization becomes essential.
+Utilizing shared memory to store the sum computed by each warp and subsequently reducing these sums as previously described enables the calculation of a thread block&amp;rsquo;s total sum.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_warp_shlf&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Helps to share data between warps
@@ -238,7 +239,8 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> g_odata[blockIdx.x] &lt;span style="color:#666">=&lt;/span> mySum;
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This kernel reads a single element of thread, but it can achieve a throughput of 96GB/s (The shared memory version is 70GB/s). Of course, it can be refactored to read \(N\) element each time:&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Despite reading only a single element per thread, this kernel can achieve a throughput of 96GB/s, outperforming the shared memory version&amp;rsquo;s 70GB/s.
+Furthermore, the kernel can be modified to read \(NT\) elements at a time for enhanced efficiency:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">template&lt;/span> &lt;span style="color:#666">&amp;lt;&lt;/span>&lt;span style="color:#902000">int&lt;/span> NT&lt;span style="color:#666">&amp;gt;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> reduce_warp_shlf_read_N(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
@@ -281,7 +283,7 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> g_odata[blockIdx.x] &lt;span style="color:#666">=&lt;/span> mySum;
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>With different \(NT\), it gets different performance:&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Performance varies with different \(N\) values, as summarized below:&lt;/p>
 &lt;table>
 &lt;thead>
 &lt;tr>
@@ -308,8 +310,10 @@
 &lt;/tr>
 &lt;/tbody>
 &lt;/table>
-&lt;h3 id="warp-shuffle-with-atomic">warp shuffle with atomic&lt;/h3>
-&lt;p>Compared to the tiled solution, the atomicAdd doesn&amp;rsquo;t need a temporary buffer and the kernel needs to launch only once. Let&amp;rsquo;s take atomic together with warp shuffle.&lt;/p>
+&lt;h3 id="warp-shuffle-combined-with-atomic-operations">Warp Shuffle Combined with Atomic Operations&lt;/h3>
+&lt;p>Compared to tiled reduction solutions, utilizing &lt;code>atomicAdd&lt;/code> eliminates the need for a temporary buffer and requires only a single kernel launch.
+This segment explores combining warp shuffle and atomic operations for efficient reduction.&lt;/p>
+&lt;p>The kernel template below demonstrates this approach, utilizing warp shuffle instructions to enhance the warp reduction performance, and leveraging atomic operations to write directly to the output slot without the need for temporary buffer and multiple kernel launches.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">template&lt;/span> &lt;span style="color:#666">&amp;lt;&lt;/span>&lt;span style="color:#902000">int&lt;/span> NT&lt;span style="color:#666">&amp;gt;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> reduce_warp_shlf_read_N_atomic(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
@@ -353,11 +357,12 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> atomicAdd(g_odata, mySum);
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>It can achieve a throughput of 121.777 GB/s, which is the best on the same setting.&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Remarkably, this kernel achieves a throughput of 121.777 GB/s under the same conditions.&lt;/p>
 &lt;h2 id="benchmark">Benchmark&lt;/h2>
+&lt;p>The benchmark results illustrate the performance of different CUDA optimization strategies under varying conditions.&lt;/p>
 &lt;figure>&lt;img src="/ox-hugo/2024-04-06_16-47-39_screenshot.png">
 &lt;/figure>
-&lt;p>Note that, in different \(n\), the optimum kernel might be different.&lt;/p>
+&lt;p>Note that the optimal kernel configuration may vary depending on the size of the input data(\(n\)).&lt;/p>
 &lt;h2 id="reference">Reference&lt;/h2>
 &lt;ul>
 &lt;li>&lt;a href="https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf">Optimizing Parallel Reduction in CUDA&lt;/a>&lt;/li>
