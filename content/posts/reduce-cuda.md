@@ -16,7 +16,7 @@ Given an array of \\(n\\) integers, the goal is to compute the sum of all elemen
 The implementations for all kernel versions can be found at [2-reduce.cu on GitHub](https://github.com/Superjomn/cuda-from-scratch/blob/dev/2-reduce.cu).
 
 
-### Naive version with atomicAdd {#naive-version-with-atomicadd}
+### Naive Version with `atomicAdd` {#naive-version-with-atomicadd}
 
 The simplest approach involves utilizing each thread to perform an `atomicAdd` operation on the output variable. Here's how the kernel is defined:
 
@@ -65,7 +65,7 @@ int launch_reduce(int* g_idata, int* g_odata, unsigned int n, int block_size, ke
 When tested on a GTX 4080, this method achieved a throughput of approximately 82GB/s.
 
 
-### Tiled reduction with shared memory {#tiled-reduction-with-shared-memory}
+### Tiled Reduction with Shared Memory {#tiled-reduction-with-shared-memory}
 
 A classical approach involves leveraging a thread block to perform local reductions on a tile within shared memory.
 This method encompasses several kernel versions, each with different optimizations.
@@ -261,7 +261,6 @@ __inline__ __device__ int warpReduce(int mySum)
 }
 ```
 
-When a thread block contains multiple warps, synchronization becomes essential.
 Utilizing shared memory to store the sum computed by each warp and subsequently reducing these sums as previously described enables the calculation of a thread block's total sum.
 
 ```C++
