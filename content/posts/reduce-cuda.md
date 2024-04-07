@@ -67,19 +67,18 @@ When tested on a GTX 4080, this method achieved a throughput of approximately 82
 
 ### Tiled reduction with shared memory {#tiled-reduction-with-shared-memory}
 
-One classical way is to utilize the thread block to perform reduction on a tile locally on shared memory.
-
-There are several kernel versions to do this.
+A classical approach involves leveraging a thread block to perform local reductions on a tile within shared memory.
+This method encompasses several kernel versions, each with different optimizations.
 
 
 #### Basic version {#basic-version}
 
-The basic implementation is as below:
+The initial implementation is as below:
 
-1.  load a tile of data into the shared memory collectively
-2.  perform partial reduction on the data tile inside a thread block and get the sum of the tile
-3.  write the sum of the tile on the corresponding place on the output slot in global memory, note that, this kernel requires a temporary buffer to write a partial result
-4.  shrink \\(n\\) to \\(\frac{n}{blockSize}\\), and repeat the steps above until \\(n=1\\)
+1.  A tile of data is collaboratively loaded into shared memory.
+2.  A partial reduction on this data tile is executed within a thread block, get the sum of the tile.
+3.  The sum is then written to a designated spot in the global memory's output slot. It's important to note that this kernel requires a temporary buffer for writing partial results from each thread block.
+4.  The process repeats with the size \\(n\\) reduced to \\(\frac{n}{blockSize}\\), continuing until \\(n=1\\).
 
 <!--listend-->
 
@@ -113,7 +112,7 @@ __global__ void reduce_smem_naive(int* g_idata, int* g_odata, unsigned int n)
 }
 ```
 
-This kernel needs multiple times of launching, the launcher is a bit more complex:
+Launching this kernel multiple times involves a slightly more complex launcher:
 
 ```C++
 int launch_reduce(int* g_idata, int* g_odata, unsigned int n, int block_size, kernel_fn kernel, cudaStream_t stream,
@@ -157,14 +156,13 @@ int launch_reduce(int* g_idata, int* g_odata, unsigned int n, int block_size, ke
 }
 ```
 
-All the tiled reduction kernels share the above launcher.
-
-It can get a throughput of 54GB/s, worse than the atomic naive one(82GB/s).
+All tiled reduction kenrels utilize the aforementioned launcher, achieving a throughput of 54GB/s. This is less efficient compared to the atomic naive version, which reaches 82GB/s.
 
 
 #### Avoid thread divergence {#avoid-thread-divergence}
 
-The basic version has a serious problem of thread divergence on `if (tid % (2 * stride) == 0)`, here is an optimized version:
+The basic version encounters significant thread divergence, particularly noticeable at `if (tid % (2 * stride) == 0)`.
+Here is an optimized variant:
 
 ```C++
 __global__ void reduce_smem_1_avoid_divergent_warps(int* g_idata, int* g_odata, unsigned int n)
@@ -195,17 +193,17 @@ __global__ void reduce_smem_1_avoid_divergent_warps(int* g_idata, int* g_odata, 
 }
 ```
 
-It can reach 70GB/s, which is 29% improved than the basic one.
+The optimization yields a 70GB/s throughput, marking a 29% improvement over the basic version.
 
 
 #### Read two elements one time {#read-two-elements-one-time}
 
-The last version has a low DRAM throughput: `DRAM Throughput [%]	20.63`, that may due to the following reasons:
+The preceding version's DRAM throughput was only 20.63%, likely due to
 
-1.  The grid size is small due to a small input, so the resource is not fully utilized with the threads
-2.  Each thread reads only one element, considering there are a fixed number of resident thread blocks in SMs for a specific kernel, which means a small number of LD instructions are launched each time.
+1.  Insufficient grid size for small inputs, leading to underutilized thread resources.
+2.  Each thread reading a single element at a time, given the fixed number of resident thread blocks per SM for a specific kernel, results in a limited number of load instructions issued.
 
-To improve the DRAM Throughput, for small grid size, we can make the thread read more than one element each time.
+To enhance DRAM throughput, especially for smaller grid sizes, threads can be configured to read more than one element at a time.
 
 ```C++
 __global__ void reduce_smem_3_read_two(int* g_idata, int* g_odata, unsigned int n)
@@ -239,16 +237,15 @@ __global__ void reduce_smem_3_read_two(int* g_idata, int* g_odata, unsigned int 
 }
 ```
 
-This kernel achieves `DRAM Throughput [%]	33.78`, which is 63.72% larger than the previous one.
+This approach improves the DRAM Throughput to 33.78%, a significant 63.72% increase over the previous method.
+The overall throughput reaches 96.51GB/s, demonstrating 37.87% enhancement from the 70GB/s achieved earlier.
 
-The overall throughput is 96.51GB/s, which is 37.87% better than the previous one(70GB/s).
 
+### Tiled Reduction with Warp Shuffle {#tiled-reduction-with-warp-shuffle}
 
-### Tiled reduction with warp_shlf {#tiled-reduction-with-warp-shlf}
+Modern GPUs facilitate direct data exchange within a warp, bypassing the need for shared memory.
 
-The modern GPU supports threads within a warp to exchange data directly instead of shared memory, which should be much faster by eliminating the shared memory read/write.
-
-The following function helps to do a reduction on a single warp.
+The function below demonstrates how to conduct a reduction within a single warp using the warp shuffle instruction, as highlighted in the book &lt;Professional CUDA C Programming&gt;.
 
 ```C++
 // using warp shuffle instruction
@@ -264,7 +261,8 @@ __inline__ __device__ int warpReduce(int mySum)
 }
 ```
 
-If a thread block contains multiple warps, it requires synchronization, the shared memory is a good choice. By writing the sum within each warp into the shared memory, and then doing a reduction on the shared memory as above, we can get the sum of a thread block, and the rest logic is identical to the kernels above.
+When a thread block contains multiple warps, synchronization becomes essential.
+Utilizing shared memory to store the sum computed by each warp and subsequently reducing these sums as previously described enables the calculation of a thread block's total sum.
 
 ```C++
 __global__ void reduce_warp_shlf(int* g_idata, int* g_odata, unsigned int n)
@@ -304,7 +302,8 @@ __global__ void reduce_warp_shlf(int* g_idata, int* g_odata, unsigned int n)
 }
 ```
 
-This kernel reads a single element of thread, but it can achieve a throughput of 96GB/s (The shared memory version is 70GB/s). Of course, it can be refactored to read \\(N\\) element each time:
+Despite reading only a single element per thread, this kernel can achieve a throughput of 96GB/s, outperforming the shared memory version's 70GB/s.
+Furthermore, the kernel can be modified to read \\(NT\\) elements at a time for enhanced efficiency:
 
 ```C++
 template <int NT>
@@ -351,7 +350,7 @@ __global__ void reduce_warp_shlf_read_N(int* g_idata, int* g_odata, unsigned int
 }
 ```
 
-With different \\(NT\\), it gets different performance:
+Performance varies with different \\(N\\) values, as summarized below:
 
 | NT | throughput (GB/s) |
 |----|-------------------|
@@ -361,9 +360,12 @@ With different \\(NT\\), it gets different performance:
 | 8  | 107.226           |
 
 
-### warp shuffle with atomic {#warp-shuffle-with-atomic}
+### Warp Shuffle Combined with Atomic Operations {#warp-shuffle-combined-with-atomic-operations}
 
-Compared to the tiled solution, the atomicAdd doesn't need a temporary buffer and the kernel needs to launch only once. Let's take atomic together with warp shuffle.
+Compared to tiled reduction solutions, utilizing `atomicAdd` eliminates the need for a temporary buffer and requires only a single kernel launch.
+This segment explores combining warp shuffle and atomic operations for efficient reduction.
+
+The kernel template below demonstrates this approach, utilizing warp shuffle instructions to enhance the warp reduction performance, and leveraging atomic operations to write directly to the output slot without the need for temporary buffer and multiple kernel launches.
 
 ```C++
 template <int NT>
@@ -411,14 +413,16 @@ __global__ void reduce_warp_shlf_read_N_atomic(int* g_idata, int* g_odata, unsig
 }
 ```
 
-It can achieve a throughput of 121.777 GB/s, which is the best on the same setting.
+Remarkably, this kernel achieves a throughput of 121.777 GB/s under the same conditions.
 
 
 ## Benchmark {#benchmark}
 
+The benchmark results illustrate the performance of different CUDA optimization strategies under varying conditions.
+
 {{< figure src="/ox-hugo/2024-04-06_16-47-39_screenshot.png" >}}
 
-Note that, in different \\(n\\), the optimum kernel might be different.
+Note that the optimal kernel configuration may vary depending on the size of the input data(\\(n\\)).
 
 
 ## Reference {#reference}
