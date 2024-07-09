@@ -1,4 +1,114 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Tech on Superjomn's blog</title><link>/tags/tech/</link><description>Recent content in Tech on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Sun, 28 Apr 2024 00:00:00 +0000</lastBuildDate><atom:link href="/tags/tech/index.xml" rel="self" type="application/rss+xml"/><item><title>Emacs Lisp Introduction for Python Programmers</title><link>/posts/elisp-tutorial-for-pythoner/</link><pubDate>Sun, 28 Apr 2024 00:00:00 +0000</pubDate><guid>/posts/elisp-tutorial-for-pythoner/</guid><description>&lt;p>This is a brief introduction to Emacs Lisp for Python programmers, (although I am not an Elisp expert, and actually I am more familiar with Python than Elisp). Both languages have quite different syntaxes, it is interesting to see how can implement Python code with lisp code.&lt;/p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Tech on Superjomn's blog</title><link>/tags/tech/</link><description>Recent content in Tech on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Tue, 09 Jul 2024 00:00:00 +0000</lastBuildDate><atom:link href="/tags/tech/index.xml" rel="self" type="application/rss+xml"/><item><title>Asyncio By Example: Implementing the Producer-Consumer Pattern</title><link>/posts/python-asyncio/</link><pubDate>Tue, 09 Jul 2024 00:00:00 +0000</pubDate><guid>/posts/python-asyncio/</guid><description>&lt;h2 id="the-most-basic-case">The Most Basic Case&lt;/h2>
+&lt;p>With corountines, we can define a produer and consumer without any need for threads. This simplifies our code and makes it more efficient.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">asyncio&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">producer&lt;/span>():
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> i &lt;span style="color:#007020;font-weight:bold">in&lt;/span> &lt;span style="color:#007020">range&lt;/span>(&lt;span style="color:#40a070">6&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>sleep(&lt;span style="color:#40a070">0.2&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">yield&lt;/span> i
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">consumer&lt;/span>():
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> i &lt;span style="color:#007020;font-weight:bold">in&lt;/span> producer():
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(i)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">main&lt;/span>():
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>gather(consumer())
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>asyncio&lt;span style="color:#666">.&lt;/span>run(main())
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>0
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>1
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>2
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>3
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>4
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>5
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="work-with-heavy-io">Work with Heavy IO&lt;/h2>
+&lt;p>When working with heavy IO operations, we need to be careful not to block the event loop. Running heavy IO operations can block the current event loop, which would slow down the scheduling of all coroutines.&lt;/p>
+&lt;p>We can use &lt;code>asyncio.to_thread&lt;/code> to run the operation in another thread, thus avoiding the schedule being affected.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">asyncio&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">time&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">blocking_io&lt;/span>():
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> time&lt;span style="color:#666">.&lt;/span>sleep(&lt;span style="color:#40a070">0.1&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#39;Blocking IO complete&amp;#39;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">producer&lt;/span>(queue):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> i &lt;span style="color:#007020;font-weight:bold">in&lt;/span> &lt;span style="color:#007020">range&lt;/span>(&lt;span style="color:#40a070">4&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> request &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>to_thread(blocking_io)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> queue&lt;span style="color:#666">.&lt;/span>put(request)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#39;Produced 1 item&amp;#39;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">consumer&lt;/span>(queue):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> i &lt;span style="color:#007020;font-weight:bold">in&lt;/span> &lt;span style="color:#007020">range&lt;/span>(&lt;span style="color:#40a070">4&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> item &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> queue&lt;span style="color:#666">.&lt;/span>get()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#39;Consumed 1 item&amp;#39;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> queue&lt;span style="color:#666">.&lt;/span>task_done()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">main&lt;/span>():
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> queue &lt;span style="color:#666">=&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>Queue()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> producer_task &lt;span style="color:#666">=&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>create_task(producer(queue))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> consumer_task &lt;span style="color:#666">=&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>create_task(consumer(queue))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>gather(producer_task, consumer_task)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>asyncio&lt;span style="color:#666">.&lt;/span>run(main())
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>Blocking IO complete
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Produced 1 item
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Consumed 1 item
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Blocking IO complete
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Produced 1 item
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Consumed 1 item
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Blocking IO complete
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Produced 1 item
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Consumed 1 item
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Blocking IO complete
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Produced 1 item
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Consumed 1 item
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="event-driven">Event driven&lt;/h2>
+&lt;p>When the producer is not a coutine, we can utilize &lt;code>asyncio.Event&lt;/code> to connect it with coutine world.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">asyncio&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">asyncio&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> Queue, Event
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># NOTE: add_request is a traditional function&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">add_request&lt;/span>(event:Event, queue:Queue, request:&lt;span style="color:#007020">int&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;add_request: &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>request&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> queue&lt;span style="color:#666">.&lt;/span>put_nowait(request)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> event&lt;span style="color:#666">.&lt;/span>set()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">consumer&lt;/span>(event:Event, queue:Queue):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> i &lt;span style="color:#007020;font-weight:bold">in&lt;/span> &lt;span style="color:#007020">range&lt;/span>(&lt;span style="color:#40a070">6&lt;/span>): &lt;span style="color:#60a0b0;font-style:italic"># loop&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> event&lt;span style="color:#666">.&lt;/span>wait()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> event&lt;span style="color:#666">.&lt;/span>clear()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> request &lt;span style="color:#666">=&lt;/span> queue&lt;span style="color:#666">.&lt;/span>get_nowait()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;consume: &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>request&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">main&lt;/span>():
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> event &lt;span style="color:#666">=&lt;/span> Event()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> queue &lt;span style="color:#666">=&lt;/span> Queue()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> consumer_task &lt;span style="color:#666">=&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>create_task(consumer(event, queue))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> i &lt;span style="color:#007020;font-weight:bold">in&lt;/span> &lt;span style="color:#007020">range&lt;/span>(&lt;span style="color:#40a070">6&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> add_request(event, queue, i)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>sleep(&lt;span style="color:#40a070">1&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> consumer_task
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>asyncio&lt;span style="color:#666">.&lt;/span>run(main())
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>add_request: 0
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>consume: 0
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>add_request: 1
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>consume: 1
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>add_request: 2
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>consume: 2
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>add_request: 3
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>consume: 3
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>add_request: 4
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>consume: 4
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>add_request: 5
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>consume: 5
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="take-away">Take away&lt;/h2>
+&lt;p>Python coroutine can simplify the code for producer-consumer pattern, and reduce the necessary for threads or other inter-thread collaboration.&lt;/p>
+&lt;p>Use &lt;code>asyncio.to_thread&lt;/code> to dispatch blocking IO to another thread and avoid slow down the current &lt;code>event_loop&lt;/code>.&lt;/p>
+&lt;p>Use &lt;code>asyncio.Event&lt;/code> and &lt;code>asyncio.Queue&lt;/code> to connect real-world code with coroutines.&lt;/p></description></item><item><title>Emacs Lisp Introduction for Python Programmers</title><link>/posts/elisp-tutorial-for-pythoner/</link><pubDate>Sun, 28 Apr 2024 00:00:00 +0000</pubDate><guid>/posts/elisp-tutorial-for-pythoner/</guid><description>&lt;p>This is a brief introduction to Emacs Lisp for Python programmers, (although I am not an Elisp expert, and actually I am more familiar with Python than Elisp). Both languages have quite different syntaxes, it is interesting to see how can implement Python code with lisp code.&lt;/p>
 &lt;p>The content follows the strucutre from &lt;a href="https://learnxinyminutes.com/docs/python/">Learn X in Y Minutes Where X is Python&lt;/a>, and we will touch all the topics.&lt;/p>
 &lt;h2 id="primitive-datatypes-and-operators">Primitive Datatypes and Operators&lt;/h2>
 &lt;h3 id="numbers">Numbers&lt;/h3>
