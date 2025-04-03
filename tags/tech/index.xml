@@ -1,4 +1,399 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Tech on Superjomn's blog</title><link>/tags/tech/</link><description>Recent content in Tech on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Tue, 09 Jul 2024 00:00:00 +0000</lastBuildDate><atom:link href="/tags/tech/index.xml" rel="self" type="application/rss+xml"/><item><title>Asyncio By Example: Implementing the Producer-Consumer Pattern</title><link>/posts/python-asyncio/</link><pubDate>Tue, 09 Jul 2024 00:00:00 +0000</pubDate><guid>/posts/python-asyncio/</guid><description>&lt;h2 id="the-most-basic-case">The Most Basic Case&lt;/h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Tech on Superjomn's blog</title><link>/tags/tech/</link><description>Recent content in Tech on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Sun, 30 Mar 2025 00:00:00 +0000</lastBuildDate><atom:link href="/tags/tech/index.xml" rel="self" type="application/rss+xml"/><item><title>flash-attention Usage: a Worknote for LLM inference</title><link>/posts/flash-attention-usage/</link><pubDate>Sun, 30 Mar 2025 00:00:00 +0000</pubDate><guid>/posts/flash-attention-usage/</guid><description>&lt;h2 id="background">Background&lt;/h2>
+&lt;p>The &lt;a href="https://github.com/Dao-AILab/flash-attention/tree/main">flash-attention&lt;/a> project provides &lt;code>flash_attn&lt;/code> package in Python, and it provides multiple APIs in the interface.
+As the APIs contains many LLM optimization concepts such as paged kv-cache, variant-length (continuous batching) and so on.
+This post tries to aggregate related information for the related concepts, and focus on inference only &lt;span class="sidenote-wrapper">
+&lt;label for="inferece-only" class="sidenote-label">⊕&lt;/label>
+&lt;input type="checkbox" id="inferece-only" class="sidenote-checkbox">
+&lt;span class="sidenote">We will not cover the modules defined for training, and only focus on several basic functional APIs used in inference&lt;/span>
+&lt;/span>
+, for using the &lt;code>flash_attn&lt;/code> APIs.&lt;/p>
+&lt;h3 id="the-apis">The APIs&lt;/h3>
+&lt;p>We will focus on the following two APIs which are also tested in the &lt;a href="https://github.com/Dao-AILab/flash-attention/tree/1a58058a6da83bd7baaf4c512e8a1abe0240bb77/tests/test_flash_attn.py">test_flash_attn.py&lt;/a>.&lt;/p>
+&lt;ul>
+&lt;li>flash_attn_varlen_func&lt;/li>
+&lt;li>flash_attn_with_kvcache&lt;/li>
+&lt;/ul>
+&lt;p>These two APIs can work with Paged KV Cache, which are crucial for the inference of LLM, and they are used in some LLM projects such as SGLang or vLLM.&lt;/p>
+&lt;h3 id="the-related-concepts">The related concepts&lt;/h3>
+&lt;h4 id="prefilling-and-decoding">Prefilling and Decoding&lt;/h4>
+&lt;p>The flash-attention provides two different sets of APIs for prefilling and decoding.&lt;/p>
+&lt;p>Here is some comparasion between the two:&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>-&lt;/th>
+&lt;th>Prefilling&lt;/th>
+&lt;th>Decoding&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>Input Tokens&lt;/td>
+&lt;td>seqlen &amp;gt;= 1&lt;/td>
+&lt;td>1&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Output Tokens&lt;/td>
+&lt;td>1&lt;/td>
+&lt;td>1&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>The difference in the IO tokens result in different arguments in the APIs.&lt;/p>
+&lt;h4 id="kv-cache">KV Cache&lt;/h4>
+&lt;p>The self-attention is computed as below:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># hidden_states for the first transformer layer&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># token_embeddings: [batch_size, seq_len, hidden_size]&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>token_embeddings &lt;span style="color:#666">=&lt;/span> token_embeddings[input_token_ids]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># position_embeddings: [batch_size, seq_len, hidden_size]&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>position_embeddings &lt;span style="color:#666">=&lt;/span> position_embeddings[position_ids]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>hidden_states &lt;span style="color:#666">=&lt;/span> token_embeddings &lt;span style="color:#666">+&lt;/span> position_embeddings
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">attention&lt;/span>(hidden_states):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> query &lt;span style="color:#666">=&lt;/span> hidden_states &lt;span style="color:#666">@&lt;/span> Wq
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> key &lt;span style="color:#666">=&lt;/span> hidden_states &lt;span style="color:#666">@&lt;/span> Wk
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> value &lt;span style="color:#666">=&lt;/span> hidden_states &lt;span style="color:#666">@&lt;/span> Wv
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># MHA (Multi-Head Attention)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> attn_output &lt;span style="color:#666">=&lt;/span> MHA(query, key, value)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> attn_output &lt;span style="color:#60a0b0;font-style:italic"># it will be the hidden_states for the next layer&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Suppose the current sequence length is &lt;code>seq_len&lt;/code>, and the batch size is &lt;code>batch_size&lt;/code>. As the hidden_states is of shape &lt;code>[batch_size, seq_len, hidden_size]&lt;/code>, the query, key and value are of shape &lt;code>[batch_size, seq_len, hidden_size]&lt;/code>,
+for the next token, the hidden_states is of shape &lt;code>[batch_size, seq_len + 1, hidden_size]&lt;/code>, and both the key and value are of shape &lt;code>[batch_size, seq_len + 1, hidden_size]&lt;/code>.
+Since the &lt;code>Wk&lt;/code> and &lt;code>Wv&lt;/code> are fixed, the key and value can be pre-computed and stored in the memory.&lt;/p>
+&lt;p>Here is the pseudo code for the above process:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># current sequence length is seq_len, we hope to predict the next token of (seq_len + 1)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># kv cache: [batch_size, seq_len, hidden_size]&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">kvcached_attention&lt;/span>(hidden_states, k_cache, v_cache):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># query: [batch_size, seq_len, hidden_size] for prefilling phase&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># query: [batch_size, 1, hidden_size] for decoding phase&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> query &lt;span style="color:#666">=&lt;/span> hidden_states &lt;span style="color:#666">@&lt;/span> Wq
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># key, value: [batch_size, seq_len, hidden_size]&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> key &lt;span style="color:#666">=&lt;/span> k_cache &lt;span style="color:#60a0b0;font-style:italic"># key is cached, which eliminates the computation of $hidden_states @ Wk$&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> value &lt;span style="color:#666">=&lt;/span> v_cache &lt;span style="color:#60a0b0;font-style:italic"># so is value&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> attn_output &lt;span style="color:#666">=&lt;/span> MHA(query, key, value)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> attn_output &lt;span style="color:#60a0b0;font-style:italic"># it will be the hidden_states for the next layer&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="paged-kv-cache">Paged KV Cache&lt;/h4>
+&lt;p>KV Cache is vital, while it is not efficient for batch inference. Suppose we have a batch of sequences with different lengths,
+and for K and V, we need to store the caches in Tensors, the shape of which is &lt;code>[batch_size, max_seq_len, hidden_size]&lt;/code> where &lt;code>max_seq_len&lt;/code> is the maximum sequence length in the batch.
+What&amp;rsquo;s more, normally, we will append the new key and value to the end of the cache, thus the shape could be &lt;code>[batch_size, max_prefill_len + max_generate_len, hidden_size]&lt;/code>, which may waste a lot of memory.&lt;/p>
+&lt;p>To solve the above problems, we can use the paged KV cache. The idea is to split the cache into several pages, and each sequence will only cache the number of pages that are used.&lt;/p>
+&lt;p>For example, if we have 3 sequences with length 10, 20, 30, and we set the page size to 10, then the total number of pages is 1 + 2 + 3 = 6. Normally the paged cache is stored with two tensors, one holds the addresses of the pages for the batch, and the other holds the number of pages for each sequence.
+Paged KV Cache modified the inputs to the attention function, thus it needs dedicated kernels.&lt;/p>
+&lt;h2 id="apis">APIs&lt;/h2>
+&lt;h3 id="flash-attn-varlen-func-for-prefilling">flash_attn_varlen_func for prefilling&lt;/h3>
+&lt;p>This API is mainly used for prefilling, as the prefilling could have multiple sequences with different lengths.&lt;/p>
+&lt;h4 id="flash-attn-varlen-func-without-kv-cache">flash_attn_varlen_func without KV Cache&lt;/h4>
+&lt;p>It is simpler to use without KV Cache:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">test_flash_attn_varlen_func_without_kvcache&lt;/span>(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> device&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#4070a0">&amp;#34;cuda&amp;#34;&lt;/span>, seed&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">42&lt;/span>, batch_size&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">10&lt;/span>, num_heads&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">16&lt;/span>, head_dim&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">16&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#34;&amp;#34;&amp;#34;Test variable length FlashAttention implementation.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> Args:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> device: Device to run the test on
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> seed: Random seed for reproducibility
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> batch_size: Number of sequences in batch
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> num_heads: Number of attention heads
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> head_dim: Dimension of each attention head
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> The flash_attn_varlen_func is for prefilling phase.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> &amp;#34;&amp;#34;&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Set seed for reproducibility&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> torch&lt;span style="color:#666">.&lt;/span>manual_seed(seed)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Calculate total hidden dimension&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> hidden_dim &lt;span style="color:#666">=&lt;/span> num_heads &lt;span style="color:#666">*&lt;/span> head_dim
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Generate random sequence lengths between 10 and 100&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> seq_len &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randint(&lt;span style="color:#40a070">10&lt;/span>, &lt;span style="color:#40a070">100&lt;/span>, (batch_size, &lt;span style="color:#40a070">1&lt;/span>), device&lt;span style="color:#666">=&lt;/span>device)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> max_seq_len &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>max(seq_len)&lt;span style="color:#666">.&lt;/span>item()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> total_seq_len &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>sum(seq_len)&lt;span style="color:#666">.&lt;/span>item()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># All of the q,k,v packs all the sequence into one tensor&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Create query, key, value tensors (total_seq_len, num_heads, head_dim)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> q &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randn(total_seq_len, num_heads, head_dim, device&lt;span style="color:#666">=&lt;/span>device, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>float16)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> k &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randn(total_seq_len, num_heads, head_dim, device&lt;span style="color:#666">=&lt;/span>device, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>float16)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> v &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randn(total_seq_len, num_heads, head_dim, device&lt;span style="color:#666">=&lt;/span>device, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>float16)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Remove the extra dimension from seq_len&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> seq_len &lt;span style="color:#666">=&lt;/span> seq_len&lt;span style="color:#666">.&lt;/span>squeeze(&lt;span style="color:#40a070">1&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Create cumulative sequence lengths with leading 0&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># This creates offsets: [0, len1, len1+len2, len1+len2+len3, ...]&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cu_seqlens_q &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>cumsum(seq_len, dim&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">0&lt;/span>, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>int32)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cu_seqlens_q &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>cat([torch&lt;span style="color:#666">.&lt;/span>zeros(&lt;span style="color:#40a070">1&lt;/span>, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>int32, device&lt;span style="color:#666">=&lt;/span>device), cu_seqlens_q])
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cu_seqlens_k &lt;span style="color:#666">=&lt;/span> cu_seqlens_q&lt;span style="color:#666">.&lt;/span>clone() &lt;span style="color:#60a0b0;font-style:italic"># Keys have same lengths as queries&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Run flash attention with variable length sequences&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> res &lt;span style="color:#666">=&lt;/span> flash_attn_varlen_func(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> q,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> k,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> v,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cu_seqlens_q&lt;span style="color:#666">=&lt;/span>cu_seqlens_q,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cu_seqlens_k&lt;span style="color:#666">=&lt;/span>cu_seqlens_k,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> max_seqlen_q&lt;span style="color:#666">=&lt;/span>max_seq_len,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> max_seqlen_k&lt;span style="color:#666">=&lt;/span>max_seq_len,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dropout_p&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">0.0&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> return_attn_probs&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020;font-weight:bold">True&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> output &lt;span style="color:#666">=&lt;/span> res[&lt;span style="color:#40a070">0&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> attn_probs &lt;span style="color:#666">=&lt;/span> res[&lt;span style="color:#40a070">1&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> S_mask &lt;span style="color:#666">=&lt;/span> res[&lt;span style="color:#40a070">2&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Basic validation - check output shape matches input shape&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">assert&lt;/span> (
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> output&lt;span style="color:#666">.&lt;/span>shape &lt;span style="color:#666">==&lt;/span> q&lt;span style="color:#666">.&lt;/span>shape
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ), &lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Output shape &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>output&lt;span style="color:#666">.&lt;/span>shape&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0"> doesn&amp;#39;t match input shape &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>q&lt;span style="color:#666">.&lt;/span>shape&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Verify output is not all zeros or NaNs&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">assert&lt;/span> &lt;span style="color:#007020;font-weight:bold">not&lt;/span> torch&lt;span style="color:#666">.&lt;/span>isnan(output)&lt;span style="color:#666">.&lt;/span>any(), &lt;span style="color:#4070a0">&amp;#34;Output contains NaN values&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">assert&lt;/span> torch&lt;span style="color:#666">.&lt;/span>any(output &lt;span style="color:#666">!=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>), &lt;span style="color:#4070a0">&amp;#34;Output is all zeros&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#34;output&amp;#34;&lt;/span>, output)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#34;attn_probs&amp;#34;&lt;/span>, attn_probs)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#34;S_mask&amp;#34;&lt;/span>, S_mask)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> output
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="flash-attn-varlen-func-with-kv-cache">flash_attn_varlen_func with KV Cache&lt;/h4>
+&lt;p>In an LLM framework, the Paged KV Cache is crucial for memory efficiency, this API can work with Paged KV Cache.&lt;/p>
+&lt;p>Let&amp;rsquo;s define the Paged KV Cache utility function:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">generate_block_kvcache&lt;/span>(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> max_seqlen_k: &lt;span style="color:#007020">int&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> paged_kv_block_size: &lt;span style="color:#007020">int&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> max_batch_size: &lt;span style="color:#007020">int&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> nheads_k: &lt;span style="color:#007020">int&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> d: &lt;span style="color:#007020">int&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> device: torch&lt;span style="color:#666">.&lt;/span>device,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dtype: torch&lt;span style="color:#666">.&lt;/span>dtype,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#34;&amp;#34;&amp;#34;Generate a block-based KV cache for efficient memory management in attention.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> This function creates a paged key-value cache organized in memory blocks, along with
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> a block table that maps logical sequence positions to physical memory blocks.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> This block-based approach allows efficient memory management for variable-length
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> sequences in transformer decoding.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> Args:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> max_seqlen_k: Maximum sequence length for keys
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> paged_kv_block_size: Size of each block in the paged cache
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> max_batch_size: Maximum batch size
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> nheads_k: Number of attention heads
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> d: Dimension of each attention head
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> device: Device to create tensors on
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> dtype: Data type for the cache tensors
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> Returns:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> Tuple containing:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> - k_cache_paged: Paged key cache tensor [num_blocks, block_size, nheads_k, d]
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> - v_cache_paged: Paged value cache tensor [num_blocks, block_size, nheads_k, d]
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> - block_table: Mapping from logical to physical blocks [batch_size, num_blocks_per_seq]
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> &amp;#34;&amp;#34;&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Calculate total number of blocks needed&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> num_blocks &lt;span style="color:#666">=&lt;/span> math&lt;span style="color:#666">.&lt;/span>ceil(max_seqlen_k &lt;span style="color:#666">/&lt;/span> paged_kv_block_size) &lt;span style="color:#666">*&lt;/span> max_batch_size
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Create randomized paged cache storage for keys and values&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> k_cache_paged &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randn(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> num_blocks, paged_kv_block_size, nheads_k, d, device&lt;span style="color:#666">=&lt;/span>device, dtype&lt;span style="color:#666">=&lt;/span>dtype
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> v_cache_paged &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randn(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> num_blocks, paged_kv_block_size, nheads_k, d, device&lt;span style="color:#666">=&lt;/span>device, dtype&lt;span style="color:#666">=&lt;/span>dtype
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Create block table - a mapping from logical sequence positions to physical memory blocks&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Using a random permutation to simulate realistic block allocation&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> block_table &lt;span style="color:#666">=&lt;/span> rearrange(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> torch&lt;span style="color:#666">.&lt;/span>randperm(num_blocks, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>int32, device&lt;span style="color:#666">=&lt;/span>device),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#34;(b nblocks) -&amp;gt; b nblocks&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> b&lt;span style="color:#666">=&lt;/span>max_batch_size,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> k_cache_paged, v_cache_paged, block_table
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">create_culens&lt;/span>(seq_lens: torch&lt;span style="color:#666">.&lt;/span>Tensor, device: torch&lt;span style="color:#666">.&lt;/span>device):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cu_seqlens &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>cumsum(seq_lens, dim&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">0&lt;/span>, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>int32)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cu_seqlens &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>cat([torch&lt;span style="color:#666">.&lt;/span>zeros(&lt;span style="color:#40a070">1&lt;/span>, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>int32, device&lt;span style="color:#666">=&lt;/span>device), cu_seqlens])
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> cu_seqlens
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>And here is the code for using the API:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">test_flash_attn_varlen_func_with_kvcache&lt;/span>(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> device&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#4070a0">&amp;#34;cuda&amp;#34;&lt;/span>, seed&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">42&lt;/span>, batch_size&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">10&lt;/span>, num_heads&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">16&lt;/span>, head_dim&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">16&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#34;&amp;#34;&amp;#34;Test flash attention with variable length and KV caching.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> Tests the functionality of flash_attn_varlen_func when using paged key-value cache.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> Args:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> device: Device to run the test on (default: &amp;#34;cuda&amp;#34;)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> seed: Random seed for reproducibility (default: 42)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> batch_size: Number of sequences in batch (default: 10)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> num_heads: Number of attention heads (default: 16)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> head_dim: Dimension of each attention head (default: 16)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> &amp;#34;&amp;#34;&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Set seed for reproducibility&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> torch&lt;span style="color:#666">.&lt;/span>manual_seed(seed)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Generate random sequence lengths between 10 and 100&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> seq_lens &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randint(&lt;span style="color:#40a070">10&lt;/span>, &lt;span style="color:#40a070">100&lt;/span>, (batch_size, &lt;span style="color:#40a070">1&lt;/span>), device&lt;span style="color:#666">=&lt;/span>device)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> max_seq_len &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>max(seq_lens)&lt;span style="color:#666">.&lt;/span>item()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> total_seq_len &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>sum(seq_lens)&lt;span style="color:#666">.&lt;/span>item()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># KV cache parameters&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> paged_kv_block_size &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">256&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> max_k_seq_len &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">100&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> k_seq_lens &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randint(&lt;span style="color:#40a070">0&lt;/span>, max_k_seq_len, (batch_size, &lt;span style="color:#40a070">1&lt;/span>), device&lt;span style="color:#666">=&lt;/span>device)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Create query tensor packed with all sequences (total_seq_len, num_heads, head_dim)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> q &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randn(total_seq_len, num_heads, head_dim, device&lt;span style="color:#666">=&lt;/span>device, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>float16)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Generate paged KV cache with extra room for new tokens&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> k_cache_paged, v_cache_paged, block_table &lt;span style="color:#666">=&lt;/span> generate_block_kvcache(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> max_k_seq_len &lt;span style="color:#666">+&lt;/span> &lt;span style="color:#40a070">100&lt;/span>, &lt;span style="color:#60a0b0;font-style:italic"># room for new tokens&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> paged_kv_block_size,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> batch_size,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> num_heads,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> head_dim,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> device,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>float16,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Prepare sequence length information&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> seq_lens &lt;span style="color:#666">=&lt;/span> seq_lens&lt;span style="color:#666">.&lt;/span>squeeze(&lt;span style="color:#40a070">1&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> k_seq_lens &lt;span style="color:#666">=&lt;/span> k_seq_lens&lt;span style="color:#666">.&lt;/span>squeeze(&lt;span style="color:#40a070">1&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Create cumulative sequence lengths for batched attention&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cu_seqlens_q &lt;span style="color:#666">=&lt;/span> create_culens(seq_lens, device)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cu_seqlens_k &lt;span style="color:#666">=&lt;/span> create_culens(k_seq_lens, device)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Run flash attention with variable length sequences&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> output, attn_probs, S_mask &lt;span style="color:#666">=&lt;/span> flash_attn_varlen_func(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> q,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> k&lt;span style="color:#666">=&lt;/span>k_cache_paged,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> v&lt;span style="color:#666">=&lt;/span>v_cache_paged,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cu_seqlens_q&lt;span style="color:#666">=&lt;/span>cu_seqlens_q,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cu_seqlens_k&lt;span style="color:#666">=&lt;/span>cu_seqlens_k,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> max_seqlen_q&lt;span style="color:#666">=&lt;/span>max_seq_len,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> max_seqlen_k&lt;span style="color:#666">=&lt;/span>max_k_seq_len,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> block_table&lt;span style="color:#666">=&lt;/span>block_table,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dropout_p&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">0.0&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> return_attn_probs&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020;font-weight:bold">True&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Verify outputs&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">assert&lt;/span> output&lt;span style="color:#666">.&lt;/span>shape &lt;span style="color:#666">==&lt;/span> q&lt;span style="color:#666">.&lt;/span>shape, &lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Output shape &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>output&lt;span style="color:#666">.&lt;/span>shape&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0"> doesn&amp;#39;t match query shape &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>q&lt;span style="color:#666">.&lt;/span>shape&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">assert&lt;/span> &lt;span style="color:#007020;font-weight:bold">not&lt;/span> torch&lt;span style="color:#666">.&lt;/span>isnan(output)&lt;span style="color:#666">.&lt;/span>any(), &lt;span style="color:#4070a0">&amp;#34;Output contains NaN values&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">assert&lt;/span> torch&lt;span style="color:#666">.&lt;/span>any(output &lt;span style="color:#666">!=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>), &lt;span style="color:#4070a0">&amp;#34;Output is all zeros&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">assert&lt;/span> attn_probs &lt;span style="color:#007020;font-weight:bold">is&lt;/span> &lt;span style="color:#007020;font-weight:bold">not&lt;/span> &lt;span style="color:#007020;font-weight:bold">None&lt;/span>, &lt;span style="color:#4070a0">&amp;#34;Attention probabilities not returned&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">assert&lt;/span> S_mask &lt;span style="color:#007020;font-weight:bold">is&lt;/span> &lt;span style="color:#007020;font-weight:bold">not&lt;/span> &lt;span style="color:#007020;font-weight:bold">None&lt;/span>, &lt;span style="color:#4070a0">&amp;#34;Attention mask not returned&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Return results for potential further testing&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> output, attn_probs, S_mask
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="flash-attn-with-kvcache-for-decoding">flash_attn_with_kvcache for decoding&lt;/h3>
+&lt;p>This API is mainly used for decoding, as the decoding is always a batch of sequences with one token.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">test_flash_attn_with_kvcache&lt;/span>(device&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#4070a0">&amp;#34;cuda&amp;#34;&lt;/span>, seed&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">42&lt;/span>, batch_size&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">10&lt;/span>, num_heads&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">16&lt;/span>, head_dim&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">16&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#34;&amp;#34;&amp;#34;Test flash attention with KV cache for incremental decoding.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> This test validates the functionality of flash_attn_with_kvcache which is designed
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> for efficient incremental decoding. The function updates the KV cache in-place with
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> new key and value tensors while performing attention in a single kernel call.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> Args:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> device: Device to run the test on (default: &amp;#34;cuda&amp;#34;)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> seed: Random seed for reproducibility (default: 42)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> batch_size: Number of sequences in batch (default: 10)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> num_heads: Number of attention heads (default: 16)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> head_dim: Dimension of each attention head (default: 16)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> Returns:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> Attention output tensor
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#4070a0"> &amp;#34;&amp;#34;&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Set seed for reproducibility&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> torch&lt;span style="color:#666">.&lt;/span>manual_seed(seed)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Create query tensor - for incremental decoding, we only have one token per sequence&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> q &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randn(batch_size, &lt;span style="color:#40a070">1&lt;/span>, num_heads, head_dim, device&lt;span style="color:#666">=&lt;/span>device, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>float16)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Generate random sequence lengths for the key-value cache (previous tokens)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> max_seq_len_k &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">100&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> seq_lens_k &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randint(&lt;span style="color:#40a070">10&lt;/span>, max_seq_len_k, (batch_size,), device&lt;span style="color:#666">=&lt;/span>device, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>int32)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> max_seq_len_k &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>max(seq_lens_k)&lt;span style="color:#666">.&lt;/span>item()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Create paged KV cache - block-based memory structure for efficient caching&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> paged_kv_block_size &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">256&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> k_cache_paged, v_cache_paged, block_table &lt;span style="color:#666">=&lt;/span> generate_block_kvcache(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> max_seq_len_k,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> paged_kv_block_size,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> batch_size,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> num_heads,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> head_dim,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> device,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>float16,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Create new key and value tensors for the current token&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># (These will be added to the cache in-place during the attention call)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> k &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randn(batch_size, &lt;span style="color:#40a070">1&lt;/span>, num_heads, head_dim, device&lt;span style="color:#666">=&lt;/span>device, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>float16)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> v &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randn(batch_size, &lt;span style="color:#40a070">1&lt;/span>, num_heads, head_dim, device&lt;span style="color:#666">=&lt;/span>device, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>float16)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Run flash attention with KV cache&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># This performs attention and updates the cache in a single operation&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> output &lt;span style="color:#666">=&lt;/span> flash_attn_with_kvcache(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> q&lt;span style="color:#666">=&lt;/span>q,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> k_cache&lt;span style="color:#666">=&lt;/span>k_cache_paged,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> v_cache&lt;span style="color:#666">=&lt;/span>v_cache_paged,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> k&lt;span style="color:#666">=&lt;/span>k,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> v&lt;span style="color:#666">=&lt;/span>v,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cache_seqlens&lt;span style="color:#666">=&lt;/span>seq_lens_k,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> block_table&lt;span style="color:#666">=&lt;/span>block_table,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Validate output&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> expected_shape &lt;span style="color:#666">=&lt;/span> (batch_size, &lt;span style="color:#40a070">1&lt;/span>, num_heads, head_dim)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">assert&lt;/span> output&lt;span style="color:#666">.&lt;/span>shape &lt;span style="color:#666">==&lt;/span> expected_shape, &lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Output shape &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>output&lt;span style="color:#666">.&lt;/span>shape&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0"> doesn&amp;#39;t match expected &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>expected_shape&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">assert&lt;/span> &lt;span style="color:#007020;font-weight:bold">not&lt;/span> torch&lt;span style="color:#666">.&lt;/span>isnan(output)&lt;span style="color:#666">.&lt;/span>any(), &lt;span style="color:#4070a0">&amp;#34;Output contains NaN values&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">assert&lt;/span> torch&lt;span style="color:#666">.&lt;/span>any(output &lt;span style="color:#666">!=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>), &lt;span style="color:#4070a0">&amp;#34;Output is all zeros&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Verify cache was updated by checking if sequences grew by 1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># (This assumes flash_attn_with_kvcache increments cache_seqlens internally)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> output
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="the-references">The references&lt;/h2>
+&lt;ul>
+&lt;li>The &lt;a href="https://github.com/Superjomn/yallm/blob/main/tests/3rdparty/test_flashattn.py">file&lt;/a> containing all the code&lt;/li>
+&lt;/ul></description></item><item><title>Enable Jupyter in Doom Emacs</title><link>/posts/emacs-jupyter/</link><pubDate>Sat, 02 Nov 2024 00:00:00 +0000</pubDate><guid>/posts/emacs-jupyter/</guid><description>&lt;p>There are a few adjustments needs for the default installation when using the &lt;a href="https://github.com/emacs-jupyter/jupyter">jupyter package&lt;/a> in Emacs. Here&amp;rsquo;s a step-by-step guide to configure it properly with Doom Emacs.&lt;/p>
+&lt;h2 id="step-1-install-the-jupyter-package-dot">Step 1: Install the jupyter package.&lt;/h2>
+&lt;p>Add this line to &lt;code>package.el&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">package!&lt;/span> &lt;span style="color:#bb60d5">jupyter&lt;/span>) &lt;span style="color:#60a0b0;font-style:italic">;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="step-2-enable-builtin-jupyter-support-in-org-mode">Step 2: Enable builtin Jupyter Support in Org Mode&lt;/h2>
+&lt;p>To enable Jupyter support in Org mode, make the following modifications in your &lt;code>init.el&lt;/code> file:&lt;/p>
+&lt;ol>
+&lt;li>Uncomment the &lt;code>ein&lt;/code> line. The &lt;a href="https://github.com/millejoh/emacs-ipython-notebook">emacs-ipython-notebook&lt;/a> is a dependency of jupyter package.&lt;/li>
+&lt;li>Add &lt;code>+jupyter&lt;/code> to the Org settings. For more details, refer to &lt;a href="https://github.com/doomemacs/doomemacs/blob/5dcba2f89fa5a20c6535e15f859aaef466ce4b90/modules/lang/org/README.org#L63">:lang org&lt;/a>:&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">org&lt;/span> &lt;span style="color:#bb60d5">+jupyter&lt;/span>) &lt;span style="color:#60a0b0;font-style:italic">; organize your plain life in plain text&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="step-3-patch-for-runtime-errors-with-zeromq">Step 3: Patch for Runtime Errors with ZeroMQ&lt;/h2>
+&lt;p>To address a runtime error related to ZeroMQ (as discussed in this &lt;a href="https://github.com/emacs-jupyter/jupyter/issues/527#issuecomment-2391691176">issue&lt;/a>), append the following code to your &lt;code>config.el&lt;/code> or any other configuration file:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#007020">defun&lt;/span> &lt;span style="color:#bb60d5">my-jupyter-api-http-request--ignore-login-error-a&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#bb60d5">func&lt;/span> &lt;span style="color:#bb60d5">url&lt;/span> &lt;span style="color:#bb60d5">endpoint&lt;/span> &lt;span style="color:#bb60d5">method&lt;/span> &lt;span style="color:#007020">&amp;amp;rest&lt;/span> &lt;span style="color:#bb60d5">data&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#007020">cond&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ((&lt;span style="color:#06287e">member&lt;/span> &lt;span style="color:#bb60d5">endpoint&lt;/span> &lt;span style="color:#666">&amp;#39;&lt;/span>(&lt;span style="color:#4070a0">&amp;#34;login&amp;#34;&lt;/span>))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#bb60d5">ignore-error&lt;/span> (&lt;span style="color:#bb60d5">jupyter-api-http-error&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">apply&lt;/span> &lt;span style="color:#bb60d5">func&lt;/span> &lt;span style="color:#bb60d5">url&lt;/span> &lt;span style="color:#bb60d5">endpoint&lt;/span> &lt;span style="color:#bb60d5">method&lt;/span> &lt;span style="color:#bb60d5">data&lt;/span>)))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#007020">:else&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#06287e">apply&lt;/span> &lt;span style="color:#bb60d5">func&lt;/span> &lt;span style="color:#bb60d5">url&lt;/span> &lt;span style="color:#bb60d5">endpoint&lt;/span> &lt;span style="color:#bb60d5">method&lt;/span> &lt;span style="color:#bb60d5">data&lt;/span>))))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">advice-add&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#06287e">#&amp;#39;&lt;/span>&lt;span style="color:#bb60d5">jupyter-api-http-request&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">:around&lt;/span> &lt;span style="color:#06287e">#&amp;#39;&lt;/span>&lt;span style="color:#bb60d5">my-jupyter-api-http-request--ignore-login-error-a&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="step-4-reload-the-emacs">Step 4: reload the Emacs&lt;/h2>
+&lt;p>After making these changes, reload Emacs. Doom Emacs should now install the necessary packages.&lt;/p>
+&lt;h2 id="using-the-jupyter-package">Using the Jupyter Package&lt;/h2>
+&lt;p>To use the jupyter package, you can start an &lt;code>org&lt;/code> file, and invoke &lt;code>jupyter-run-repl&lt;/code> command, it will start a kernel for this file. The python code blocks will map to the jupyter session.&lt;/p>
+&lt;p>For example:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#40a070">2&lt;/span> &lt;span style="color:#666">**&lt;/span> &lt;span style="color:#40a070">10&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>1024
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>Asyncio By Example: Implementing the Producer-Consumer Pattern</title><link>/posts/python-asyncio/</link><pubDate>Tue, 09 Jul 2024 00:00:00 +0000</pubDate><guid>/posts/python-asyncio/</guid><description>&lt;h2 id="the-most-basic-case">The Most Basic Case&lt;/h2>
 &lt;p>With corountines, we can define a produer and consumer without any need for threads. This simplifies our code and makes it more efficient.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">asyncio&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
@@ -1318,7 +1713,6 @@ This method encompasses several kernel versions, each with different optimizatio
 &lt;li>The sum is then written to a designated spot in the global memory&amp;rsquo;s output slot. It&amp;rsquo;s important to note that this kernel requires a temporary buffer for writing partial results from each thread block.&lt;/li>
 &lt;li>The process repeats with the size \(n\) reduced to \(\frac{n}{blockSize}\), continuing until \(n=1\).&lt;/li>
 &lt;/ol>
-&lt;!-- raw HTML omitted -->
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_smem_naive&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">extern&lt;/span> __shared__ &lt;span style="color:#902000">int&lt;/span> sdata[];
@@ -2754,7 +3148,6 @@ It can automatically generate some common methods for the class, such as &lt;cod
 &lt;h4 id="data-layout">Data layout&lt;/h4>
 &lt;p>Data layout 是 TritonGPU Dialect 的 Type system 的关键，确定了 Data(各层级memory中的Tensor) 到 thread 之间的映射关系。&lt;/p>
 &lt;p>目前 Triton 中有如下几种&lt;/p>
-&lt;!-- raw HTML omitted -->
 &lt;ul>
 &lt;li>
 &lt;ol>
@@ -2784,7 +3177,6 @@ warpsPerCTA = {1, 2}
 }&amp;gt;
 &lt;/code>&lt;/pre>&lt;/li>
 &lt;/ul>
-&lt;!-- raw HTML omitted -->
 &lt;ul>
 &lt;li>
 &lt;ol start="2">
@@ -2812,7 +3204,6 @@ A_{2, 2} A_{2, 3} A_{2, 0} A_{2, 1} ... [phase 1] \ per phase = 2
 A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;/code>&lt;/pre>&lt;/li>
 &lt;/ul>
-&lt;!-- raw HTML omitted -->
 &lt;ul>
 &lt;li>
 &lt;ol start="3">
@@ -2834,7 +3225,6 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;/figure>
 &lt;/li>
 &lt;/ul>
-&lt;!-- raw HTML omitted -->
 &lt;ul>
 &lt;li>
 &lt;ol start="4">
@@ -2874,7 +3264,6 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;/ul>
 &lt;/li>
 &lt;/ul>
-&lt;!-- raw HTML omitted -->
 &lt;ul>
 &lt;li>
 &lt;ol start="5">
@@ -3309,7 +3698,6 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;li>给 dot 相关的增加了 mma 的 data layout&lt;/li>
 &lt;li>插入了 mma layout 相关的 &lt;code>convert_layout&lt;/code>&lt;/li>
 &lt;/ul>
-&lt;!-- raw HTML omitted -->
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;display:grid;">&lt;code class="language-llvm" data-lang="llvm">&lt;span style="display:flex;">&lt;span>&lt;span style="">#blocked&lt;/span>&lt;span style="color:#40a070">0&lt;/span> = &lt;span style="">#triton_gpu&lt;/span>.&lt;span style="">blocked&lt;/span>&amp;lt;{&lt;span style="">sizePerThread&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">8&lt;/span>], &lt;span style="">threadsPerWarp&lt;/span> = [&lt;span style="color:#40a070">16&lt;/span>, &lt;span style="color:#40a070">2&lt;/span>], &lt;span style="">warpsPerCTA&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">1&lt;/span>], &lt;span style="">order&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">0&lt;/span>]}&amp;gt;
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">#blocked&lt;/span>&lt;span style="color:#40a070">1&lt;/span> = &lt;span style="">#triton_gpu&lt;/span>.&lt;span style="">blocked&lt;/span>&amp;lt;{&lt;span style="">sizePerThread&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">1&lt;/span>], &lt;span style="">threadsPerWarp&lt;/span> = [&lt;span style="color:#40a070">4&lt;/span>, &lt;span style="color:#40a070">8&lt;/span>], &lt;span style="">warpsPerCTA&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">1&lt;/span>], &lt;span style="">order&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">0&lt;/span>]}&amp;gt;
 &lt;/span>&lt;/span>&lt;span style="display:flex; background-color:#d8d8d8">&lt;span>&lt;span style="">#mma&lt;/span> = &lt;span style="">#triton_gpu&lt;/span>.&lt;span style="">mma&lt;/span>&amp;lt;{&lt;span style="">version&lt;/span> = &lt;span style="color:#40a070">2&lt;/span>, &lt;span style="">warpsPerCTA&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">1&lt;/span>]}&amp;gt;
@@ -3699,15 +4087,13 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;h4 id="tags-related">Tags related&lt;/h4>
 &lt;p>Tags in org-mode are as below:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-org" data-lang="org">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#000080;font-weight:bold">*&lt;/span>&lt;span style="font-weight:bold"> heading&lt;/span>&lt;span style="font-style:italic"> :tag0:tag1:&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;!-- raw HTML omitted -->
-&lt;ul>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ul>
 &lt;li>
 &lt;p>Get tags&lt;/p>
 &lt;p>To get tags on the current entry:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">org-get-tags&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
 &lt;/ul>
-&lt;!-- raw HTML omitted -->
 &lt;ul>
 &lt;li>
 &lt;p>Set tags&lt;/p>
@@ -3721,15 +4107,13 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">:PROPERTIES:
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span>&lt;span style="color:#60a0b0;background-color:#fff0f0">:prop: value
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;background-color:#fff0f0">&lt;/span>&lt;span style="color:#60a0b0;font-style:italic">:END:&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;!-- raw HTML omitted -->
-&lt;ul>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ul>
 &lt;li>
 &lt;p>Get properties&lt;/p>
 &lt;p>Get properties of the current entry:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-emacs-lisp" data-lang="emacs-lisp">&lt;span style="display:flex;">&lt;span>(&lt;span style="color:#bb60d5">org-entry-properties&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
 &lt;/ul>
-&lt;!-- raw HTML omitted -->
 &lt;ul>
 &lt;li>
 &lt;p>Set property&lt;/p>

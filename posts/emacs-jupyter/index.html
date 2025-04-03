@@ -1,0 +1,43 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel=stylesheet type=text/css href=/css/bootstrap.min.css><link rel=stylesheet type=text/css href=/css/style.css><title>Superjomn's blog | Enable Jupyter in Doom Emacs</title>
+<meta name=google-site-verification content="kO2XszgjIr1OyaOubGpeb0M34ADBz27vyI1dLETarCM"></head><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z60BDN3JGH"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z60BDN3JGH")</script><script src=https://cdn.jsdelivr.net/npm/cash-dom/dist/cash.min.js></script><script>$(function(){$("article table").addClass("table")})</script><body><div id=nav-border class=container><nav id=nav class="nav justify-content-center"><a class=nav-link href=/><i data-feather=home></i>
+Home
+</a><a class=nav-link href=/tags/tech><i data-feather=terminal></i>
+Tech
+</a><a class=nav-link href=/tags/life><i data-feather=coffee></i>
+Life
+</a><a class=nav-link href=/posts/><i data-feather=archive></i>
+Archive
+</a><a class=nav-link href=/tags/><i data-feather=tag></i>
+Tags
+</a><a class=nav-link href=/posts/about/><i data-feather=info></i>
+About</a></nav></div><div class=container><main id=main><main><article><h1>Enable Jupyter in Doom Emacs</h1><i data-feather=calendar></i> <time datetime=2024-11-02>Nov 2, 2024</time>
+<span id=social></span><i data-feather=tag></i>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/emacs>emacs</a><br><br><p><b>Table of Contents</b></p><aside><nav id=TableOfContents><ol><li><a href=#step-1-install-the-jupyter-package-dot>Step 1: Install the jupyter package.</a></li><li><a href=#step-2-enable-builtin-jupyter-support-in-org-mode>Step 2: Enable builtin Jupyter Support in Org Mode</a></li><li><a href=#step-3-patch-for-runtime-errors-with-zeromq>Step 3: Patch for Runtime Errors with ZeroMQ</a></li><li><a href=#step-4-reload-the-emacs>Step 4: reload the Emacs</a></li><li><a href=#using-the-jupyter-package>Using the Jupyter Package</a></li></ol></nav></aside><br><p>There are a few adjustments needs for the default installation when using the <a href=https://github.com/emacs-jupyter/jupyter>jupyter package</a> in Emacs. Here&rsquo;s a step-by-step guide to configure it properly with Doom Emacs.</p><h2 id=step-1-install-the-jupyter-package-dot>Step 1: Install the jupyter package.</h2><p>Add this line to <code>package.el</code>:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-emacs-lisp data-lang=emacs-lisp><span style=display:flex><span>(<span style=color:#bb60d5>package!</span> <span style=color:#bb60d5>jupyter</span>)                      <span style=color:#60a0b0;font-style:italic>;</span>
+</span></span></code></pre></div><h2 id=step-2-enable-builtin-jupyter-support-in-org-mode>Step 2: Enable builtin Jupyter Support in Org Mode</h2><p>To enable Jupyter support in Org mode, make the following modifications in your <code>init.el</code> file:</p><ol><li>Uncomment the <code>ein</code> line. The <a href=https://github.com/millejoh/emacs-ipython-notebook>emacs-ipython-notebook</a> is a dependency of jupyter package.</li><li>Add <code>+jupyter</code> to the Org settings. For more details, refer to <a href=https://github.com/doomemacs/doomemacs/blob/5dcba2f89fa5a20c6535e15f859aaef466ce4b90/modules/lang/org/README.org#L63>:lang org</a>:</li></ol><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-emacs-lisp data-lang=emacs-lisp><span style=display:flex><span>(<span style=color:#bb60d5>org</span> <span style=color:#bb60d5>+jupyter</span>)               <span style=color:#60a0b0;font-style:italic>; organize your plain life in plain text</span>
+</span></span></code></pre></div><h2 id=step-3-patch-for-runtime-errors-with-zeromq>Step 3: Patch for Runtime Errors with ZeroMQ</h2><p>To address a runtime error related to ZeroMQ (as discussed in this <a href=https://github.com/emacs-jupyter/jupyter/issues/527#issuecomment-2391691176>issue</a>), append the following code to your <code>config.el</code> or any other configuration file:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-emacs-lisp data-lang=emacs-lisp><span style=display:flex><span>(<span style=color:#007020>defun</span> <span style=color:#bb60d5>my-jupyter-api-http-request--ignore-login-error-a</span>
+</span></span><span style=display:flex><span>    (<span style=color:#bb60d5>func</span> <span style=color:#bb60d5>url</span> <span style=color:#bb60d5>endpoint</span> <span style=color:#bb60d5>method</span> <span style=color:#007020>&amp;rest</span> <span style=color:#bb60d5>data</span>)
+</span></span><span style=display:flex><span>  (<span style=color:#007020>cond</span>
+</span></span><span style=display:flex><span>   ((<span style=color:#06287e>member</span> <span style=color:#bb60d5>endpoint</span> <span style=color:#666>&#39;</span>(<span style=color:#4070a0>&#34;login&#34;</span>))
+</span></span><span style=display:flex><span>    (<span style=color:#bb60d5>ignore-error</span> (<span style=color:#bb60d5>jupyter-api-http-error</span>)
+</span></span><span style=display:flex><span>      (<span style=color:#06287e>apply</span> <span style=color:#bb60d5>func</span> <span style=color:#bb60d5>url</span> <span style=color:#bb60d5>endpoint</span> <span style=color:#bb60d5>method</span> <span style=color:#bb60d5>data</span>)))
+</span></span><span style=display:flex><span>   (<span style=color:#007020>:else</span>
+</span></span><span style=display:flex><span>    (<span style=color:#06287e>apply</span> <span style=color:#bb60d5>func</span> <span style=color:#bb60d5>url</span> <span style=color:#bb60d5>endpoint</span> <span style=color:#bb60d5>method</span> <span style=color:#bb60d5>data</span>))))
+</span></span><span style=display:flex><span>(<span style=color:#bb60d5>advice-add</span>
+</span></span><span style=display:flex><span> <span style=color:#06287e>#&#39;</span><span style=color:#bb60d5>jupyter-api-http-request</span>
+</span></span><span style=display:flex><span> <span style=color:#007020>:around</span> <span style=color:#06287e>#&#39;</span><span style=color:#bb60d5>my-jupyter-api-http-request--ignore-login-error-a</span>)
+</span></span></code></pre></div><h2 id=step-4-reload-the-emacs>Step 4: reload the Emacs</h2><p>After making these changes, reload Emacs. Doom Emacs should now install the necessary packages.</p><h2 id=using-the-jupyter-package>Using the Jupyter Package</h2><p>To use the jupyter package, you can start an <code>org</code> file, and invoke <code>jupyter-run-repl</code> command, it will start a kernel for this file. The python code blocks will map to the jupyter session.</p><p>For example:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#40a070>2</span> <span style=color:#666>**</span> <span style=color:#40a070>10</span>
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>1024
+</span></span></code></pre></div><script src=https://utteranc.es/client.js repo=superjomn/superjomn.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></article></main><p class="footer text-center">Copyright (c) 2025 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script></body></html>

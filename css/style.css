@@ -5,7 +5,7 @@
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 800px;
 }
 
 #nav a {
@@ -152,4 +152,61 @@ article h2,
 article h3,
 article h4 {
   line-height: 1.4em;
+}
+
+/*  Hide the checkbox itself */
+.sidenote-checkbox {
+  display: none;
+}
+
+/* Style the label (the ⊕ symbol) */
+.sidenote-label {
+  cursor: pointer;
+  font-size: 1em;  /* Adjust size as needed */
+  margin-right: 0.2em; /* Spacing from main text*/
+}
+
+/* Initially hide the sidenote content */
+.sidenote {
+  display: none;
+  width: 30%;        /* Or whatever width you want */
+  float: right;
+  margin-left: 2em;
+  font-size: 0.8em;
+  font-style: italic;
+  border-left: 1px solid #ccc;
+  padding-left: 1em;
+}
+
+/* Show the sidenote when the checkbox is checked */
+.sidenote-checkbox:checked + .sidenote {
+    display: block;
+}
+
+
+/* --- Responsive Adjustments (Media Queries) --- */
+@media (max-width: 768px) { /* Adjust breakpoint as needed */
+  .sidenote {
+    float: none;      /* Remove the float on small screens */
+    width: 100%;      /* Make it full-width */
+    margin-left: 0;   /* Remove the margin */
+    border-left: none; /* Remove border*/
+    padding-left: 0;
+    margin-top: 0.5em; /* Add some spacing above */
+    border-top: 1px solid #ccc; /* Add a border *above* */
+    padding-top: 0.5em;
+  }
+
+  .sidenote-label::before {
+     content: "Note: "; /* Change the label for small screens */
+     font-weight: bold;
+  }
+    .sidenote-checkbox:checked + .sidenote{
+        display: block; /*Always visible when check on small screen*/
+    }
+
+    /*Optional: change label when check*/
+    .sidenote-checkbox:checked + .sidenote-label::before{
+        content: "Close Note: ";
+    }
 }

@@ -10,60 +10,225 @@ Archive
 </a><a class=nav-link href=/tags/><i data-feather=tag></i>
 Tags
 </a><a class=nav-link href=/posts/about/><i data-feather=info></i>
-About</a></nav></div><div class=container><main id=main><h1>Posts</h1><p><h3><a class=title href=/posts/python-asyncio/>Asyncio By Example: Implementing the Producer-Consumer Pattern</a></h3><i data-feather=calendar></i> <time datetime=2024-07-09>Jul 9, 2024</time>
+About</a></nav></div><div class=container><main id=main><h1>Posts</h1><p><h3><a class=title href=/posts/flash-attention-usage/>flash-attention Usage: a Worknote for LLM inference</a></h3><i data-feather=calendar></i> <time datetime=2025-03-30>Mar 30, 2025</time>
+<span id=social></span><i data-feather=tag></i>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/llm>llm</a>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><h2 id=background>Background</h2><p>The <a href=https://github.com/Dao-AILab/flash-attention/tree/main>flash-attention</a> project provides <code>flash_attn</code> package in Python, and it provides multiple APIs in the interface.
+As the APIs contains many LLM optimization concepts such as paged kv-cache, variant-length (continuous batching) and so on.
+This post tries to aggregate related information for the related concepts, and focus on inference only <span class=sidenote-wrapper><label for=inferece-only class=sidenote-label>⊕</label>
+<input type=checkbox id=inferece-only class=sidenote-checkbox>
+<span class=sidenote>We will not cover the modules defined for training, and only focus on several basic functional APIs used in inference</span>
+</span>, for using the <code>flash_attn</code> APIs.</p></p></p><p><h3><a class=title href=/posts/emacs-jupyter/>Enable Jupyter in Doom Emacs</a></h3><i data-feather=calendar></i> <time datetime=2024-11-02>Nov 2, 2024</time>
+<span id=social></span><i data-feather=tag></i>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/emacs>emacs</a><p><p>There are a few adjustments needs for the default installation when using the <a href=https://github.com/emacs-jupyter/jupyter>jupyter package</a> in Emacs. Here&rsquo;s a step-by-step guide to configure it properly with Doom Emacs.</p><h2 id=step-1-install-the-jupyter-package-dot>Step 1: Install the jupyter package.</h2><p>Add this line to <code>package.el</code>:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-emacs-lisp data-lang=emacs-lisp><span style=display:flex><span>(<span style=color:#bb60d5>package!</span> <span style=color:#bb60d5>jupyter</span>)                      <span style=color:#60a0b0;font-style:italic>;</span>
+</span></span></code></pre></div><h2 id=step-2-enable-builtin-jupyter-support-in-org-mode>Step 2: Enable builtin Jupyter Support in Org Mode</h2><p>To enable Jupyter support in Org mode, make the following modifications in your <code>init.el</code> file:</p><ol><li>Uncomment the <code>ein</code> line. The <a href=https://github.com/millejoh/emacs-ipython-notebook>emacs-ipython-notebook</a> is a dependency of jupyter package.</li><li>Add <code>+jupyter</code> to the Org settings. For more details, refer to <a href=https://github.com/doomemacs/doomemacs/blob/5dcba2f89fa5a20c6535e15f859aaef466ce4b90/modules/lang/org/README.org#L63>:lang org</a>:</li></ol><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-emacs-lisp data-lang=emacs-lisp><span style=display:flex><span>(<span style=color:#bb60d5>org</span> <span style=color:#bb60d5>+jupyter</span>)               <span style=color:#60a0b0;font-style:italic>; organize your plain life in plain text</span>
+</span></span></code></pre></div><h2 id=step-3-patch-for-runtime-errors-with-zeromq>Step 3: Patch for Runtime Errors with ZeroMQ</h2><p>To address a runtime error related to ZeroMQ (as discussed in this <a href=https://github.com/emacs-jupyter/jupyter/issues/527#issuecomment-2391691176>issue</a>), append the following code to your <code>config.el</code> or any other configuration file:</p></p></p><p><h3><a class=title href=/posts/python-asyncio/>Asyncio By Example: Implementing the Producer-Consumer Pattern</a></h3><i data-feather=calendar></i> <time datetime=2024-07-09>Jul 9, 2024</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/python>python</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/coroutine>coroutine</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p>The Most Basic Case With corountines, we can define a produer and consumer without any need for threads. This simplifies our code and makes it more efficient.
-import asyncio async def producer(): for i in range(6): await asyncio.sleep(0.2) yield i async def consumer(): async for i in producer(): print(i) async def main(): await asyncio.gather(consumer()) asyncio.run(main()) 0 1 2 3 4 5 Work with Heavy IO When working with heavy IO operations, we need to be careful not to block the event loop.</p></p><p><h3><a class=title href=/posts/elisp-tutorial-for-pythoner/>Emacs Lisp Introduction for Python Programmers</a></h3><i data-feather=calendar></i> <time datetime=2024-04-28>Apr 28, 2024</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><h2 id=the-most-basic-case>The Most Basic Case</h2><p>With corountines, we can define a produer and consumer without any need for threads. This simplifies our code and makes it more efficient.</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>import</span> <span style=color:#0e84b5;font-weight:700>asyncio</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>async</span> <span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>producer</span>():
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>for</span> i <span style=color:#007020;font-weight:700>in</span> <span style=color:#007020>range</span>(<span style=color:#40a070>6</span>):
+</span></span><span style=display:flex><span>        <span style=color:#007020;font-weight:700>await</span> asyncio<span style=color:#666>.</span>sleep(<span style=color:#40a070>0.2</span>)
+</span></span><span style=display:flex><span>        <span style=color:#007020;font-weight:700>yield</span> i
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>async</span> <span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>consumer</span>():
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>async</span> <span style=color:#007020;font-weight:700>for</span> i <span style=color:#007020;font-weight:700>in</span> producer():
+</span></span><span style=display:flex><span>        <span style=color:#007020>print</span>(i)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>async</span> <span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>main</span>():
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>await</span> asyncio<span style=color:#666>.</span>gather(consumer())
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>asyncio<span style=color:#666>.</span>run(main())
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>0
+</span></span><span style=display:flex><span>1
+</span></span><span style=display:flex><span>2
+</span></span><span style=display:flex><span>3
+</span></span><span style=display:flex><span>4
+</span></span><span style=display:flex><span>5
+</span></span></code></pre></div><h2 id=work-with-heavy-io>Work with Heavy IO</h2><p>When working with heavy IO operations, we need to be careful not to block the event loop. Running heavy IO operations can block the current event loop, which would slow down the scheduling of all coroutines.</p></p></p><p><h3><a class=title href=/posts/elisp-tutorial-for-pythoner/>Emacs Lisp Introduction for Python Programmers</a></h3><i data-feather=calendar></i> <time datetime=2024-04-28>Apr 28, 2024</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/emacs>emacs</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/lisp>lisp</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/python>python</a><p>This is a brief introduction to Emacs Lisp for Python programmers, (although I am not an Elisp expert, and actually I am more familiar with Python than Elisp). Both languages have quite different syntaxes, it is interesting to see how can implement Python code with lisp code.
-The content follows the strucutre from Learn X in Y Minutes Where X is Python, and we will touch all the topics.
-Primitive Datatypes and Operators Numbers Python # Integer 1 # Float 3.</p></p><p><h3><a class=title href=/posts/reduce-cuda/>Reduce kernel in CUDA</a></h3><i data-feather=calendar></i> <time datetime=2024-03-25>Mar 25, 2024</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/python>python</a><p><p>This is a brief introduction to Emacs Lisp for Python programmers, (although I am not an Elisp expert, and actually I am more familiar with Python than Elisp). Both languages have quite different syntaxes, it is interesting to see how can implement Python code with lisp code.</p><p>The content follows the strucutre from <a href=https://learnxinyminutes.com/docs/python/>Learn X in Y Minutes Where X is Python</a>, and we will touch all the topics.</p><h2 id=primitive-datatypes-and-operators>Primitive Datatypes and Operators</h2><h3 id=numbers>Numbers</h3><table><tr><td><b>Python</b><pre><code class=python-html>
+# Integer
+1
+# Float
+3.14
+# Math is what you would expect
+1 + 1   # => 2
+8 - 1   # => 7
+10 * 2  # => 20
+35 / 5  # => 7.0
+
+# Integer division rounds down for both positive and negative numbers.
+5 // 3       # => 1
+-5 // 3      # => -2
+5.0 // 3.0   # => 1.0  # works on floats too
+-5.0 // 3.0  # => -2.0
+
+# The result of division is always a float
+10.0 / 3  # => 3.3333333333333335
+
+# Modulo operation
+7 % 3   # => 1
+# i % j have the same sign as j, unlike C
+-7 % 3  # => 2
+
+# Exponentiation (x**y, x to the yth power)
+2**3  # => 8
+
+# Enforce precedence with parentheses
+1 + 3 * 2    # => 7
+(1 + 3) * 2  # => 8
+</code></pre></td><td><b>Elisp</b><pre><code class=lisp-html>
+;; Integer
+1
+;; Float
+3.14
+;; Math is what you would expect
+(+ 1 1)   ; => 2
+(- 8 1)   ; => 7
+(* 10 2)  ; => 20
+(/ 35 5)  ; => 7
+
+;; Integer division rounds down for both positive and negative numbers.
+(truncate (/ 5 3))       ; => 1
+(truncate (/ -5 3))      ; => -2
+(truncate (/ 5.0 3.0))   ; => 1.0  ; works on floats too
+(truncate (/ -5.0 3.0))  ; => -2.0
+
+;; The result of division is always a float if the denominator or numerator is float
+(/ 10.0 3)  ; => 3.3333333333333335
+
+;; Modulo operation
+(% 7 3)   ; => 1
+;; different from Python
+(% -7 3)  ; => -1
+
+;; Exponentiation
+(expt 2 3)  ; => 8
+
+;; Enforce precedence with parentheses
+(+ 1 (* 3 2))    ; => 7
+(* (1+ 3) 2)  ; => 8
+
+</code></pre></td></table><h3 id=bools-and-comparasion>Bools and comparasion</h3><p>In Emacs Lisp, booleans are represented by the symbols <code>t</code> for true and <code>nil</code> for false.</p></p></p><p><h3><a class=title href=/posts/reduce-cuda/>Reduce kernel in CUDA</a></h3><i data-feather=calendar></i> <time datetime=2024-03-25>Mar 25, 2024</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/cuda>cuda</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/basics>basics</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p>Question definition Given an array of \(n\) integers, the goal is to compute the sum of all elements within the array.
-Solutions The implementations for all kernel versions can be found at 2-reduce.cu on GitHub.
-Naive Version with atomicAdd The simplest approach involves utilizing each thread to perform an atomicAdd operation on the output variable. Here&rsquo;s how the kernel is defined:
-__global__ void reduce_naive_atomic(int* g_idata, int* g_odata, unsigned int n) { unsigned int idx = blockIdx.</p></p><p><h3><a class=title href=/posts/count-parameters-in-llama/>Count the parameters in LLaMA V1 model</a></h3><i data-feather=calendar></i> <time datetime=2024-03-21>Mar 21, 2024</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><h2 id=question-definition>Question definition</h2><p>Given an array of \(n\) integers, the goal is to compute the sum of all elements within the array.</p><h2 id=solutions>Solutions</h2><p>The implementations for all kernel versions can be found at <a href=https://github.com/Superjomn/cuda-from-scratch/blob/dev/2-reduce.cu>2-reduce.cu on GitHub</a>.</p><h3 id=naive-version-with-atomicadd>Naive Version with <code>atomicAdd</code></h3><p>The simplest approach involves utilizing each thread to perform an <code>atomicAdd</code> operation on the output variable. Here&rsquo;s how the kernel is defined:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=display:flex><span>__global__ <span style=color:#902000>void</span> <span style=color:#06287e>reduce_naive_atomic</span>(<span style=color:#902000>int</span><span style=color:#666>*</span> g_idata, <span style=color:#902000>int</span><span style=color:#666>*</span> g_odata, <span style=color:#902000>unsigned</span> <span style=color:#902000>int</span> n)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    <span style=color:#902000>unsigned</span> <span style=color:#902000>int</span> idx <span style=color:#666>=</span> blockIdx.x <span style=color:#666>*</span> blockDim.x <span style=color:#666>+</span> threadIdx.x;
+</span></span><span style=display:flex><span>    <span style=color:#902000>unsigned</span> <span style=color:#902000>int</span> gridSize <span style=color:#666>=</span> blockDim.x <span style=color:#666>*</span> gridDim.x;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#902000>int</span> sum <span style=color:#666>=</span> <span style=color:#40a070>0</span>;
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>for</span> (<span style=color:#902000>unsigned</span> <span style=color:#902000>int</span> i <span style=color:#666>=</span> idx; i <span style=color:#666>&lt;</span> n; i <span style=color:#666>+=</span> gridSize)
+</span></span><span style=display:flex><span>    {
+</span></span><span style=display:flex><span>        sum <span style=color:#666>+=</span> g_idata[i];
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    atomicAdd(g_odata, sum);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>And the kernel launcher is straightforward, invoking the kernel a single time:</p></p></p><p><h3><a class=title href=/posts/count-parameters-in-llama/>Count the parameters in LLaMA V1 model</a></h3><i data-feather=calendar></i> <time datetime=2024-03-21>Mar 21, 2024</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/llm>LLM</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p>Let&rsquo;s load the model
-from transformers import LlamaModel, LlamaConfig model = LlamaModel.from_pretrained("llama-7b-hf-path") def count_params(model, is_human: bool = False): params: int = sum(p.numel() for p in model.parameters() if p.requires_grad) return f"{params / 1e6:.2f}M" if is_human else params print(model) print("Total # of params:", count_params(model, is_human=True)) Print out the layers:
-LlamaModel( (embed_tokens): Embedding(32000, 4096, padding_idx=0) (layers): ModuleList( (0-31): 32 x LlamaDecoderLayer( (self_attn): LlamaSdpaAttention( (q_proj): Linear(in_features=4096, out_features=4096, bias=False) (k_proj): Linear(in_features=4096, out_features=4096, bias=False) (v_proj): Linear(in_features=4096, out_features=4096, bias=False) (o_proj): Linear(in_features=4096, out_features=4096, bias=False) (rotary_emb): LlamaRotaryEmbedding() ) (mlp): LlamaMLP( (gate_proj): Linear(in_features=4096, out_features=11008, bias=False) (up_proj): Linear(in_features=4096, out_features=11008, bias=False) (down_proj): Linear(in_features=11008, out_features=4096, bias=False) (act_fn): SiLU() ) (input_layernorm): LlamaRMSNorm() (post_attention_layernorm): LlamaRMSNorm() ) ) (norm): LlamaRMSNorm() ) Total # of params: 6607.</p></p><p><h3><a class=title href=/posts/gpu-get-props/>Get GPU Properties</a></h3><i data-feather=calendar></i> <time datetime=2024-03-11>Mar 11, 2024</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><p>Let&rsquo;s load the model</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>from</span> <span style=color:#0e84b5;font-weight:700>transformers</span> <span style=color:#007020;font-weight:700>import</span> LlamaModel, LlamaConfig
+</span></span><span style=display:flex><span>model <span style=color:#666>=</span> LlamaModel<span style=color:#666>.</span>from_pretrained(<span style=color:#4070a0>&#34;llama-7b-hf-path&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>count_params</span>(model, is_human: <span style=color:#007020>bool</span> <span style=color:#666>=</span> <span style=color:#007020;font-weight:700>False</span>):
+</span></span><span style=display:flex><span>    params: <span style=color:#007020>int</span> <span style=color:#666>=</span> <span style=color:#007020>sum</span>(p<span style=color:#666>.</span>numel() <span style=color:#007020;font-weight:700>for</span> p <span style=color:#007020;font-weight:700>in</span> model<span style=color:#666>.</span>parameters() <span style=color:#007020;font-weight:700>if</span> p<span style=color:#666>.</span>requires_grad)
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> <span style=color:#4070a0>f</span><span style=color:#4070a0>&#34;</span><span style=color:#70a0d0>{</span>params <span style=color:#666>/</span> <span style=color:#40a070>1e6</span><span style=color:#70a0d0>:</span><span style=color:#4070a0>.2f</span><span style=color:#70a0d0>}</span><span style=color:#4070a0>M&#34;</span> <span style=color:#007020;font-weight:700>if</span> is_human <span style=color:#007020;font-weight:700>else</span> params
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020>print</span>(model)
+</span></span><span style=display:flex><span><span style=color:#007020>print</span>(<span style=color:#4070a0>&#34;Total # of params:&#34;</span>, count_params(model, is_human<span style=color:#666>=</span><span style=color:#007020;font-weight:700>True</span>))
+</span></span></code></pre></div><p>Print out the layers:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>LlamaModel(
+</span></span><span style=display:flex><span>  (embed_tokens): Embedding(32000, 4096, padding_idx=0)
+</span></span><span style=display:flex><span>  (layers): ModuleList(
+</span></span><span style=display:flex><span>    (0-31): 32 x LlamaDecoderLayer(
+</span></span><span style=display:flex><span>      (self_attn): LlamaSdpaAttention(
+</span></span><span style=display:flex><span>        (q_proj): Linear(in_features=4096, out_features=4096, bias=False)
+</span></span><span style=display:flex><span>        (k_proj): Linear(in_features=4096, out_features=4096, bias=False)
+</span></span><span style=display:flex><span>        (v_proj): Linear(in_features=4096, out_features=4096, bias=False)
+</span></span><span style=display:flex><span>        (o_proj): Linear(in_features=4096, out_features=4096, bias=False)
+</span></span><span style=display:flex><span>        (rotary_emb): LlamaRotaryEmbedding()
+</span></span><span style=display:flex><span>      )
+</span></span><span style=display:flex><span>      (mlp): LlamaMLP(
+</span></span><span style=display:flex><span>        (gate_proj): Linear(in_features=4096, out_features=11008, bias=False)
+</span></span><span style=display:flex><span>        (up_proj): Linear(in_features=4096, out_features=11008, bias=False)
+</span></span><span style=display:flex><span>        (down_proj): Linear(in_features=11008, out_features=4096, bias=False)
+</span></span><span style=display:flex><span>        (act_fn): SiLU()
+</span></span><span style=display:flex><span>      )
+</span></span><span style=display:flex><span>      (input_layernorm): LlamaRMSNorm()
+</span></span><span style=display:flex><span>      (post_attention_layernorm): LlamaRMSNorm()
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span>  )
+</span></span><span style=display:flex><span>  (norm): LlamaRMSNorm()
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>Total # of params: 6607.34M
+</span></span></code></pre></div><p>The Transformers shows that there are 6607.34M float16 parameters, roughly 13GB, that is aligned to the actual weight size.</p></p></p><p><h3><a class=title href=/posts/gpu-get-props/>Get GPU Properties</a></h3><i data-feather=calendar></i> <time datetime=2024-03-11>Mar 11, 2024</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/gpu>gpu</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/basics>basics</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p>In `cuda_runtime.h`, there are several APIs for retrieving properties for the installed GPU.
-cudaDeviceGetAttribute(int* value, cudaDeviceAttr attr, int device): a C api cudaGetDeviceProperties ( cudaDeviceProp* prop, int device ) : a C++ api Here is the code of the example.
-On a Nvidia GTX 3080 GPU, the properties are as below:
-Device 0 properties: Max block dimensions: 1024 x 1024 x 64 Max grid dimensions: 2147483647 x 65535 x 65535 Shared memory bank size: 4 bytes Max shared memory per block: 49152 bytes Max registers per block: 65536 Warp size: 32 Multiprocessor count: 68 Max resident threads per multiprocessor: 1536 = 48 warps L2 cache size: 5242880 bytes Global L1 cache supported: yes Total global memory: 9 GB Processor clock: 1 MHZ Memory clock: 9 MHZ</p></p><p><h3><a class=title href=/posts/llm_notes/>Notes on LLM technologies (keep updating)</a></h3><i data-feather=calendar></i> <time datetime=2024-03-10>Mar 10, 2024</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><p>In `cuda_runtime.h`, there are several APIs for retrieving properties for the installed GPU.</p><ul><li><a href=https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gb22e8256592b836df9a9cc36c9db7151>cudaDeviceGetAttribute(int* value, cudaDeviceAttr attr, int device)</a>: a C api</li><li><a href=https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1g1bf9d625a931d657e08db2b4391170f0>cudaGetDeviceProperties ( cudaDeviceProp* prop, int device ) </a>: a C++ api</li></ul><p><a href=https://github.com/Superjomn/cuda-from-scratch/blob/dev/dump-gpu-props.cpp>Here</a> is the code of the example.</p><p>On a Nvidia GTX 3080 GPU, the properties are as below:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>Device 0 properties:
+</span></span><span style=display:flex><span>  Max block dimensions: 1024 x 1024 x 64
+</span></span><span style=display:flex><span>  Max grid dimensions: 2147483647 x 65535 x 65535
+</span></span><span style=display:flex><span>  Shared memory bank size: 4 bytes
+</span></span><span style=display:flex><span>  Max shared memory per block: 49152 bytes
+</span></span><span style=display:flex><span>  Max registers per block: 65536
+</span></span><span style=display:flex><span>  Warp size: 32
+</span></span><span style=display:flex><span>  Multiprocessor count: 68
+</span></span><span style=display:flex><span>  Max resident threads per multiprocessor: 1536 = 48 warps
+</span></span><span style=display:flex><span>  L2 cache size: 5242880 bytes
+</span></span><span style=display:flex><span>  Global L1 cache supported: yes
+</span></span><span style=display:flex><span>  Total global memory: 9 GB
+</span></span><span style=display:flex><span>  Processor clock: 1 MHZ
+</span></span><span style=display:flex><span>  Memory clock: 9 MHZ
+</span></span></code></pre></div></p></p><p><h3><a class=title href=/posts/llm_notes/>Notes on LLM technologies (keep updating)</a></h3><i data-feather=calendar></i> <time datetime=2024-03-10>Mar 10, 2024</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/llm>LLM</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p>Brief notes on LLM technologies.
-Models GPT2 Model structure The GPT model employs a repeated structure of Transformer Blocks, each containing two sub-layers: a Masked Multi-Head Attention (MMHA) layer and a Position-wise Feed-Forward Network.
-The MMHA is a central component of the model. It operates by splitting the input into multiple &lsquo;heads&rsquo;, each of which learns to attend to different positions within the input sequence, allowing the model to focus on different aspects of the input simultaneously.</p></p><p><h3><a class=title href=/posts/cuda-memory-coalescing-access-matrix-transpose/>Memory coalescing in CUDA (2) – Matrix Transpose</a></h3><i data-feather=calendar></i> <time datetime=2024-03-05>Mar 5, 2024</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><p>Brief notes on LLM technologies.</p><h2 id=models>Models</h2><h3 id=gpt2>GPT2</h3><h4 id=model-structure>Model structure</h4><figure><img src=/ox-hugo/GPT%20model%20structure.png></figure><p>The GPT model employs a repeated structure of Transformer Blocks, each containing two sub-layers: a Masked Multi-Head Attention (MMHA) layer and a Position-wise Feed-Forward Network.</p><p>The MMHA is a central component of the model. It operates by splitting the input into multiple &lsquo;heads&rsquo;, each of which learns to attend to different positions within the input sequence, allowing the model to focus on different aspects of the input simultaneously. The output of these heads is then concatenated and linearly transformed to produce the final output.</p></p></p><p><h3><a class=title href=/posts/cuda-memory-coalescing-access-matrix-transpose/>Memory coalescing in CUDA (2) – Matrix Transpose</a></h3><i data-feather=calendar></i> <time datetime=2024-03-05>Mar 5, 2024</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/cuda>cuda</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/basics>basics</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p>Background In the VecAdd page, we&rsquo;ve introduced the memory coalescing in global memory access. This post will follow the topic with another interesting application: Matrix transposing.
-The following content will briefly touch on the following topics:
-Tiles in matrix, this is the basis of optimization matrix computation A simple trick to avoid bank conflict in shared memory access Kernels The code for all the kernels locates in 1-matrix-transpose-coalesce.cu.
-Read coalesced template &lt;typename T> __global__ void transpose_read_coalesce( const T* __restrict__ input, T* __restrict__ output, int n, int m) { int i = blockIdx.</p></p><p><h3><a class=title href=/posts/cuda-memory-coalescing-access/>Memory coalescing in CUDA (1) – VecAdd</a></h3><i data-feather=calendar></i> <time datetime=2024-02-25>Feb 25, 2024</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><h2 id=background>Background</h2><p>In the <a href=https://superjomn.github.io/posts/cuda-memory-coalescing-access/>VecAdd</a> page, we&rsquo;ve introduced the memory coalescing in global memory access. This post will follow the topic with another interesting application: Matrix transposing.</p><p>The following content will briefly touch on the following topics:</p><ul><li>Tiles in matrix, this is the basis of optimization matrix computation</li><li>A simple trick to avoid bank conflict in shared memory access</li></ul><h2 id=kernels>Kernels</h2><p>The code for all the kernels locates in <a href=https://github.com/Superjomn/cuda-from-scratch/blob/dev/1-matrix-transpose-coalesce.cu>1-matrix-transpose-coalesce.cu</a>.</p><h3 id=read-coalesced>Read coalesced</h3><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=display:flex><span><span style=color:#007020;font-weight:700>template</span> <span style=color:#666>&lt;</span><span style=color:#007020;font-weight:700>typename</span> T<span style=color:#666>&gt;</span>
+</span></span><span style=display:flex><span>__global__ <span style=color:#902000>void</span> transpose_read_coalesce(
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>const</span> T<span style=color:#666>*</span> __restrict__ input,
+</span></span><span style=display:flex><span>    T<span style=color:#666>*</span> __restrict__ output,
+</span></span><span style=display:flex><span>    <span style=color:#902000>int</span> n,
+</span></span><span style=display:flex><span>    <span style=color:#902000>int</span> m) {
+</span></span><span style=display:flex><span>  <span style=color:#902000>int</span> i <span style=color:#666>=</span> blockIdx.x <span style=color:#666>*</span> blockDim.x <span style=color:#666>+</span> threadIdx.x; <span style=color:#60a0b0;font-style:italic>// the contiguous tid
+</span></span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic></span>  <span style=color:#902000>int</span> j <span style=color:#666>=</span> blockIdx.y <span style=color:#666>*</span> blockDim.y <span style=color:#666>+</span> threadIdx.y;
+</span></span><span style=display:flex><span>  <span style=color:#007020;font-weight:700>if</span> (i <span style=color:#666>&lt;</span> n <span style=color:#666>&amp;&amp;</span> j <span style=color:#666>&lt;</span> m) {
+</span></span><span style=display:flex><span>    output[i <span style=color:#666>*</span> m <span style=color:#666>+</span> j] <span style=color:#666>=</span> input[j <span style=color:#666>*</span> n <span style=color:#666>+</span> i];
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=write-coalesced>Write coalesced</h3><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=display:flex><span><span style=color:#007020;font-weight:700>template</span> <span style=color:#666>&lt;</span><span style=color:#007020;font-weight:700>typename</span> T<span style=color:#666>&gt;</span>
+</span></span><span style=display:flex><span>__global__ <span style=color:#902000>void</span> transpose_write_coalesce(
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>const</span> T<span style=color:#666>*</span> __restrict__ input,
+</span></span><span style=display:flex><span>    T<span style=color:#666>*</span> __restrict__ output,
+</span></span><span style=display:flex><span>    <span style=color:#902000>int</span> n,
+</span></span><span style=display:flex><span>    <span style=color:#902000>int</span> m) {
+</span></span><span style=display:flex><span>  <span style=color:#902000>int</span> i <span style=color:#666>=</span> blockIdx.x <span style=color:#666>*</span> blockDim.x <span style=color:#666>+</span> threadIdx.x; <span style=color:#60a0b0;font-style:italic>// the contiguous tid
+</span></span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic></span>  <span style=color:#902000>int</span> j <span style=color:#666>=</span> blockIdx.y <span style=color:#666>*</span> blockDim.y <span style=color:#666>+</span> threadIdx.y;
+</span></span><span style=display:flex><span>  <span style=color:#007020;font-weight:700>if</span> (i <span style=color:#666>&lt;</span> n <span style=color:#666>&amp;&amp;</span> j <span style=color:#666>&lt;</span> m) {
+</span></span><span style=display:flex><span>    output[j <span style=color:#666>*</span> n <span style=color:#666>+</span> i] <span style=color:#666>=</span> input[i <span style=color:#666>*</span> m <span style=color:#666>+</span> j];
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=both-read-and-write-coalesced-by-tiling-with-shared-memory>Both read and write coalesced by tiling with shared memory</h3><p>The tiling method is a common methodology for optimizing matrix operation. It divides the matrix into smaller, manageable blocks or &ldquo;tiles&rdquo; that can fit into shared memory.</p></p></p><p><h3><a class=title href=/posts/cuda-memory-coalescing-access/>Memory coalescing in CUDA (1) – VecAdd</a></h3><i data-feather=calendar></i> <time datetime=2024-02-25>Feb 25, 2024</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/cuda>cuda</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/basics>basics</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p>Background Memory coalescing is a crucial optimization technique in CUDA programming that allows optimal usage of the global memory bandwidth. When threads in the same warp running the same instruction access to consecutive locations in the global memory, the hardware can coalesce these accesses into a single transaction, significantly improving performance.
-Coalescing memory access is vital for achieving high performance. Besides PCIe memory traffic, accessing global memory tends to be the largest bottleneck in GPU&rsquo;s memory hierarchy.</p></p><p><h3><a class=title href=/posts/llvm-utils/>LLVM Utilities (keep updating)</a></h3><i data-feather=calendar></i> <time datetime=2023-10-17>Oct 17, 2023</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><h2 id=background>Background</h2><p><strong>Memory coalescing</strong> is a crucial optimization technique in CUDA programming that allows optimal usage of the <strong>global memory bandwidth</strong>. When threads in the same warp running the same instruction access to <strong>consecutive locations</strong> in the global memory, the hardware can coalesce these accesses into a single transaction, significantly improving performance.</p><p>Coalescing memory access is vital for achieving high performance. Besides PCIe memory traffic, accessing global memory tends to be the largest bottleneck in GPU&rsquo;s memory hierarchy.
+Non-coalesced memory access can lead to underutilization of memory bandwidth.</p></p></p><p><h3><a class=title href=/posts/llvm-utils/>LLVM Utilities (keep updating)</a></h3><i data-feather=calendar></i> <time datetime=2023-10-17>Oct 17, 2023</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/llvm>llvm</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/cpp>cpp</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p>There are many handy functions or data structures in LLVM project, which are widely used by other projects that rely on LLVM. In this page, I will introduce some common utilities that are worthy of using in your own project or frequently used in LLVM code that you should be familiar with.
-Basic data type llvm::StringRef It is a lightweight, non-owning reference to a sequence of characters. It is similar to std::string_view introduced in C++17.</p></p><p><h3><a class=title href=/posts/apple-tv-as-service/>Apple TV 折腾记</a></h3><i data-feather=calendar></i> <time datetime=2023-04-18>Apr 18, 2023</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><p>There are many handy functions or data structures in LLVM project, which are widely used by other projects that rely on LLVM. In this page, I will introduce some common utilities that are worthy of using in your own project or frequently used in LLVM code that you should be familiar with.</p><h2 id=basic-data-type>Basic data type</h2><h3 id=llvm-stringref>llvm::StringRef</h3><p>It is a lightweight, non-owning reference to a sequence of characters.
+It is similar to <code>std::string_view</code> introduced in <code>C++17</code>.</p></p></p><p><h3><a class=title href=/posts/apple-tv-as-service/>Apple TV 折腾记</a></h3><i data-feather=calendar></i> <time datetime=2023-04-18>Apr 18, 2023</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/life>life</a><p><p>由于房屋面积有限，我们的大厅一直没有安装电视。相反，我们使用了一个较大的LG 4K显示器作为娱乐中心，并搭配了两个巨大的Fyne落地音箱，效果不错。我们主要观看的节目是Netflix，晚上我们会和家人一起围在电脑旁边观看，感觉还不错。但是，将显示器用作电视存在一个问题，就是必须通过操作系统进行操作。由于我的职业是程序员，一旦接触电脑，就不由自主地敲击键盘，并且很容易进入工作模式，这对放松娱乐有些影响。</p></p></p><p><h3><a class=title href=/posts/python-best-practices/>Best Practices for Python Programming (Continuously Updated)</a></h3><i data-feather=calendar></i> <time datetime=2023-02-22>Feb 22, 2023</time>
 <span id=social></span><i data-feather=tag></i>
@@ -75,14 +240,9 @@ Basic data type llvm::StringRef It is a lightweight, non-owning reference to a s
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><p>经过几个月的不懈努力，OpenAI Triton已经成功完成了面向MLIR Infra的迁移/重构工作，并将其最新的基于MLIR的代码合并至主分支。这个工作是由OpenAI和NVIDIA相关团队近几个月来深入合作完成的，而我也有幸参与其中。在这篇文章中，我将分享一些技术总结，记录一些收获和思考。</p><p>尽管Triton目前的开源开发非常迅速，但本文将主要聚焦于基于MLIR Infra进行重构的第一个版本的<a href=https://github.com/openai/triton/tree/ca05ef8e5b0b4d4834957bc31e7581b09d35c530>代码</a>（这应该也是两三个月前的）</p></p></p><p><h3><a class=title href=/posts/emacs-essentials/>Emacs Essentials</a></h3><i data-feather=calendar></i> <time datetime=2022-10-15>Oct 15, 2022</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/emacs>emacs</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p>It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience
-the lisp syntax and functional programming the fragmented methods and libraries For the 1st issue, it is easy to master the syntax after writing several programs and getting used to them, but for the 2nd one, one needs to take notes or remember something.
-In this blog, I focus on the 2nd point and keep updating the notes of some methods and libraries that I think are essential for writing Emacs lisp packages.</p></p><p><h3><a class=title href=/posts/about/>About me</a></h3><i data-feather=calendar></i> <time datetime=2022-10-15>Oct 15, 2022</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><p>It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience</p><ol><li>the lisp syntax and functional programming</li><li>the fragmented methods and libraries</li></ol><p>For the 1st issue, it is easy to master the syntax after writing several programs and getting used to them, but for the 2nd one, one needs to take notes or remember something.</p><p>In this blog, I focus on the 2nd point and keep updating the notes of some methods and libraries that I think are essential for writing Emacs lisp packages.</p></p></p><p><h3><a class=title href=/posts/about/>About me</a></h3><i data-feather=calendar></i> <time datetime=2022-10-15>Oct 15, 2022</time>
 <span id=social></span><i data-feather=tag></i>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/about-me>about-me</a><p>About me Thank you for your interest.
-I am a Deep Learning system architect at NVIDIA, and my current focus is high-performance AI Compiler(on GPU).
-Before this, I was a senior engineer in Baidu, working as an architect on PaddlePaddle (one of the most popular open-sourced deep learning frameworks in China market).
-I was the creator & primary author & tech lead of the following projects in PaddlePaddle ecosystem (before 2022-6)</p></p><p class="footer text-center">Copyright (c) 2024 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/about-me>about-me</a><p><h2 id=about-me>About me</h2><p>Thank you for your interest.</p><p>I am a Deep Learning system architect at NVIDIA, and my current focus is high-performance AI Compiler(on GPU).</p><p>Before this, I was a senior engineer in Baidu, working as an architect on PaddlePaddle (one of the most popular open-sourced deep learning frameworks in China market).</p><p>I was the creator & primary author & tech lead of the following projects in PaddlePaddle ecosystem (before 2022-6)</p></p></p><p class="footer text-center">Copyright (c) 2025 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
 MathJax.Hub.Config({
   tex2jax: {
     inlineMath: [['\\(','\\)']],

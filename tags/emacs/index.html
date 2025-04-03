@@ -10,19 +10,83 @@ Archive
 </a><a class=nav-link href=/tags/><i data-feather=tag></i>
 Tags
 </a><a class=nav-link href=/posts/about/><i data-feather=info></i>
-About</a></nav></div><div class=container><main id=main><h1>Emacs</h1><p><h3><a class=title href=/posts/elisp-tutorial-for-pythoner/>Emacs Lisp Introduction for Python Programmers</a></h3><i data-feather=calendar></i> <time datetime=2024-04-28>Apr 28, 2024</time>
+About</a></nav></div><div class=container><main id=main><h1>Emacs</h1><p><h3><a class=title href=/posts/emacs-jupyter/>Enable Jupyter in Doom Emacs</a></h3><i data-feather=calendar></i> <time datetime=2024-11-02>Nov 2, 2024</time>
+<span id=social></span><i data-feather=tag></i>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/emacs>emacs</a><p><p>There are a few adjustments needs for the default installation when using the <a href=https://github.com/emacs-jupyter/jupyter>jupyter package</a> in Emacs. Here&rsquo;s a step-by-step guide to configure it properly with Doom Emacs.</p><h2 id=step-1-install-the-jupyter-package-dot>Step 1: Install the jupyter package.</h2><p>Add this line to <code>package.el</code>:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-emacs-lisp data-lang=emacs-lisp><span style=display:flex><span>(<span style=color:#bb60d5>package!</span> <span style=color:#bb60d5>jupyter</span>)                      <span style=color:#60a0b0;font-style:italic>;</span>
+</span></span></code></pre></div><h2 id=step-2-enable-builtin-jupyter-support-in-org-mode>Step 2: Enable builtin Jupyter Support in Org Mode</h2><p>To enable Jupyter support in Org mode, make the following modifications in your <code>init.el</code> file:</p><ol><li>Uncomment the <code>ein</code> line. The <a href=https://github.com/millejoh/emacs-ipython-notebook>emacs-ipython-notebook</a> is a dependency of jupyter package.</li><li>Add <code>+jupyter</code> to the Org settings. For more details, refer to <a href=https://github.com/doomemacs/doomemacs/blob/5dcba2f89fa5a20c6535e15f859aaef466ce4b90/modules/lang/org/README.org#L63>:lang org</a>:</li></ol><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-emacs-lisp data-lang=emacs-lisp><span style=display:flex><span>(<span style=color:#bb60d5>org</span> <span style=color:#bb60d5>+jupyter</span>)               <span style=color:#60a0b0;font-style:italic>; organize your plain life in plain text</span>
+</span></span></code></pre></div><h2 id=step-3-patch-for-runtime-errors-with-zeromq>Step 3: Patch for Runtime Errors with ZeroMQ</h2><p>To address a runtime error related to ZeroMQ (as discussed in this <a href=https://github.com/emacs-jupyter/jupyter/issues/527#issuecomment-2391691176>issue</a>), append the following code to your <code>config.el</code> or any other configuration file:</p></p></p><p><h3><a class=title href=/posts/elisp-tutorial-for-pythoner/>Emacs Lisp Introduction for Python Programmers</a></h3><i data-feather=calendar></i> <time datetime=2024-04-28>Apr 28, 2024</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/emacs>emacs</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/lisp>lisp</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/python>python</a><p>This is a brief introduction to Emacs Lisp for Python programmers, (although I am not an Elisp expert, and actually I am more familiar with Python than Elisp). Both languages have quite different syntaxes, it is interesting to see how can implement Python code with lisp code.
-The content follows the strucutre from Learn X in Y Minutes Where X is Python, and we will touch all the topics.
-Primitive Datatypes and Operators Numbers Python # Integer 1 # Float 3.</p></p><p><h3><a class=title href=/posts/emacs-essentials/>Emacs Essentials</a></h3><i data-feather=calendar></i> <time datetime=2022-10-15>Oct 15, 2022</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/python>python</a><p><p>This is a brief introduction to Emacs Lisp for Python programmers, (although I am not an Elisp expert, and actually I am more familiar with Python than Elisp). Both languages have quite different syntaxes, it is interesting to see how can implement Python code with lisp code.</p><p>The content follows the strucutre from <a href=https://learnxinyminutes.com/docs/python/>Learn X in Y Minutes Where X is Python</a>, and we will touch all the topics.</p><h2 id=primitive-datatypes-and-operators>Primitive Datatypes and Operators</h2><h3 id=numbers>Numbers</h3><table><tr><td><b>Python</b><pre><code class=python-html>
+# Integer
+1
+# Float
+3.14
+# Math is what you would expect
+1 + 1   # => 2
+8 - 1   # => 7
+10 * 2  # => 20
+35 / 5  # => 7.0
+
+# Integer division rounds down for both positive and negative numbers.
+5 // 3       # => 1
+-5 // 3      # => -2
+5.0 // 3.0   # => 1.0  # works on floats too
+-5.0 // 3.0  # => -2.0
+
+# The result of division is always a float
+10.0 / 3  # => 3.3333333333333335
+
+# Modulo operation
+7 % 3   # => 1
+# i % j have the same sign as j, unlike C
+-7 % 3  # => 2
+
+# Exponentiation (x**y, x to the yth power)
+2**3  # => 8
+
+# Enforce precedence with parentheses
+1 + 3 * 2    # => 7
+(1 + 3) * 2  # => 8
+</code></pre></td><td><b>Elisp</b><pre><code class=lisp-html>
+;; Integer
+1
+;; Float
+3.14
+;; Math is what you would expect
+(+ 1 1)   ; => 2
+(- 8 1)   ; => 7
+(* 10 2)  ; => 20
+(/ 35 5)  ; => 7
+
+;; Integer division rounds down for both positive and negative numbers.
+(truncate (/ 5 3))       ; => 1
+(truncate (/ -5 3))      ; => -2
+(truncate (/ 5.0 3.0))   ; => 1.0  ; works on floats too
+(truncate (/ -5.0 3.0))  ; => -2.0
+
+;; The result of division is always a float if the denominator or numerator is float
+(/ 10.0 3)  ; => 3.3333333333333335
+
+;; Modulo operation
+(% 7 3)   ; => 1
+;; different from Python
+(% -7 3)  ; => -1
+
+;; Exponentiation
+(expt 2 3)  ; => 8
+
+;; Enforce precedence with parentheses
+(+ 1 (* 3 2))    ; => 7
+(* (1+ 3) 2)  ; => 8
+
+</code></pre></td></table><h3 id=bools-and-comparasion>Bools and comparasion</h3><p>In Emacs Lisp, booleans are represented by the symbols <code>t</code> for true and <code>nil</code> for false.</p></p></p><p><h3><a class=title href=/posts/emacs-essentials/>Emacs Essentials</a></h3><i data-feather=calendar></i> <time datetime=2022-10-15>Oct 15, 2022</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/emacs>emacs</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p>It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience
-the lisp syntax and functional programming the fragmented methods and libraries For the 1st issue, it is easy to master the syntax after writing several programs and getting used to them, but for the 2nd one, one needs to take notes or remember something.
-In this blog, I focus on the 2nd point and keep updating the notes of some methods and libraries that I think are essential for writing Emacs lisp packages.</p></p><p class="footer text-center">Copyright (c) 2024 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><p>It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience</p><ol><li>the lisp syntax and functional programming</li><li>the fragmented methods and libraries</li></ol><p>For the 1st issue, it is easy to master the syntax after writing several programs and getting used to them, but for the 2nd one, one needs to take notes or remember something.</p><p>In this blog, I focus on the 2nd point and keep updating the notes of some methods and libraries that I think are essential for writing Emacs lisp packages.</p></p></p><p class="footer text-center">Copyright (c) 2025 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
 MathJax.Hub.Config({
   tex2jax: {
     inlineMath: [['\\(','\\)']],

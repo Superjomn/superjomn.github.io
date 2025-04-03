@@ -1,0 +1,333 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel=stylesheet type=text/css href=/css/bootstrap.min.css><link rel=stylesheet type=text/css href=/css/style.css><title>Superjomn's blog | flash-attention Usage: a Worknote for LLM inference</title>
+<meta name=google-site-verification content="kO2XszgjIr1OyaOubGpeb0M34ADBz27vyI1dLETarCM"></head><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z60BDN3JGH"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z60BDN3JGH")</script><script src=https://cdn.jsdelivr.net/npm/cash-dom/dist/cash.min.js></script><script>$(function(){$("article table").addClass("table")})</script><body><div id=nav-border class=container><nav id=nav class="nav justify-content-center"><a class=nav-link href=/><i data-feather=home></i>
+Home
+</a><a class=nav-link href=/tags/tech><i data-feather=terminal></i>
+Tech
+</a><a class=nav-link href=/tags/life><i data-feather=coffee></i>
+Life
+</a><a class=nav-link href=/posts/><i data-feather=archive></i>
+Archive
+</a><a class=nav-link href=/tags/><i data-feather=tag></i>
+Tags
+</a><a class=nav-link href=/posts/about/><i data-feather=info></i>
+About</a></nav></div><div class=container><main id=main><main><article><h1>flash-attention Usage: a Worknote for LLM inference</h1><i data-feather=calendar></i> <time datetime=2025-03-30>Mar 30, 2025</time>
+<span id=social></span><i data-feather=tag></i>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/llm>llm</a>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><br><br><p><b>Table of Contents</b></p><aside><nav id=TableOfContents><ol><li><a href=#background>Background</a><ol><li><a href=#the-apis>The APIs</a></li><li><a href=#the-related-concepts>The related concepts</a><ol><li><a href=#prefilling-and-decoding>Prefilling and Decoding</a></li><li><a href=#kv-cache>KV Cache</a></li><li><a href=#paged-kv-cache>Paged KV Cache</a></li></ol></li></ol></li><li><a href=#apis>APIs</a><ol><li><a href=#flash-attn-varlen-func-for-prefilling>flash_attn_varlen_func for prefilling</a><ol><li><a href=#flash-attn-varlen-func-without-kv-cache>flash_attn_varlen_func without KV Cache</a></li><li><a href=#flash-attn-varlen-func-with-kv-cache>flash_attn_varlen_func with KV Cache</a></li></ol></li><li><a href=#flash-attn-with-kvcache-for-decoding>flash_attn_with_kvcache for decoding</a></li></ol></li><li><a href=#the-references>The references</a></li></ol></nav></aside><br><h2 id=background>Background</h2><p>The <a href=https://github.com/Dao-AILab/flash-attention/tree/main>flash-attention</a> project provides <code>flash_attn</code> package in Python, and it provides multiple APIs in the interface.
+As the APIs contains many LLM optimization concepts such as paged kv-cache, variant-length (continuous batching) and so on.
+This post tries to aggregate related information for the related concepts, and focus on inference only <span class=sidenote-wrapper><label for=inferece-only class=sidenote-label>⊕</label>
+<input type=checkbox id=inferece-only class=sidenote-checkbox>
+<span class=sidenote>We will not cover the modules defined for training, and only focus on several basic functional APIs used in inference</span>
+</span>, for using the <code>flash_attn</code> APIs.</p><h3 id=the-apis>The APIs</h3><p>We will focus on the following two APIs which are also tested in the <a href=https://github.com/Dao-AILab/flash-attention/tree/1a58058a6da83bd7baaf4c512e8a1abe0240bb77/tests/test_flash_attn.py>test_flash_attn.py</a>.</p><ul><li>flash_attn_varlen_func</li><li>flash_attn_with_kvcache</li></ul><p>These two APIs can work with Paged KV Cache, which are crucial for the inference of LLM, and they are used in some LLM projects such as SGLang or vLLM.</p><h3 id=the-related-concepts>The related concepts</h3><h4 id=prefilling-and-decoding>Prefilling and Decoding</h4><p>The flash-attention provides two different sets of APIs for prefilling and decoding.</p><p>Here is some comparasion between the two:</p><table><thead><tr><th>-</th><th>Prefilling</th><th>Decoding</th></tr></thead><tbody><tr><td>Input Tokens</td><td>seqlen >= 1</td><td>1</td></tr><tr><td>Output Tokens</td><td>1</td><td>1</td></tr></tbody></table><p>The difference in the IO tokens result in different arguments in the APIs.</p><h4 id=kv-cache>KV Cache</h4><p>The self-attention is computed as below:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#60a0b0;font-style:italic># hidden_states for the first transformer layer</span>
+</span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic># token_embeddings: [batch_size, seq_len, hidden_size]</span>
+</span></span><span style=display:flex><span>token_embeddings <span style=color:#666>=</span> token_embeddings[input_token_ids]
+</span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic># position_embeddings: [batch_size, seq_len, hidden_size]</span>
+</span></span><span style=display:flex><span>position_embeddings <span style=color:#666>=</span> position_embeddings[position_ids]
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>hidden_states <span style=color:#666>=</span> token_embeddings <span style=color:#666>+</span> position_embeddings
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>attention</span>(hidden_states):
+</span></span><span style=display:flex><span>    query <span style=color:#666>=</span> hidden_states <span style=color:#666>@</span> Wq
+</span></span><span style=display:flex><span>    key <span style=color:#666>=</span> hidden_states <span style=color:#666>@</span> Wk
+</span></span><span style=display:flex><span>    value <span style=color:#666>=</span> hidden_states <span style=color:#666>@</span> Wv
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># MHA (Multi-Head Attention)</span>
+</span></span><span style=display:flex><span>    attn_output <span style=color:#666>=</span> MHA(query, key, value)
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> attn_output <span style=color:#60a0b0;font-style:italic># it will be the hidden_states for the next layer</span>
+</span></span></code></pre></div><p>Suppose the current sequence length is <code>seq_len</code>, and the batch size is <code>batch_size</code>. As the hidden_states is of shape <code>[batch_size, seq_len, hidden_size]</code>, the query, key and value are of shape <code>[batch_size, seq_len, hidden_size]</code>,
+for the next token, the hidden_states is of shape <code>[batch_size, seq_len + 1, hidden_size]</code>, and both the key and value are of shape <code>[batch_size, seq_len + 1, hidden_size]</code>.
+Since the <code>Wk</code> and <code>Wv</code> are fixed, the key and value can be pre-computed and stored in the memory.</p><p>Here is the pseudo code for the above process:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#60a0b0;font-style:italic># current sequence length is seq_len, we hope to predict the next token of (seq_len + 1)</span>
+</span></span><span style=display:flex><span><span style=color:#60a0b0;font-style:italic># kv cache: [batch_size, seq_len, hidden_size]</span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>kvcached_attention</span>(hidden_states, k_cache, v_cache):
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># query: [batch_size, seq_len, hidden_size] for prefilling phase</span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># query: [batch_size, 1, hidden_size] for decoding phase</span>
+</span></span><span style=display:flex><span>    query <span style=color:#666>=</span> hidden_states <span style=color:#666>@</span> Wq
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># key, value: [batch_size, seq_len, hidden_size]</span>
+</span></span><span style=display:flex><span>    key <span style=color:#666>=</span> k_cache <span style=color:#60a0b0;font-style:italic># key is cached, which eliminates the computation of $hidden_states @ Wk$</span>
+</span></span><span style=display:flex><span>    value <span style=color:#666>=</span> v_cache <span style=color:#60a0b0;font-style:italic># so is value</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    attn_output <span style=color:#666>=</span> MHA(query, key, value)
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> attn_output <span style=color:#60a0b0;font-style:italic># it will be the hidden_states for the next layer</span>
+</span></span></code></pre></div><h4 id=paged-kv-cache>Paged KV Cache</h4><p>KV Cache is vital, while it is not efficient for batch inference. Suppose we have a batch of sequences with different lengths,
+and for K and V, we need to store the caches in Tensors, the shape of which is <code>[batch_size, max_seq_len, hidden_size]</code> where <code>max_seq_len</code> is the maximum sequence length in the batch.
+What&rsquo;s more, normally, we will append the new key and value to the end of the cache, thus the shape could be <code>[batch_size, max_prefill_len + max_generate_len, hidden_size]</code>, which may waste a lot of memory.</p><p>To solve the above problems, we can use the paged KV cache. The idea is to split the cache into several pages, and each sequence will only cache the number of pages that are used.</p><p>For example, if we have 3 sequences with length 10, 20, 30, and we set the page size to 10, then the total number of pages is 1 + 2 + 3 = 6. Normally the paged cache is stored with two tensors, one holds the addresses of the pages for the batch, and the other holds the number of pages for each sequence.
+Paged KV Cache modified the inputs to the attention function, thus it needs dedicated kernels.</p><h2 id=apis>APIs</h2><h3 id=flash-attn-varlen-func-for-prefilling>flash_attn_varlen_func for prefilling</h3><p>This API is mainly used for prefilling, as the prefilling could have multiple sequences with different lengths.</p><h4 id=flash-attn-varlen-func-without-kv-cache>flash_attn_varlen_func without KV Cache</h4><p>It is simpler to use without KV Cache:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>test_flash_attn_varlen_func_without_kvcache</span>(
+</span></span><span style=display:flex><span>    device<span style=color:#666>=</span><span style=color:#4070a0>&#34;cuda&#34;</span>, seed<span style=color:#666>=</span><span style=color:#40a070>42</span>, batch_size<span style=color:#666>=</span><span style=color:#40a070>10</span>, num_heads<span style=color:#666>=</span><span style=color:#40a070>16</span>, head_dim<span style=color:#666>=</span><span style=color:#40a070>16</span>
+</span></span><span style=display:flex><span>):
+</span></span><span style=display:flex><span>    <span style=color:#4070a0>&#34;&#34;&#34;Test variable length FlashAttention implementation.
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    Args:
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        device: Device to run the test on
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        seed: Random seed for reproducibility
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        batch_size: Number of sequences in batch
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        num_heads: Number of attention heads
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        head_dim: Dimension of each attention head
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    The flash_attn_varlen_func is for prefilling phase.
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    &#34;&#34;&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Set seed for reproducibility</span>
+</span></span><span style=display:flex><span>    torch<span style=color:#666>.</span>manual_seed(seed)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Calculate total hidden dimension</span>
+</span></span><span style=display:flex><span>    hidden_dim <span style=color:#666>=</span> num_heads <span style=color:#666>*</span> head_dim
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Generate random sequence lengths between 10 and 100</span>
+</span></span><span style=display:flex><span>    seq_len <span style=color:#666>=</span> torch<span style=color:#666>.</span>randint(<span style=color:#40a070>10</span>, <span style=color:#40a070>100</span>, (batch_size, <span style=color:#40a070>1</span>), device<span style=color:#666>=</span>device)
+</span></span><span style=display:flex><span>    max_seq_len <span style=color:#666>=</span> torch<span style=color:#666>.</span>max(seq_len)<span style=color:#666>.</span>item()
+</span></span><span style=display:flex><span>    total_seq_len <span style=color:#666>=</span> torch<span style=color:#666>.</span>sum(seq_len)<span style=color:#666>.</span>item()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># All of the q,k,v packs all the sequence into one tensor</span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Create query, key, value tensors (total_seq_len, num_heads, head_dim)</span>
+</span></span><span style=display:flex><span>    q <span style=color:#666>=</span> torch<span style=color:#666>.</span>randn(total_seq_len, num_heads, head_dim, device<span style=color:#666>=</span>device, dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>float16)
+</span></span><span style=display:flex><span>    k <span style=color:#666>=</span> torch<span style=color:#666>.</span>randn(total_seq_len, num_heads, head_dim, device<span style=color:#666>=</span>device, dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>float16)
+</span></span><span style=display:flex><span>    v <span style=color:#666>=</span> torch<span style=color:#666>.</span>randn(total_seq_len, num_heads, head_dim, device<span style=color:#666>=</span>device, dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>float16)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Remove the extra dimension from seq_len</span>
+</span></span><span style=display:flex><span>    seq_len <span style=color:#666>=</span> seq_len<span style=color:#666>.</span>squeeze(<span style=color:#40a070>1</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Create cumulative sequence lengths with leading 0</span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># This creates offsets: [0, len1, len1+len2, len1+len2+len3, ...]</span>
+</span></span><span style=display:flex><span>    cu_seqlens_q <span style=color:#666>=</span> torch<span style=color:#666>.</span>cumsum(seq_len, dim<span style=color:#666>=</span><span style=color:#40a070>0</span>, dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>int32)
+</span></span><span style=display:flex><span>    cu_seqlens_q <span style=color:#666>=</span> torch<span style=color:#666>.</span>cat([torch<span style=color:#666>.</span>zeros(<span style=color:#40a070>1</span>, dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>int32, device<span style=color:#666>=</span>device), cu_seqlens_q])
+</span></span><span style=display:flex><span>    cu_seqlens_k <span style=color:#666>=</span> cu_seqlens_q<span style=color:#666>.</span>clone()  <span style=color:#60a0b0;font-style:italic># Keys have same lengths as queries</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Run flash attention with variable length sequences</span>
+</span></span><span style=display:flex><span>    res <span style=color:#666>=</span> flash_attn_varlen_func(
+</span></span><span style=display:flex><span>        q,
+</span></span><span style=display:flex><span>        k,
+</span></span><span style=display:flex><span>        v,
+</span></span><span style=display:flex><span>        cu_seqlens_q<span style=color:#666>=</span>cu_seqlens_q,
+</span></span><span style=display:flex><span>        cu_seqlens_k<span style=color:#666>=</span>cu_seqlens_k,
+</span></span><span style=display:flex><span>        max_seqlen_q<span style=color:#666>=</span>max_seq_len,
+</span></span><span style=display:flex><span>        max_seqlen_k<span style=color:#666>=</span>max_seq_len,
+</span></span><span style=display:flex><span>        dropout_p<span style=color:#666>=</span><span style=color:#40a070>0.0</span>,
+</span></span><span style=display:flex><span>        return_attn_probs<span style=color:#666>=</span><span style=color:#007020;font-weight:700>True</span>,
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    output <span style=color:#666>=</span> res[<span style=color:#40a070>0</span>]
+</span></span><span style=display:flex><span>    attn_probs <span style=color:#666>=</span> res[<span style=color:#40a070>1</span>]
+</span></span><span style=display:flex><span>    S_mask <span style=color:#666>=</span> res[<span style=color:#40a070>2</span>]
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Basic validation - check output shape matches input shape</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>assert</span> (
+</span></span><span style=display:flex><span>        output<span style=color:#666>.</span>shape <span style=color:#666>==</span> q<span style=color:#666>.</span>shape
+</span></span><span style=display:flex><span>    ), <span style=color:#4070a0>f</span><span style=color:#4070a0>&#34;Output shape </span><span style=color:#70a0d0>{</span>output<span style=color:#666>.</span>shape<span style=color:#70a0d0>}</span><span style=color:#4070a0> doesn&#39;t match input shape </span><span style=color:#70a0d0>{</span>q<span style=color:#666>.</span>shape<span style=color:#70a0d0>}</span><span style=color:#4070a0>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Verify output is not all zeros or NaNs</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>assert</span> <span style=color:#007020;font-weight:700>not</span> torch<span style=color:#666>.</span>isnan(output)<span style=color:#666>.</span>any(), <span style=color:#4070a0>&#34;Output contains NaN values&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>assert</span> torch<span style=color:#666>.</span>any(output <span style=color:#666>!=</span> <span style=color:#40a070>0</span>), <span style=color:#4070a0>&#34;Output is all zeros&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#007020>print</span>(<span style=color:#4070a0>&#34;output&#34;</span>, output)
+</span></span><span style=display:flex><span>    <span style=color:#007020>print</span>(<span style=color:#4070a0>&#34;attn_probs&#34;</span>, attn_probs)
+</span></span><span style=display:flex><span>    <span style=color:#007020>print</span>(<span style=color:#4070a0>&#34;S_mask&#34;</span>, S_mask)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> output
+</span></span></code></pre></div><h4 id=flash-attn-varlen-func-with-kv-cache>flash_attn_varlen_func with KV Cache</h4><p>In an LLM framework, the Paged KV Cache is crucial for memory efficiency, this API can work with Paged KV Cache.</p><p>Let&rsquo;s define the Paged KV Cache utility function:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>generate_block_kvcache</span>(
+</span></span><span style=display:flex><span>    max_seqlen_k: <span style=color:#007020>int</span>,
+</span></span><span style=display:flex><span>    paged_kv_block_size: <span style=color:#007020>int</span>,
+</span></span><span style=display:flex><span>    max_batch_size: <span style=color:#007020>int</span>,
+</span></span><span style=display:flex><span>    nheads_k: <span style=color:#007020>int</span>,
+</span></span><span style=display:flex><span>    d: <span style=color:#007020>int</span>,
+</span></span><span style=display:flex><span>    device: torch<span style=color:#666>.</span>device,
+</span></span><span style=display:flex><span>    dtype: torch<span style=color:#666>.</span>dtype,
+</span></span><span style=display:flex><span>):
+</span></span><span style=display:flex><span>    <span style=color:#4070a0>&#34;&#34;&#34;Generate a block-based KV cache for efficient memory management in attention.
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    This function creates a paged key-value cache organized in memory blocks, along with
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    a block table that maps logical sequence positions to physical memory blocks.
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    This block-based approach allows efficient memory management for variable-length
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    sequences in transformer decoding.
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    Args:
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        max_seqlen_k: Maximum sequence length for keys
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        paged_kv_block_size: Size of each block in the paged cache
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        max_batch_size: Maximum batch size
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        nheads_k: Number of attention heads
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        d: Dimension of each attention head
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        device: Device to create tensors on
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        dtype: Data type for the cache tensors
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    Returns:
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        Tuple containing:
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>            - k_cache_paged: Paged key cache tensor [num_blocks, block_size, nheads_k, d]
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>            - v_cache_paged: Paged value cache tensor [num_blocks, block_size, nheads_k, d]
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>            - block_table: Mapping from logical to physical blocks [batch_size, num_blocks_per_seq]
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    &#34;&#34;&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Calculate total number of blocks needed</span>
+</span></span><span style=display:flex><span>    num_blocks <span style=color:#666>=</span> math<span style=color:#666>.</span>ceil(max_seqlen_k <span style=color:#666>/</span> paged_kv_block_size) <span style=color:#666>*</span> max_batch_size
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Create randomized paged cache storage for keys and values</span>
+</span></span><span style=display:flex><span>    k_cache_paged <span style=color:#666>=</span> torch<span style=color:#666>.</span>randn(
+</span></span><span style=display:flex><span>        num_blocks, paged_kv_block_size, nheads_k, d, device<span style=color:#666>=</span>device, dtype<span style=color:#666>=</span>dtype
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span>    v_cache_paged <span style=color:#666>=</span> torch<span style=color:#666>.</span>randn(
+</span></span><span style=display:flex><span>        num_blocks, paged_kv_block_size, nheads_k, d, device<span style=color:#666>=</span>device, dtype<span style=color:#666>=</span>dtype
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Create block table - a mapping from logical sequence positions to physical memory blocks</span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Using a random permutation to simulate realistic block allocation</span>
+</span></span><span style=display:flex><span>    block_table <span style=color:#666>=</span> rearrange(
+</span></span><span style=display:flex><span>        torch<span style=color:#666>.</span>randperm(num_blocks, dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>int32, device<span style=color:#666>=</span>device),
+</span></span><span style=display:flex><span>        <span style=color:#4070a0>&#34;(b nblocks) -&gt; b nblocks&#34;</span>,
+</span></span><span style=display:flex><span>        b<span style=color:#666>=</span>max_batch_size,
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> k_cache_paged, v_cache_paged, block_table
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>create_culens</span>(seq_lens: torch<span style=color:#666>.</span>Tensor, device: torch<span style=color:#666>.</span>device):
+</span></span><span style=display:flex><span>    cu_seqlens <span style=color:#666>=</span> torch<span style=color:#666>.</span>cumsum(seq_lens, dim<span style=color:#666>=</span><span style=color:#40a070>0</span>, dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>int32)
+</span></span><span style=display:flex><span>    cu_seqlens <span style=color:#666>=</span> torch<span style=color:#666>.</span>cat([torch<span style=color:#666>.</span>zeros(<span style=color:#40a070>1</span>, dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>int32, device<span style=color:#666>=</span>device), cu_seqlens])
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> cu_seqlens
+</span></span></code></pre></div><p>And here is the code for using the API:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>test_flash_attn_varlen_func_with_kvcache</span>(
+</span></span><span style=display:flex><span>    device<span style=color:#666>=</span><span style=color:#4070a0>&#34;cuda&#34;</span>, seed<span style=color:#666>=</span><span style=color:#40a070>42</span>, batch_size<span style=color:#666>=</span><span style=color:#40a070>10</span>, num_heads<span style=color:#666>=</span><span style=color:#40a070>16</span>, head_dim<span style=color:#666>=</span><span style=color:#40a070>16</span>
+</span></span><span style=display:flex><span>):
+</span></span><span style=display:flex><span>    <span style=color:#4070a0>&#34;&#34;&#34;Test flash attention with variable length and KV caching.
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    Tests the functionality of flash_attn_varlen_func when using paged key-value cache.
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    Args:
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        device: Device to run the test on (default: &#34;cuda&#34;)
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        seed: Random seed for reproducibility (default: 42)
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        batch_size: Number of sequences in batch (default: 10)
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        num_heads: Number of attention heads (default: 16)
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        head_dim: Dimension of each attention head (default: 16)
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    &#34;&#34;&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Set seed for reproducibility</span>
+</span></span><span style=display:flex><span>    torch<span style=color:#666>.</span>manual_seed(seed)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Generate random sequence lengths between 10 and 100</span>
+</span></span><span style=display:flex><span>    seq_lens <span style=color:#666>=</span> torch<span style=color:#666>.</span>randint(<span style=color:#40a070>10</span>, <span style=color:#40a070>100</span>, (batch_size, <span style=color:#40a070>1</span>), device<span style=color:#666>=</span>device)
+</span></span><span style=display:flex><span>    max_seq_len <span style=color:#666>=</span> torch<span style=color:#666>.</span>max(seq_lens)<span style=color:#666>.</span>item()
+</span></span><span style=display:flex><span>    total_seq_len <span style=color:#666>=</span> torch<span style=color:#666>.</span>sum(seq_lens)<span style=color:#666>.</span>item()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># KV cache parameters</span>
+</span></span><span style=display:flex><span>    paged_kv_block_size <span style=color:#666>=</span> <span style=color:#40a070>256</span>
+</span></span><span style=display:flex><span>    max_k_seq_len <span style=color:#666>=</span> <span style=color:#40a070>100</span>
+</span></span><span style=display:flex><span>    k_seq_lens <span style=color:#666>=</span> torch<span style=color:#666>.</span>randint(<span style=color:#40a070>0</span>, max_k_seq_len, (batch_size, <span style=color:#40a070>1</span>), device<span style=color:#666>=</span>device)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Create query tensor packed with all sequences (total_seq_len, num_heads, head_dim)</span>
+</span></span><span style=display:flex><span>    q <span style=color:#666>=</span> torch<span style=color:#666>.</span>randn(total_seq_len, num_heads, head_dim, device<span style=color:#666>=</span>device, dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>float16)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Generate paged KV cache with extra room for new tokens</span>
+</span></span><span style=display:flex><span>    k_cache_paged, v_cache_paged, block_table <span style=color:#666>=</span> generate_block_kvcache(
+</span></span><span style=display:flex><span>        max_k_seq_len <span style=color:#666>+</span> <span style=color:#40a070>100</span>,  <span style=color:#60a0b0;font-style:italic># room for new tokens</span>
+</span></span><span style=display:flex><span>        paged_kv_block_size,
+</span></span><span style=display:flex><span>        batch_size,
+</span></span><span style=display:flex><span>        num_heads,
+</span></span><span style=display:flex><span>        head_dim,
+</span></span><span style=display:flex><span>        device,
+</span></span><span style=display:flex><span>        dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>float16,
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Prepare sequence length information</span>
+</span></span><span style=display:flex><span>    seq_lens <span style=color:#666>=</span> seq_lens<span style=color:#666>.</span>squeeze(<span style=color:#40a070>1</span>)
+</span></span><span style=display:flex><span>    k_seq_lens <span style=color:#666>=</span> k_seq_lens<span style=color:#666>.</span>squeeze(<span style=color:#40a070>1</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Create cumulative sequence lengths for batched attention</span>
+</span></span><span style=display:flex><span>    cu_seqlens_q <span style=color:#666>=</span> create_culens(seq_lens, device)
+</span></span><span style=display:flex><span>    cu_seqlens_k <span style=color:#666>=</span> create_culens(k_seq_lens, device)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Run flash attention with variable length sequences</span>
+</span></span><span style=display:flex><span>    output, attn_probs, S_mask <span style=color:#666>=</span> flash_attn_varlen_func(
+</span></span><span style=display:flex><span>        q,
+</span></span><span style=display:flex><span>        k<span style=color:#666>=</span>k_cache_paged,
+</span></span><span style=display:flex><span>        v<span style=color:#666>=</span>v_cache_paged,
+</span></span><span style=display:flex><span>        cu_seqlens_q<span style=color:#666>=</span>cu_seqlens_q,
+</span></span><span style=display:flex><span>        cu_seqlens_k<span style=color:#666>=</span>cu_seqlens_k,
+</span></span><span style=display:flex><span>        max_seqlen_q<span style=color:#666>=</span>max_seq_len,
+</span></span><span style=display:flex><span>        max_seqlen_k<span style=color:#666>=</span>max_k_seq_len,
+</span></span><span style=display:flex><span>        block_table<span style=color:#666>=</span>block_table,
+</span></span><span style=display:flex><span>        dropout_p<span style=color:#666>=</span><span style=color:#40a070>0.0</span>,
+</span></span><span style=display:flex><span>        return_attn_probs<span style=color:#666>=</span><span style=color:#007020;font-weight:700>True</span>,
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Verify outputs</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>assert</span> output<span style=color:#666>.</span>shape <span style=color:#666>==</span> q<span style=color:#666>.</span>shape, <span style=color:#4070a0>f</span><span style=color:#4070a0>&#34;Output shape </span><span style=color:#70a0d0>{</span>output<span style=color:#666>.</span>shape<span style=color:#70a0d0>}</span><span style=color:#4070a0> doesn&#39;t match query shape </span><span style=color:#70a0d0>{</span>q<span style=color:#666>.</span>shape<span style=color:#70a0d0>}</span><span style=color:#4070a0>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>assert</span> <span style=color:#007020;font-weight:700>not</span> torch<span style=color:#666>.</span>isnan(output)<span style=color:#666>.</span>any(), <span style=color:#4070a0>&#34;Output contains NaN values&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>assert</span> torch<span style=color:#666>.</span>any(output <span style=color:#666>!=</span> <span style=color:#40a070>0</span>), <span style=color:#4070a0>&#34;Output is all zeros&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>assert</span> attn_probs <span style=color:#007020;font-weight:700>is</span> <span style=color:#007020;font-weight:700>not</span> <span style=color:#007020;font-weight:700>None</span>, <span style=color:#4070a0>&#34;Attention probabilities not returned&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>assert</span> S_mask <span style=color:#007020;font-weight:700>is</span> <span style=color:#007020;font-weight:700>not</span> <span style=color:#007020;font-weight:700>None</span>, <span style=color:#4070a0>&#34;Attention mask not returned&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Return results for potential further testing</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> output, attn_probs, S_mask
+</span></span></code></pre></div><h3 id=flash-attn-with-kvcache-for-decoding>flash_attn_with_kvcache for decoding</h3><p>This API is mainly used for decoding, as the decoding is always a batch of sequences with one token.</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>test_flash_attn_with_kvcache</span>(device<span style=color:#666>=</span><span style=color:#4070a0>&#34;cuda&#34;</span>, seed<span style=color:#666>=</span><span style=color:#40a070>42</span>, batch_size<span style=color:#666>=</span><span style=color:#40a070>10</span>, num_heads<span style=color:#666>=</span><span style=color:#40a070>16</span>, head_dim<span style=color:#666>=</span><span style=color:#40a070>16</span>):
+</span></span><span style=display:flex><span>    <span style=color:#4070a0>&#34;&#34;&#34;Test flash attention with KV cache for incremental decoding.
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    This test validates the functionality of flash_attn_with_kvcache which is designed
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    for efficient incremental decoding. The function updates the KV cache in-place with
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    new key and value tensors while performing attention in a single kernel call.
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    Args:
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        device: Device to run the test on (default: &#34;cuda&#34;)
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        seed: Random seed for reproducibility (default: 42)
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        batch_size: Number of sequences in batch (default: 10)
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        num_heads: Number of attention heads (default: 16)
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        head_dim: Dimension of each attention head (default: 16)
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    Returns:
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>        Attention output tensor
+</span></span></span><span style=display:flex><span><span style=color:#4070a0>    &#34;&#34;&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Set seed for reproducibility</span>
+</span></span><span style=display:flex><span>    torch<span style=color:#666>.</span>manual_seed(seed)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Create query tensor - for incremental decoding, we only have one token per sequence</span>
+</span></span><span style=display:flex><span>    q <span style=color:#666>=</span> torch<span style=color:#666>.</span>randn(batch_size, <span style=color:#40a070>1</span>, num_heads, head_dim, device<span style=color:#666>=</span>device, dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>float16)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Generate random sequence lengths for the key-value cache (previous tokens)</span>
+</span></span><span style=display:flex><span>    max_seq_len_k <span style=color:#666>=</span> <span style=color:#40a070>100</span>
+</span></span><span style=display:flex><span>    seq_lens_k <span style=color:#666>=</span> torch<span style=color:#666>.</span>randint(<span style=color:#40a070>10</span>, max_seq_len_k, (batch_size,), device<span style=color:#666>=</span>device, dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>int32)
+</span></span><span style=display:flex><span>    max_seq_len_k <span style=color:#666>=</span> torch<span style=color:#666>.</span>max(seq_lens_k)<span style=color:#666>.</span>item()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Create paged KV cache - block-based memory structure for efficient caching</span>
+</span></span><span style=display:flex><span>    paged_kv_block_size <span style=color:#666>=</span> <span style=color:#40a070>256</span>
+</span></span><span style=display:flex><span>    k_cache_paged, v_cache_paged, block_table <span style=color:#666>=</span> generate_block_kvcache(
+</span></span><span style=display:flex><span>        max_seq_len_k,
+</span></span><span style=display:flex><span>        paged_kv_block_size,
+</span></span><span style=display:flex><span>        batch_size,
+</span></span><span style=display:flex><span>        num_heads,
+</span></span><span style=display:flex><span>        head_dim,
+</span></span><span style=display:flex><span>        device,
+</span></span><span style=display:flex><span>        dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>float16,
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Create new key and value tensors for the current token</span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># (These will be added to the cache in-place during the attention call)</span>
+</span></span><span style=display:flex><span>    k <span style=color:#666>=</span> torch<span style=color:#666>.</span>randn(batch_size, <span style=color:#40a070>1</span>, num_heads, head_dim, device<span style=color:#666>=</span>device, dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>float16)
+</span></span><span style=display:flex><span>    v <span style=color:#666>=</span> torch<span style=color:#666>.</span>randn(batch_size, <span style=color:#40a070>1</span>, num_heads, head_dim, device<span style=color:#666>=</span>device, dtype<span style=color:#666>=</span>torch<span style=color:#666>.</span>float16)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Run flash attention with KV cache</span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># This performs attention and updates the cache in a single operation</span>
+</span></span><span style=display:flex><span>    output <span style=color:#666>=</span> flash_attn_with_kvcache(
+</span></span><span style=display:flex><span>        q<span style=color:#666>=</span>q,
+</span></span><span style=display:flex><span>        k_cache<span style=color:#666>=</span>k_cache_paged,
+</span></span><span style=display:flex><span>        v_cache<span style=color:#666>=</span>v_cache_paged,
+</span></span><span style=display:flex><span>        k<span style=color:#666>=</span>k,
+</span></span><span style=display:flex><span>        v<span style=color:#666>=</span>v,
+</span></span><span style=display:flex><span>        cache_seqlens<span style=color:#666>=</span>seq_lens_k,
+</span></span><span style=display:flex><span>        block_table<span style=color:#666>=</span>block_table,
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Validate output</span>
+</span></span><span style=display:flex><span>    expected_shape <span style=color:#666>=</span> (batch_size, <span style=color:#40a070>1</span>, num_heads, head_dim)
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>assert</span> output<span style=color:#666>.</span>shape <span style=color:#666>==</span> expected_shape, <span style=color:#4070a0>f</span><span style=color:#4070a0>&#34;Output shape </span><span style=color:#70a0d0>{</span>output<span style=color:#666>.</span>shape<span style=color:#70a0d0>}</span><span style=color:#4070a0> doesn&#39;t match expected </span><span style=color:#70a0d0>{</span>expected_shape<span style=color:#70a0d0>}</span><span style=color:#4070a0>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>assert</span> <span style=color:#007020;font-weight:700>not</span> torch<span style=color:#666>.</span>isnan(output)<span style=color:#666>.</span>any(), <span style=color:#4070a0>&#34;Output contains NaN values&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>assert</span> torch<span style=color:#666>.</span>any(output <span style=color:#666>!=</span> <span style=color:#40a070>0</span>), <span style=color:#4070a0>&#34;Output is all zeros&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># Verify cache was updated by checking if sequences grew by 1</span>
+</span></span><span style=display:flex><span>    <span style=color:#60a0b0;font-style:italic># (This assumes flash_attn_with_kvcache increments cache_seqlens internally)</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> output
+</span></span></code></pre></div><h2 id=the-references>The references</h2><ul><li>The <a href=https://github.com/Superjomn/yallm/blob/main/tests/3rdparty/test_flashattn.py>file</a> containing all the code</li></ul><script src=https://utteranc.es/client.js repo=superjomn/superjomn.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></article></main><p class="footer text-center">Copyright (c) 2025 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script></body></html>

@@ -51,7 +51,6 @@ This method encompasses several kernel versions, each with different optimizatio
 &lt;li>The sum is then written to a designated spot in the global memory&amp;rsquo;s output slot. It&amp;rsquo;s important to note that this kernel requires a temporary buffer for writing partial results from each thread block.&lt;/li>
 &lt;li>The process repeats with the size \(n\) reduced to \(\frac{n}{blockSize}\), continuing until \(n=1\).&lt;/li>
 &lt;/ol>
-&lt;!-- raw HTML omitted -->
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-C++" data-lang="C++">&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">reduce_smem_naive&lt;/span>(&lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_idata, &lt;span style="color:#902000">int&lt;/span>&lt;span style="color:#666">*&lt;/span> g_odata, &lt;span style="color:#902000">unsigned&lt;/span> &lt;span style="color:#902000">int&lt;/span> n)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">extern&lt;/span> __shared__ &lt;span style="color:#902000">int&lt;/span> sdata[];

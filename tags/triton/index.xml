@@ -111,7 +111,6 @@
 &lt;h4 id="data-layout">Data layout&lt;/h4>
 &lt;p>Data layout 是 TritonGPU Dialect 的 Type system 的关键，确定了 Data(各层级memory中的Tensor) 到 thread 之间的映射关系。&lt;/p>
 &lt;p>目前 Triton 中有如下几种&lt;/p>
-&lt;!-- raw HTML omitted -->
 &lt;ul>
 &lt;li>
 &lt;ol>
@@ -141,7 +140,6 @@ warpsPerCTA = {1, 2}
 }&amp;gt;
 &lt;/code>&lt;/pre>&lt;/li>
 &lt;/ul>
-&lt;!-- raw HTML omitted -->
 &lt;ul>
 &lt;li>
 &lt;ol start="2">
@@ -169,7 +167,6 @@ A_{2, 2} A_{2, 3} A_{2, 0} A_{2, 1} ... [phase 1] \ per phase = 2
 A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;/code>&lt;/pre>&lt;/li>
 &lt;/ul>
-&lt;!-- raw HTML omitted -->
 &lt;ul>
 &lt;li>
 &lt;ol start="3">
@@ -191,7 +188,6 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;/figure>
 &lt;/li>
 &lt;/ul>
-&lt;!-- raw HTML omitted -->
 &lt;ul>
 &lt;li>
 &lt;ol start="4">
@@ -231,7 +227,6 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;/ul>
 &lt;/li>
 &lt;/ul>
-&lt;!-- raw HTML omitted -->
 &lt;ul>
 &lt;li>
 &lt;ol start="5">
@@ -666,7 +661,6 @@ A_{3, 2} A_{3, 3} A_{3, 0} A_{3, 1} ... [phase 1] /
 &lt;li>给 dot 相关的增加了 mma 的 data layout&lt;/li>
 &lt;li>插入了 mma layout 相关的 &lt;code>convert_layout&lt;/code>&lt;/li>
 &lt;/ul>
-&lt;!-- raw HTML omitted -->
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;display:grid;">&lt;code class="language-llvm" data-lang="llvm">&lt;span style="display:flex;">&lt;span>&lt;span style="">#blocked&lt;/span>&lt;span style="color:#40a070">0&lt;/span> = &lt;span style="">#triton_gpu&lt;/span>.&lt;span style="">blocked&lt;/span>&amp;lt;{&lt;span style="">sizePerThread&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">8&lt;/span>], &lt;span style="">threadsPerWarp&lt;/span> = [&lt;span style="color:#40a070">16&lt;/span>, &lt;span style="color:#40a070">2&lt;/span>], &lt;span style="">warpsPerCTA&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">1&lt;/span>], &lt;span style="">order&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">0&lt;/span>]}&amp;gt;
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="">#blocked&lt;/span>&lt;span style="color:#40a070">1&lt;/span> = &lt;span style="">#triton_gpu&lt;/span>.&lt;span style="">blocked&lt;/span>&amp;lt;{&lt;span style="">sizePerThread&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">1&lt;/span>], &lt;span style="">threadsPerWarp&lt;/span> = [&lt;span style="color:#40a070">4&lt;/span>, &lt;span style="color:#40a070">8&lt;/span>], &lt;span style="">warpsPerCTA&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">1&lt;/span>], &lt;span style="">order&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">0&lt;/span>]}&amp;gt;
 &lt;/span>&lt;/span>&lt;span style="display:flex; background-color:#d8d8d8">&lt;span>&lt;span style="">#mma&lt;/span> = &lt;span style="">#triton_gpu&lt;/span>.&lt;span style="">mma&lt;/span>&amp;lt;{&lt;span style="">version&lt;/span> = &lt;span style="color:#40a070">2&lt;/span>, &lt;span style="">warpsPerCTA&lt;/span> = [&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">1&lt;/span>]}&amp;gt;

@@ -14,8 +14,28 @@ About</a></nav></div><div class=container><main id=main><h1>Coroutine</h1><p><h3
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/python>python</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/coroutine>coroutine</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p>The Most Basic Case With corountines, we can define a produer and consumer without any need for threads. This simplifies our code and makes it more efficient.
-import asyncio async def producer(): for i in range(6): await asyncio.sleep(0.2) yield i async def consumer(): async for i in producer(): print(i) async def main(): await asyncio.gather(consumer()) asyncio.run(main()) 0 1 2 3 4 5 Work with Heavy IO When working with heavy IO operations, we need to be careful not to block the event loop.</p></p><p class="footer text-center">Copyright (c) 2024 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><h2 id=the-most-basic-case>The Most Basic Case</h2><p>With corountines, we can define a produer and consumer without any need for threads. This simplifies our code and makes it more efficient.</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>import</span> <span style=color:#0e84b5;font-weight:700>asyncio</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>async</span> <span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>producer</span>():
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>for</span> i <span style=color:#007020;font-weight:700>in</span> <span style=color:#007020>range</span>(<span style=color:#40a070>6</span>):
+</span></span><span style=display:flex><span>        <span style=color:#007020;font-weight:700>await</span> asyncio<span style=color:#666>.</span>sleep(<span style=color:#40a070>0.2</span>)
+</span></span><span style=display:flex><span>        <span style=color:#007020;font-weight:700>yield</span> i
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>async</span> <span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>consumer</span>():
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>async</span> <span style=color:#007020;font-weight:700>for</span> i <span style=color:#007020;font-weight:700>in</span> producer():
+</span></span><span style=display:flex><span>        <span style=color:#007020>print</span>(i)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>async</span> <span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>main</span>():
+</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>await</span> asyncio<span style=color:#666>.</span>gather(consumer())
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>asyncio<span style=color:#666>.</span>run(main())
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>0
+</span></span><span style=display:flex><span>1
+</span></span><span style=display:flex><span>2
+</span></span><span style=display:flex><span>3
+</span></span><span style=display:flex><span>4
+</span></span><span style=display:flex><span>5
+</span></span></code></pre></div><h2 id=work-with-heavy-io>Work with Heavy IO</h2><p>When working with heavy IO operations, we need to be careful not to block the event loop. Running heavy IO operations can block the current event loop, which would slow down the scheduling of all coroutines.</p></p></p><p class="footer text-center">Copyright (c) 2025 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
 MathJax.Hub.Config({
   tex2jax: {
     inlineMath: [['\\(','\\)']],
