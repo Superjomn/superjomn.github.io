@@ -1272,8 +1272,8 @@ width: 50%;
 &lt;p>The &lt;code>__new__&lt;/code> method is used for creating a new instance of a class. It is a static method that gets called before the &lt;code>__init__&lt;/code> method.&lt;/p>
 &lt;p>The default &lt;code>__new__&lt;/code> method could be&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">MyClass&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __new__(cls, &lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> instance &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020">super&lt;/span>(MyClass, cls)&lt;span style="color:#666">.&lt;/span>__new__(cls, &lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>, &lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> instance &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020">super&lt;/span>(MyClass, &lt;span style="color:#007020">cls&lt;/span>)&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>, &lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> instance
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Note that, different from &lt;code>__init__&lt;/code>, whose first argument is an instance &lt;code>self&lt;/code>, &lt;code>__new__&lt;/code>&amp;rsquo;s first argument is a class.&lt;/p>
 &lt;p>You can override &lt;code>__new__&lt;/code> if something special need to be done with the object creation.&lt;/p>
@@ -1281,10 +1281,10 @@ width: 50%;
 &lt;h4 id="singleton-pattern">Singleton Pattern&lt;/h4>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Singleton&lt;/span>:
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> _instance &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020;font-weight:bold">None&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __new__(cls):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> cls&lt;span style="color:#666">.&lt;/span>_instance &lt;span style="color:#007020;font-weight:bold">is&lt;/span> &lt;span style="color:#007020;font-weight:bold">None&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cls&lt;span style="color:#666">.&lt;/span>_instance &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020">super&lt;/span>()&lt;span style="color:#666">.&lt;/span>__new__(cls)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> cls&lt;span style="color:#666">.&lt;/span>_instance
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> &lt;span style="color:#007020">cls&lt;/span>&lt;span style="color:#666">.&lt;/span>_instance &lt;span style="color:#007020;font-weight:bold">is&lt;/span> &lt;span style="color:#007020;font-weight:bold">None&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">cls&lt;/span>&lt;span style="color:#666">.&lt;/span>_instance &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020">super&lt;/span>()&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">cls&lt;/span>&lt;span style="color:#666">.&lt;/span>_instance
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># Usage&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>singleton1 &lt;span style="color:#666">=&lt;/span> Singleton()
@@ -1294,8 +1294,8 @@ width: 50%;
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="subclassing-immutable-types">Subclassing Immutable Types&lt;/h4>
 &lt;p>When subclassing immutable types like &lt;code>str&lt;/code>, &lt;code>int&lt;/code>, &lt;code>unicode&lt;/code> or &lt;code>tuple&lt;/code>, the properties of immutable cannot be changed after they are created, you can override &lt;code>__new__&lt;/code> instead:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">UpperStr&lt;/span>(&lt;span style="color:#007020">str&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __new__(cls, value):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">str&lt;/span>&lt;span style="color:#666">.&lt;/span>__new__(cls, value&lt;span style="color:#666">.&lt;/span>upper())
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>, value):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">str&lt;/span>&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>, value&lt;span style="color:#666">.&lt;/span>upper())
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># Usage&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>upper_string &lt;span style="color:#666">=&lt;/span> UpperStr(&lt;span style="color:#4070a0">&amp;#34;hello&amp;#34;&lt;/span>)
@@ -1304,14 +1304,14 @@ width: 50%;
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="factory-methods">Factory Methods&lt;/h4>
 &lt;p>&lt;code>__new__&lt;/code> can be used to implement factory methods that return instances of different classes based on input parameters.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Shape&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __new__(cls, &lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> cls &lt;span style="color:#007020;font-weight:bold">is&lt;/span> Shape:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>, &lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> &lt;span style="color:#007020">cls&lt;/span> &lt;span style="color:#007020;font-weight:bold">is&lt;/span> Shape:
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> shape_type &lt;span style="color:#666">=&lt;/span> args[&lt;span style="color:#40a070">0&lt;/span>]
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> shape_type &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#4070a0">&amp;#39;circle&amp;#39;&lt;/span>:
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> Circle()
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">elif&lt;/span> shape_type &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#4070a0">&amp;#39;square&amp;#39;&lt;/span>:
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> Square()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">super&lt;/span>(Shape, cls)&lt;span style="color:#666">.&lt;/span>__new__(cls, &lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">super&lt;/span>(Shape, &lt;span style="color:#007020">cls&lt;/span>)&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>, &lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Circle&lt;/span>(Shape):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">pass&lt;/span>
@@ -1327,18 +1327,18 @@ width: 50%;
 &lt;p>The &lt;code>__iter__&lt;/code> is a magic method that allows an object to be iterable, its result should be an iterable, and the &lt;code>__next__&lt;/code> method returns the next element of the iterable.&lt;/p>
 &lt;p>A naive example:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Counter&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __init__(self, n):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>n &lt;span style="color:#666">=&lt;/span> n
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__init__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>, n):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>n &lt;span style="color:#666">=&lt;/span> n
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __iter__(self):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__iter__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Return the iterator object (self)&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> self
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">self&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __next__(self):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> self&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">&amp;lt;&lt;/span> self&lt;span style="color:#666">.&lt;/span>n:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">+=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> self&lt;span style="color:#666">.&lt;/span>i
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__next__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">&amp;lt;&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>n:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">+=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">else&lt;/span>:
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># signal the end&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">raise&lt;/span> &lt;span style="color:#007020">StopIteration&lt;/span>
@@ -1348,20 +1348,20 @@ The &lt;code>__aiter__&lt;/code> allows an object to be an asynchronous iterator
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">asyncio&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">AsyncCounter&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __init__(self, n):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>n &lt;span style="color:#666">=&lt;/span> n
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__init__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>, n):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>n &lt;span style="color:#666">=&lt;/span> n
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __aiter__(self):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__aiter__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Return the iterator object (self)&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> self
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">self&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __anext__(self):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> self&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">&amp;lt;&lt;/span> self&lt;span style="color:#666">.&lt;/span>n:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">+=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__anext__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">&amp;lt;&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>n:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">+=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Simulate some delay&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>sleep(&lt;span style="color:#40a070">1&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> self&lt;span style="color:#666">.&lt;/span>i
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">else&lt;/span>:
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Signal the end&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">raise&lt;/span> &lt;span style="color:#007020">StopAsyncIteration&lt;/span>
@@ -1369,18 +1369,18 @@ The &lt;code>__aiter__&lt;/code> allows an object to be an asynchronous iterator
 &lt;h3 id="setter-and-getter">setter and getter&lt;/h3>
 &lt;p>When there is some logic bound to a member when it is got or updated, then the getter and setter could be used.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">App&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> __init__(self):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>update_count &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>_name &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#4070a0">&amp;#34;&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__init__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>update_count &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>_name &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#4070a0">&amp;#34;&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#555;font-weight:bold">@property&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">name&lt;/span>(self) &lt;span style="color:#666">-&amp;gt;&lt;/span> &lt;span style="color:#007020">str&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> self&lt;span style="color:#666">.&lt;/span>_name
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">name&lt;/span>(&lt;span style="color:#007020">self&lt;/span>) &lt;span style="color:#666">-&amp;gt;&lt;/span> &lt;span style="color:#007020">str&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>_name
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#555;font-weight:bold">@name.setter&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">name&lt;/span>(self, v:&lt;span style="color:#007020">str&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>_name &lt;span style="color:#666">=&lt;/span> v
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self&lt;span style="color:#666">.&lt;/span>update_count &lt;span style="color:#666">+=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">name&lt;/span>(&lt;span style="color:#007020">self&lt;/span>, v:&lt;span style="color:#007020">str&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>_name &lt;span style="color:#666">=&lt;/span> v
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>update_count &lt;span style="color:#666">+=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>app &lt;span style="color:#666">=&lt;/span> App()
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>app&lt;span style="color:#666">.&lt;/span>name &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#4070a0">&amp;#39;a&amp;#39;&lt;/span>
@@ -1475,9 +1475,9 @@ It can automatically generate some common methods for the class, such as &lt;cod
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">decorator&lt;/span>(func):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">actual_func&lt;/span>(&lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#39;&amp;#39;&amp;#39; The actual func. &amp;#39;&amp;#39;&amp;#39;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Before Calling &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>func&lt;span style="color:#666">.&lt;/span>__name__&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Before Calling &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>func&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__name__&lt;/span>&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> func(&lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;After Calling &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>func&lt;span style="color:#666">.&lt;/span>__name__&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;After Calling &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>func&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__name__&lt;/span>&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> actual_func
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
@@ -1491,8 +1491,8 @@ It can automatically generate some common methods for the class, such as &lt;cod
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Hello, Martin!
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>After Calling greet
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The name and docstring of the decorated function will be hidden in the decorator function, and this makes the usage a bit opaque when debugging.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>__name__)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>__doc__)
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__name__&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__doc__&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>actual_func
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>The actual func.
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>In other words, the name and the docstring of the decorated function is overwritten by the decorator, which is not expected.&lt;/p>
@@ -1502,9 +1502,9 @@ It can automatically generate some common methods for the class, such as &lt;cod
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">decorator&lt;/span>(func):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#555;font-weight:bold">@wraps&lt;/span>(func)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">actual_func&lt;/span>(&lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Before Calling &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>func&lt;span style="color:#666">.&lt;/span>__name__&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Before Calling &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>func&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__name__&lt;/span>&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> func(&lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;After Calling &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>func&lt;span style="color:#666">.&lt;/span>__name__&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;After Calling &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>func&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__name__&lt;/span>&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> actual_func
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
@@ -1513,8 +1513,8 @@ It can automatically generate some common methods for the class, such as &lt;cod
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#39;&amp;#39;&amp;#39; The greet func. &amp;#39;&amp;#39;&amp;#39;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Hello, &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>name&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">!&amp;#34;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>__name__)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>__doc__)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__name__&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__doc__&lt;/span>)
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>greet
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> The greet func.
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="functools-lru-cache-decorator-to-wrap-a-function-with-a-lru-cache">functools &lt;code>@lru_cache&lt;/code> : decorator to wrap a function with a LRU cache&lt;/h3>
