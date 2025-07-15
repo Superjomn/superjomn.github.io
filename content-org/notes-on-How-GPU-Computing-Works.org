@@ -1,0 +1,213 @@
+-*- mode: org-mode; org-download-image-dir: ./images/gpu-computing; ... -*-
+#+title: Notes on <How GPU Computing Works>
+#+author: Chunwei Yan
+#+date: 2024-02-13
+#+subtitle: Introduction to GPU architecture
+#+hugo_tags: "gpu" "arch"
+#+hugo_draft: false
+#+toc: nil
+
+# Local Variables:
+# eval: (setq org-download-image-dir "./images/gpu-computing")
+# End:
+
+
+* Background
+This is my notes on the YouTube video [[https://www.youtube.com/watch?v=3l10o0DYJXg&ab_channel=DantheMan][How GPU Computing Works]] , it is a tutorial on Nvidia GTC 2021.
+* Nobody cares about FLOPS
+** Compute Intensity
+
+#+DOWNLOADED: screenshot @ 2024-02-13 10:12:14
+[[file:images/gpu-computing/2024-02-13_10-12-14_screenshot.png]]
+
+There are several basic concepts could help to understand the compute intensity:
+
+- $T_{mem}$ time spent in accessing memory of some size
+- $T_{math}$ time spent in performing math operations, like FMA
+- $BW_{math}$ the math bandwidth
+- $BW_{mem}$ the memory bandwidth
+
+The Compute Intensity is calculated as $\frac{T_{mem}}{T_{math}}$, which means how many math operations should be done while waiting the memory traffic to keep the GPU busy.
+
+# To support note
+We can continue to verify the numbers in the slides. According to the [[https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/a100/pdf/nvidia-a100-datasheet-us-nvidia-1758950-r4-web.pdf][NVidia A100 specifications]],
+
+- the FP64 TensorCore bandwidth is 19.5 TFLOPS, that is 19500 GFLOPS
+- the A100-40GB has a memory bandwidth of 1555GB/s
+
+The compute intensity of A100 on FP64 is as follows
+
+\begin{equation}
+\begin{split}
+\text{Compute Intensity} & = \frac{BW_{math}^{(FP64)}}{BW_{mem}^{(FP64)}} \\
+& = \frac{19500}{\frac{1555}{8}} \\
+& = 100
+\end{split}
+\end{equation}
+
+That means, to keep the GPU busy, there should be at least 100 math operations for each FP64 data, or the cores will be idle to wait for the data.
+
+#+DOWNLOADED: screenshot @ 2024-02-13 11:49:58
+[[file:images/gpu-computing/2024-02-13_11-49-58_screenshot.png]]
+
+
+Most of the time, the chips are under-utilized, so _the memory bandwidth tends to be the bottleneck for the overall performance_, rather than the math bandwidth.
+
+** Latency
+
+#+DOWNLOADED: screenshot @ 2024-02-13 18:12:00
+[[file:images/gpu-computing/2024-02-13_18-12-00_screenshot.png]]
+
+
+#+DOWNLOADED: screenshot @ 2024-02-13 18:13:35
+[[file:images/gpu-computing/2024-02-13_18-13-35_screenshot.png]]
+
+It runs in the following steps:
+
+1. The loading of both ~x[0]~ and ~y[0]~ are triggered
+2. Once ~x[0]~ is ready, the $\alpha * x[0]$ is triggered
+3. Once ~y[0]~ is ready, the $+ y$ is triggered
+4. the result is ready
+
+In reality, the compiler will perform pipeline optimization on this program, and trigger the ~x[0]~ and ~y[i]~ together as early as possible. We can say that, with the memory latency, it actually loads two FP64 values at once.
+
+
+#+DOWNLOADED: screenshot @ 2024-02-13 23:37:06
+[[file:images/gpu-computing/2024-02-13_23-37-06_screenshot.png]]
+
+
+The die size of the chip:
+
+#+DOWNLOADED: screenshot @ 2024-02-13 23:40:22
+[[file:images/gpu-computing/2024-02-13_23-40-22_screenshot.png]]
+
+So one clock, the electrictiy can only travel from one side to the other one within a chip, needless to say it may take five clocks to move from chip to the DRAM and then five clocks to come back.
+
+#+DOWNLOADED: screenshot @ 2024-02-13 23:52:21
+[[file:images/gpu-computing/2024-02-13_23-52-21_screenshot.png]]
+
+It can move 11659 bytes within the memory latency, while DAXPY only consumes two FP16 (16 bytes), so we get the memory efficiency as $\frac{16}{11659}=0.14\%$, that also means the memory bus is idle $99.86\%$ of the time.
+
+#+DOWNLOADED: screenshot @ 2024-02-13 23:56:00
+[[file:images/gpu-computing/2024-02-13_23-56-00_screenshot.png]]
+
+As the table above says, the GPU is far worse when it comes to memory efficiency, that's why we should not care about FLOPS first, if it cannot keep the bandwidth busy, so neither FLOPS.
+
+** What can we do about it?
+To keep memory bus busy, in the DAXPY example, we must run $\frac{11659}{16}=729$ iterations at once.
+
+
+*** Loop unrolling cannot fully resolve the issue
+
+#+DOWNLOADED: screenshot @ 2024-02-14 09:43:23
+[[file:images/gpu-computing/2024-02-14_09-43-23_screenshot.png]]
+
+
+Loop unrolling is a classical strategy for pipeline optimization, it leaves the compiler to see more statements in the loop body, and the compiler will let the independent memory loading instructions trigger earlier to hide other lantencies.
+
+In the example above, 8 iterations are expanded into one, and $8 x 2 FP16$ loading should be triggered at once, but that is still far from 729.
+
+Can we unroll the loop 729 times? The answer is no, Compilers rarely do such huge unrolling for the following issues:
+
+1. Large binary, it produces multi-times of instructions
+2. Cache misses, it tends to trigger more memory requests at once
+3. Larger register consumption, thus the risk of less active threads or thread spilling
+
+So the unrolling cannot fully resolve the memory inefficient issue in the GPUs.
+
+*** The only solution is by threads
+Another approach to trigger more memory operations at once is to parallelize the program with more threads.
+
+#+DOWNLOADED: screenshot @ 2024-02-14 10:34:02
+[[file:images/gpu-computing/2024-02-14_10-34-02_screenshot.png]]
+
+We can also combine the threads with unrolling, which might requires less threads.
+
+Let's look at the hardware limit on how many threads we can run.
+
+#+DOWNLOADED: screenshot @ 2024-02-14 10:37:02
+[[file:images/gpu-computing/2024-02-14_10-37-02_screenshot.png]]
+
+
+The table above says that the GPU has much larger memory latency and much larger memory bandwidth, this means it needs more threads to cover the bandwidth. While it has far more threads than needed in the workflow of the DAXPY workflow.
+This uncover the essential difference of hardware design between GPUs and CPUs:
+
+- A CPU is a latency machine, a single machine does largely all the work, less threads and expensive switching
+- A GPU is a throughput machine, more threads active, once some are idle, others will be scheduled
+
+* GPU architecture
+** Cache Sizes
+
+This is the size of the memories, let's focus on the cache system and ignore the shared memory temporarily. Note, we include registers as cache too.
+
+#+DOWNLOADED: screenshot @ 2024-02-15 09:00:22
+[[file:images/gpu-computing/2024-02-15_09-00-22_screenshot.png]]
+
+We see that the total size of the register files is 27MB, which is large and close to the cache size (38.5MB) in Xeon 8280.
+
+The GPUs use the registers as buffers to store live data around at very low latency, that's why the number is huge.
+Remember that, with a large memory bandwidth, we need to issue a number of memory operations at the same time to keep the memory busy.
+The number of registers directly relates to the number of memory operations done, this means we can hold 27MB of outstanding load data, or 3.3 MB doubles.
+
+
+** Cache Latency
+
+#+DOWNLOADED: screenshot @ 2024-02-15 10:23:36
+[[file:images/gpu-computing/2024-02-15_10-23-36_screenshot.png]]
+
+If we imagine GPU main memory to be the unit of bandwidth, then the L2 Cache is three times, and likewise, the L1 Cache is 13 times. If the bandwidth goes up, it's more easily able to satisfy my compute intensity.
+
+At the same time, if we look at the L1 Cache that is the closest to the SMs a latency of one time, the L2 Cache is five times, and the main memory is 15 times longer.
+Compared with the off-chip bandwidth and latency, it is necessary to keep the data in local, moving data through the PCIe is the biggest bottleneck.
+
+
+#+DOWNLOADED: screenshot @ 2024-02-17 15:01:21
+[[file:images/gpu-computing/2024-02-17_15-01-21_screenshot.png]]
+
+It is interesting to see the NVLink has a compute intensity close to HBM, and it is much better than PCIe.
+
+
+#+DOWNLOADED: screenshot @ 2024-02-17 15:07:23
+[[file:images/gpu-computing/2024-02-17_15-07-23_screenshot.png]]
+
+If we look at how many threads, the PCIe and NVLink gets fewer threads since their bandwidth is much smaller. But we need almost the exact same number of threads for the main memory as we do for the L2 and L1 Caches. If we want to make the whole memory system busy, and for a bottleneck, we need to add more threads for that part, but it might be too large for the rest parts. It is the hardware designer s intentionally balance things to make things evenly programmable across the whole device.
+
+* SMs
+
+#+DOWNLOADED: screenshot @ 2024-02-17 15:19:57
+[[file:images/gpu-computing/2024-02-17_15-19-57_screenshot.png]]
+
+SM is basically a processing core, and A100 has 108 SMs.
+A SM runs everything in groups of 32 threads called a warp.
+There are 64 warps alive sitting around, and a SM will run 4 of them at any time at any given clock.
+
+
+#+DOWNLOADED: screenshot @ 2024-02-17 15:33:18
+[[file:images/gpu-computing/2024-02-17_15-33-18_screenshot.png]]
+
+The GPU is oversubscribed so when some threads are off waiting for a read latency, other threads have presumably received their response and are ready to go.
+It can switch between warps instantly within a single clock cycle so there's no contact switch overhead at all.
+It can literally run threads back to back that means it's very important to have way more threads alive than the system can run at any time because this is how we compensaate for the latency.
+
+* An example illustrates latency vs throughput
+
+#+DOWNLOADED: screenshot @ 2024-02-17 15:50:41
+[[file:images/gpu-computing/2024-02-17_15-50-41_screenshot.png]]
+
+The Train is a troughput machine just like the GPUs, while the car is a latency machine.
+
+#+DOWNLOADED: screenshot @ 2024-02-17 15:56:42
+[[file:images/gpu-computing/2024-02-17_15-56-42_screenshot.png]]
+
+
+* Sync
+
+#+DOWNLOADED: screenshot @ 2024-02-17 16:11:26
+[[file:images/gpu-computing/2024-02-17_16-11-26_screenshot.png]]
+
+
+
+
+
+* Reference
+- [[https://docs.nvidia.com/deeplearning/performance/dl-performance-gpu-background/index.html][GPU Performance Background User's Guide]]

@@ -1,0 +1,56 @@
+#+title: Bit Manipulation in Algorithm
+#+author: Chunwei Yan
+#+subtitle:
+#+date: 2022-10-23
+#+hugo_tags: "algorithm"
+#+hugo_draft: true
+#+hugo_base_dir: ../
+#+hugo_section: ./posts
+#+toc: nil
+
+* Bit Manipulation in Algorithm
+
+** Basic properties
+*** xor
+Reference [[https://accu.org/journals/overload/20/109/lewin_1915/][All about XOR]] for more detail of the properties.
+
+
+1. Commutative : A ⊕ B = B ⊕ A
+   - This is clear from the definition of XOR: it doesn’t matter which way round you order the two inputs.
+2. Associative : A ⊕ ( B ⊕ C ) = ( A ⊕ B ) ⊕ C
+   - This means that XOR operations can be chained together and the order doesn’t matter. If you aren’t convinced of the truth of this statement, try drawing the truth tables.
+3. Identity element : A ⊕ 0 = A
+   - This means that any value XOR’d with zero is left unchanged.
+4. Self-inverse : A ⊕ A = 0
+   - This means that any value XOR’d with itself gives zero.
+
+*** and
+
+*** bitmask
+
+
+
+
+** Related C++ skills
+
+*** bitmap
+For small bitmask, such as a set for chars
+
+#+BEGIN_SRC C++
+// for lowercase alphas
+vector<bool> chars(26);
+// or
+uint32_t chars{};
+
+// for lowercase and uppercase alphas
+vector<bool> chars('z' - 'A');
+// or
+uint64_t chars{};
+#+END_SRC
+
+
+
+** Classical problems
+- [[https://leetcode.com/problems/single-number/description/][136. Single Number]]
+- [[https://leetcode.com/problems/single-number-ii/description/][137. Single Number II]]
+- [[https://leetcode.com/problems/single-number-iii/description/][260. Single Number III]]

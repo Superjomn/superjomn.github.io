@@ -1,0 +1,6 @@
+while not converge:
+    for sent in sentences:
+        for window in gen_windows(sent):
+            noise_samples = gen_noise()
+            loss = train(sent, window, noise_samples)
+            update(sent, samples, window, loss)

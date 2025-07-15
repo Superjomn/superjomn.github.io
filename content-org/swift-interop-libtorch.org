@@ -1,0 +1,10 @@
+#+TITLE: Bridging libtorch to Swift lang via interop
+#+AUTHOR: Superjomn
+#+DATE: 2025-02-03
+#+hugo_tags: "swift" "tech"
+#+hugo_draft: true
+#+toc: nil
+
+SWIFT_RETURNS_INDEPENDENT_VALUE
+
+Since Torch manages resource using its own reference count, so it should be safe to use SWIFT_RETURNS_INDEPENDENT_VALUE for most of the Tensor APIs.

@@ -1,0 +1,5 @@
+#+title: Unittest based on ert in Emacs Lisp
+#+author: Chunwei Yan
+#+date: 2024-12-26
+
+~ert~ extension provides ~ert-deftest~ macro to help define unittests, which is easy to use.

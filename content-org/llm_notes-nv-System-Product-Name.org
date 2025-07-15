@@ -1,0 +1,16 @@
+#+title: Notes on LLM related
+#+author: Chunwei Yan
+#+date: 2023-06-29
+#+hugo_tags: "triton,system"
+#+hugo_draft: true
+#+hugo_base_dir: ../
+#+hugo_section: ./posts
+#+toc: headlines 2
+
+In this post, I will take note on all the technologies I know concerning LLM.
+
+* Models
+
+* Quantization related
+
+* Inference system related

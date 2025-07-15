@@ -1,0 +1,28 @@
+#+title: Understanding GPT model from inference serving angle
+#+author: Chunwei Yan
+
+ChatGPT is quite popular accross the world, and the GPT series models turns out to be quite classical and successful.
+This blog will concentrate on the inference part of GPT model, in particular, the math equations and batched shapes of each model components.
+
+Before this blog, I found several detaled introduction to GPT, and you could take as a refence if not familar with GPT model.
+
+* GPT Model structure
+There are several open-sourced implementation for GPT models as below
+
+1. The HuggingFace GPT
+2. Megatron-LM
+
+The common model structure is as below
+
+# TODO images
+
+Lets list the layers in the order from input to output
+
+1. Embeddings: result of adding input word embeddings and position embeddings
+2. LayerNorm:
+
+
+The first layer is embeddings, there are two embeddings in GPT:
+
+1. the word embeddings, which is $\text{vocab_size} \times H_d$, the $H_d$ is the overall dimensionality of the model hidden layers.
+2. the position embeddings, which is $\text{position_size} \times H_d$

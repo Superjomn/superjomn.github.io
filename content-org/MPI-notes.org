@@ -1,0 +1,75 @@
+#+TITLE: MPI Programming: A Work Note
+#+AUTHOR: Superjomn
+#+DATE: 2024-07-05
+#+hugo_tags: "C++" "tech"
+#+hugo_draft: true
+#+toc: nil
+
+* MPI_Info
+~MPI_Info~ is used to share some arguments with other ranks when creating the MPI communicator.
+
+** Basic operations
+Create an object
+
+#+BEGIN_SRC C++
+MPI_Info info;
+MPI_Info_create(&info);
+#+END_SRC
+
+Set key, value:
+
+#+BEGIN_SRC C++
+MPI_Info_set(info, "buffer_size", "10485");
+#+END_SRC
+
+Read the record from ~MPI_Info~:
+
+#+BEGIN_SRC C++
+// Official advice: MPI_MAX_INFO_VAL might be very large,
+// so it might not be wise to declare a string of that size.
+char value[MPI_MAX_INFO_VAL];
+
+int found = 0; // flag to check if the key is found
+MPI_Info_get(info, "buffer_size", value, MPI_MAX_INFO_VAL, &found);
+
+if (found) {
+  buffer_size = atoi(value);
+} else {
+  printf("Key not found\n");
+  buffer_size = 100;
+}
+#+END_SRC
+
+There are other operations for manipulating ~MPI_Info~ object:
+
+- ~MPI_Info_get_nkeys~: get the number of key-value pairs in an ~MPI_Info~ object.
+- ~MPI_Info_free~: free the memory allocated by an ~MPI_Info~ object.
+- ~MPI_Info_get_nthkey~: get the key at a specific index in an ~MPI_Info~ object.
+
+** Share with all the ranks
+The ~MPI_Info~ is local in a process by default. But if it is used to configure an MPI communicator, all the processes in the same world will see the same content from the ~MPI_Info~.
+
+#+BEGIN_SRC C++
+MPI_Info info;
+MPI_Info_create(&info);
+
+// Process 0 sets a record in the info object
+MPI_Info_set(info, "buffer_size", "1048576");
+
+// Process 0 creates a new communicator with the info object
+MPI_Comm new_comm;
+MPI_Comm_create(MPI_COMM_WORLD, info, &new_comm);
+
+// Other processes in the communicator will see the updated value
+MPI_Comm_rank(new_comm, &rank);
+if (rank > 0) {
+    char value[MPI_MAX_INFO_VAL];
+    MPI_Info_get(info, "buffer_size", value, MPI_MAX_INFO_VAL, &flag);
+    printf("Process %d: buffer size = %s\n", rank, value);
+}
+#+END_SRC
+
+*Note, after the MPI communicator is created, the update to the ~MPI_Info~ object will still be processor-local, since from now, all the communication should by IPC explicitly.*
+
+* MPI_Comm
+~MPI_Comm~ is a fundamental concept that represents a group of MPI processes that can communicate with each other.
