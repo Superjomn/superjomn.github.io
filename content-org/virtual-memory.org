@@ -1,0 +1,456 @@
+#+title: Implement a Virtual Memory in Python
+#+author: Chunwei Yan
+#+subtitle:
+#+date: 2024-11-01
+#+hugo_tags: "os"
+#+hugo_draft: true
+#+toc: nil
+
+* Concepts
+
+Page
+- Unallocated
+- Cached
+- Uncached
+
+Page Table
+
+[[file:images/irtual-memory/2024-11-01_17-48-30_screenshot.png]]
+
+
+Hierarchy:
+
+- RAM
+- DISK
+
+* Implementation for basic concepts
+
+#+BEGIN_SRC python :session vm :results output
+from dataclasses import dataclass
+from enum import Enum
+from typing import *
+from collections import deque
+import os
+import tempfile
+import math
+from abc import ABC, abstractmethod
+#+END_SRC
+
+#+RESULTS:
+: None
+
+** A centric config class for all the options for Virtual Memory
+Let's have a central config to align with the algorithm.
+
+#+BEGIN_SRC python :session vm
+# The settings for Virtual Memory
+@dataclass
+class VMConfig:
+    num_pages: int = 256
+    page_size: int = 4096 # byte
+
+    num_frames: int = 256
+
+    physical_memory_size: int = 4096 * 256
+    swap_size: int = 4096 * 246
+
+    @property
+    def frame_size(self) -> int:
+        return self.page_size
+#+END_SRC
+
+#+RESULTS:
+: None
+: None
+: None
+
+** Page class for virtual memory page
+
+The state of the Page:
+
+#+BEGIN_SRC python :session vm
+class PageState(Enum):
+    # The page is cached in physical memory
+    cached = 0
+    # The page is not cached in physical memory
+    uncached = 1
+    # The page is not allocated
+    unallocated = 2
+#+END_SRC
+
+#+RESULTS:
+: None
+: None
+: None
+
+The class for a virtual memory page:
+
+#+BEGIN_SRC python :session vm
+@dataclass
+class Page:
+    ''' A virtual page '''
+    state: PageState
+    # The address of the page in the physical memory, either phisical page number or address in disk or None
+    address: Optional[int] = None
+
+    # The size of the continuous Pages for an allocated memory
+    # Only the first page of the continuous pages has this value
+    allocated_page_num : Optional[int] = None
+#+END_SRC
+
+#+RESULTS:
+: None
+: None
+
+The ~address~ is an integer, if the ~state~ is ~cached~, then it points to an pointer in RAM, while if it is ~uncached~, it points to disk instead. The ~allocation_size~ is the size of an VM allocation, only the first Page has the value, it is assigned when allocating the virtual memory, and is used to denote how many pages belong to this allocation when deallocating the memory, e.g. like C language, passing in  ~free(mem_addr)~ rather than ~free(mem_addr, allocation_size)~, we don't want user code to record the ~allocation_size~ for each ~mem_addr~.
+
+** PageTable class
+The PageTable is a container of all the ~Page~ instances, it also contains the logic of locating the Page mapped to an address and other utilities.
+
+#+BEGIN_SRC python :session vm
+class PageTable:
+    def __init__(self, num_pages:int, page_size:int):
+        self.num_pages = num_pages
+        self.page_size = page_size
+        self.table = [None] * self.page_count
+
+    def get_page(self, page_id:int) -> Page:
+        assert page_id < self.page_count
+        return self.table[page_id]
+
+    def get_page_for_address(self, address: int) -> Page:
+        page_id = address // self.page_size
+        assert page_id < self.page_count
+        return self.table[page_id]
+
+    def set_swap_frame(self, page_id:int, swap_offset:int):
+        self.table[page_id] = Page(state=PageState.uncached, address=swap_offset)
+
+    def set_memory_frame(self, page_id:int, memory_offset:int):
+        self.table[page_id] = Page(state=PageState.cached, address=memory_offset)
+
+    def free_page(self, page_id:int):
+        self.table[page_id] = None
+#+END_SRC
+
+#+RESULTS:
+: None
+: None
+: None
+: None
+
+** BufferAllocator for allocation on a pre-allocated buffer
+The ~BufferAllocator~ is the base class of ~SwapAllocator~ and ~PhysicalAllocator~, it manages the free frames on a large buffer.
+
+#+BEGIN_SRC python :session vm :results output
+class BufferAllocator(ABC):
+    ''' A base class for all allocators with buffer management. '''
+
+    def __init__(self, buffer_size:int, frame_size:int):
+        self.buffer_size = buffer_size
+        self.frame_size = frame_size
+        self.buffer = None
+        self.free_frames = deque(range(buffer_size // frame_size))
+        assert self.free_frames, f"Buffer size {buffer_size} is too small for frame size {frame_size}"
+
+        print(f"frames: {len(self.free_frames)}")
+
+    def allocate(self, size:int) -> List[int]:
+        ''' Allocate a number of frames in the buffer. '''
+        frames_needed = math.ceil(size / self.frame_size)
+        assert len(self.free_frames) >= frames_needed, "Not enough free frames in Buffer"
+        frames = [self.free_frames.popleft() for _ in range(frames_needed)]
+        return frames
+
+    def deallocate(self, frames:List[int]):
+        ''' Deallocate a number of frames in the buffer. '''
+        self.free_frames.extend(frames)
+
+    @abstractmethod
+    def write_frame(self, frame_id:int, data:bytes):
+        ''' Write data to a frame in the buffer. '''
+        pass
+
+    @abstractmethod
+    def read_frame(self, frame_id:int) -> bytes:
+        ''' Read data from a frame in the buffer. '''
+        pass
+#+END_SRC
+
+#+RESULTS:
+
+** SwapAllocator
+The ~SwapAllocator~ is used for manaing the Swap space in SSD or Disk. It will occupies a large buffer, and assign ~Frame~ for a VM allocation.
+
+#+BEGIN_SRC python :session vm :results output
+class SwapAllocator(BufferAllocator):
+    def __init__(self, config: VMConfig):
+        super().__init__(config.swap_size, config.frame_size)
+        self.config = config
+        self.swap_file_path = tempfile.mkstemp()[1]
+        self.init_buffer()
+
+    def init_buffer(self):
+        # Create the swap file as an buffer
+        self.buffer = open(self.swap_file_path, 'r+b')
+        self.buffer.seek(self.config.swap_size - 1)
+        self.buffer.write(b'\0')
+
+    def write_frame(self, frame_id:int, data:bytes):
+        self.buffer.seek(frame_id * self.config.frame_size)
+        self.buffer.write(data)
+
+    def read_frame(self, frame_id:int):
+        self.buffer.seek(frame_id * self.config.frame_size)
+        return self.buffer.read(self.config.frame_size)
+
+    def __del__(self):
+        self.buffer.close()
+        # remove the file
+        os.remove(self.swap_file_path)
+#+END_SRC
+
+#+RESULTS:
+
+The ~free_frames~ is a naive implementation for locating the next free ~Frame~, or we need to introduce some allocator algorithm such as [[https://en.wikipedia.org/wiki/Buddy_memory_allocation][Buddy Memory Allocation]], that is overkill for an example.
+
+Let's try it with a tiny buffer.
+
+#+BEGIN_SRC python :session vm :results output
+def test_swap_allocator():
+    config = VMConfig()
+    config.swap_size = 1024 # byte
+    config.page_size = 64 # byte
+
+    swap_allocator = SwapAllocator(config)
+    frame_ids = swap_allocator.allocate(512)
+    assert len(frame_ids) == 512 / 64
+    swap_allocator.write_frame(frame_ids[0], b'1'*64)
+    assert swap_allocator.read_frame(frame_ids[0]) == b'1'*64
+
+test_swap_allocator()
+#+END_SRC
+
+#+RESULTS:
+: frames: 16
+
+** PhysicalMemoryAllocator
+Similarly, the ~PhysicalMemoryAllocator~ is an inherience of ~BufferAllocator~.
+
+
+#+BEGIN_SRC python :session vm :results output
+class PhysicalAllocator(BufferAllocator):
+    def __init__(self, config: VMConfig):
+        super().__init__(config.memory_size, config.page_size)
+        self.config = config
+        self.init()
+
+    def init(self):
+        self.buffer = bytearray(self.config.memory_size)
+
+    def write_frame(self, frame_id:int, data: bytes):
+        frame_start = frame_id * self.config.page_size
+        self.buffer[frame_start:frame_start + len(data)] = data
+
+    def read_frame(self, frame_id:int) -> bytes:
+        frame_start = frame_id * self.config.page_size
+        return self.buffer[frame_start:frame_start + self.config.page_size]
+#+END_SRC
+
+#+RESULTS:
+
+Let's try it:
+
+
+#+BEGIN_SRC python :session vm :results output
+def test_PhysicalAllocator():
+    config = VMConfig()
+    config.memory_size = 1024
+    config.page_size = 64
+
+    allocator = PhysicalAllocator(config)
+    frame_ids = allocator.allocate(512)
+    print(frame_ids)
+    assert len(frame_ids) == 512 // config.page_size
+    allocator.write_frame(frame_ids[0], b'hello')
+    assert allocator.read_frame(frame_ids[0])[: len(b'hello')] == b'hello', f"expected 'hello' but got {allocator.read_frame(frame_ids[0])}"
+
+test_PhysicalAllocator()
+#+END_SRC
+
+#+RESULTS:
+: frames: 16
+: [0, 1, 2, 3, 4, 5, 6, 7]
+
+
+** VMManager for managing the Virtual Memory
+Let's assemble everything together in ~VMManager~.
+
+*** ContiBufferAllocator for allocating continuous buffers
+Different from ~SwapAllocator~ and ~PhysicalAllocator~, the allocation in VM should be continuous, so that users can access the allcation with a single VM address rather than a list of Page IDs.
+
+e.g., in C language, a allocation of VM is by ~addr = malloc(mem_size)~ rather than ~page_addrs = malloc(mem_size)~, it should be able to allocate mutiple contiguous pages with a single address.
+
+To allocate contiguous pages, there are multiple algorithms:
+
+1. First-Fit Algorithm
+2. Best-Fit Algorithm
+3. Buddy Allocation
+4. Memory Pooling and so on.
+
+Let's take the first one to get a simplest implementation:
+
+#+BEGIN_SRC python :session vm :results output
+class ContigPageAllocator:
+    """ The base class for all the page allocators. """
+    def __init__(self, config:VMConfig, page_table: PageTable):
+        self.config = config
+        self.page_table = page_table
+
+    def best_fit(self, size:int) -> int:
+        """ Allocate a contiguous memory region of the given size. """
+        num_pages = math.ceil(size / self.config.page_size)
+        # Find a contiguous region of free pages for the allocation
+        start_idx = 0
+        best_fit_found = False
+        while start_idx < len(self.page_table) and not best_fit_found:
+            if all((map(self.is_page_free,
+                        range(start_idx,start_idx+num_pages)))):
+                best_fit_found = False
+
+        if not best_fit_found:
+            return -1
+        return start_idx
+
+    def is_page_free(self, page_idx:int) -> bool:
+        page = self.page_table[page_idx]
+        return page is None or page.state is PageState.unallocated
+#+END_SRC
+
+#+RESULTS:
+
+*** LRUPageTable for scheduling the cached pages
+
+#+BEGIN_SRC python :session vm :results output
+class LRUPageTable(PageTable):
+    def __init__(self, num_frames):
+        super().__init__(num_frames)
+        self.stack = []
+
+    def update(self, frame):
+        if frame in self.stack:
+            self.stack.remove(frame)
+        self.stack.append(frame)
+
+    def evict(self):
+        return self.stack.pop(0)
+
+    def access(self, frame):
+        if frame not in self.table:
+            if len(self.table) == self.num_frames:
+                self.table.pop(self.evict())
+            self.table[frame] = True
+        self.update(frame)
+
+    def __repr__(self):
+        return 'LRUPageTable(%r, %r)' % (self.num_frames, self.table)
+#+END_SRC
+
+
+
+
+
+
+*** Implementation
+
+#+BEGIN_SRC python :session vm :results output
+class VMManager(ContigPageAllocator):
+    def __init__(self, config:VMConfig):
+        page_table = PageTable(config)
+        ContigPageAllocator.__init__(self, config, page_table)
+
+        self.config = config
+        self.swap_allocator = SwapAllocator(config)
+        self.physical_allocator = PhysicalAllocator(config)
+
+    def allocate(self, mem_size:int):
+        num_pages = mem_size // self.config.page_size
+        if num_pages > len(self.free_pages):
+            return None
+
+        page_start = self.best_fit(mem_size)
+        if page_start == -1:
+            raise Exception("No enough contiguous memory")
+
+        pages = list(range(page_start, page_start + num_pages))
+
+        return pages
+
+    def deallocate(self, page_ids:List[int]):
+        # free the physical memory or swap space
+        for page_id in page_ids:
+            page = self.page_table.get_page(page_id)
+            assert page is not None
+            if page.state is PageState.allocated:
+                continue # not allocated physical memory or swap space yet
+            elif page.state is PageState.cached:
+                self.physical_allocator.deallocate(page.address)
+            elif page.state is PageState.uncached:
+                self.swap_allocator.deallocate(page.adderss)
+
+            # free the page table entry
+            self.page_table.free_page(page_id)
+
+        self.free_pages.extend(page_ids)
+
+    def swap_page(self, page_id:int):
+        page = self.page_table.get_page(page_id)
+        assert page is not None
+        if page.state is PageState.allocated:
+            return # do nothing if the page is not accessed yet
+        elif page.state is PageState.uncached:
+            return # do nothing if the page is already in swap space
+        elif page.state is PageState.cached:
+            data = self.physical_allocator.read(page.address)
+            swap_address = self.swap_allocator.allocate(self.config.page_size)
+            self.swap_allocator.write(swap_address, data)
+            self.physical_allocator.deallocate(page.address)
+            page.address = swap_address
+            page.state = PageState.uncached
+
+    def cache_page(self, page_id:int):
+        page = self.page_table.get_page(page_id)
+        assert page is not None
+        if page.state is PageState.cached:
+            return # do nothing if the page is already cached
+        if page.state in (PageState.allocated, PageState.uncahced):
+            physical_address = self.physical_allocator.allocate(self.config.page_size)
+        if page.state is PageState.allocated:
+            page.state = PageState.cached
+            page.address = physical_address
+            return
+        elif page.state is PageState.uncached:
+            data = self.swap_allocator.read(page.address)
+            self.physical_allocator.write(physical_address, data)
+            page.state = PageState.cached
+            page.address = physical_address
+
+    def write_page(self, page_id:int, data:bytes):
+        page = self.page_table.get_page(page_id)
+        assert page is not None
+        self.swap_page(page_id)
+        self.physical_allocator.write(page.address, data)
+
+    def read_page(self, page_id:int):
+        page = self.page_table.get_page(page_id)
+        assert page is not None
+        self.cache_page(page_id)
+        return self.physical_allocator.read(page.address)
+#+END_SRC
+
+#+RESULTS:
+: None
+
+
+* Reference
+- [[https://www.csapp.cs.cmu.edu/2e/ch9-preview.pdf][ch9-preview.pdf from CMU]]

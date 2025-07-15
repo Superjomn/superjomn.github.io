@@ -1,0 +1,641 @@
+#+title: TorchDynamo 简单实践(1)
+#+author: Chunwei Yan
+#+date: 2023-03-01
+#+hugo_tags: "pytorch" "dynamo"
+#+hugo_draft: true
+#+hugo_base_dir: ../
+#+hugo_section: ./posts
+#+toc: headlines 2
+
+Pytorch 2.0 发布后，增加了 TorchDynamo 和 TorchInductor 两个新东西，前者是一个比较长远的动态图的解决方案，用于直接分析 Python 的 binary code 并部分转换为 FX Graph；
+后者则是在 FX Graph 后接着优化的编译器。
+
+对于终端用户，这两者统一的界面就是 ~torch.compile~ ，一个高层的 API，往下就是完全透明的黑盒。这个透明性对用户是好的，但优化者，还是得要深入其中。
+
+本文尝试从实践的角度，大致理清楚 TorchDynamo 的原理和修改优化方法。
+
+* 背景知识
+TorchDynamo 的 workflow 如下，
+
+[[/static/TorchDynamo/TorchDynamo.png]]
+
+原有的 [[https://pytorch.org/docs/stable/fx.html][torch.fx]] 通过 symbolic tracer 追踪 PyTorch 模型的执行步骤，并最终用 FX Graph 表示成 Backend 可以理解的格式。不过其本质上跟 TorchScript 类似，都只能表示 Torch Op 相关的操作，而用户在动态图里经常混杂其他无法表示的 Python 代码，对于这些 ~torch.fx~ 就歇菜了。
+
+TorchDynamo 对比 ~torch.fx~ 最大的变化是
+
+1. 直接面向 Python JIT 实时的 binary code 进行切图和编译，从当前 Frame 里面可以获取部分变量值进行进一步的 code simplification（比如 Prune 一些 if-else）
+2. 直接修改 Python 执行的 Frame 的 Code object，将 Backend 编译好的 function 跟其他 Torch 无法表示的 Pythonic 的操作混合执行，水乳交融了
+
+下面可能会涉及一些 Python VM 的概念，可以参考 [[https://superjomn.github.io/posts/python-vm-brief-introduction/][Python VM 执行方式简要探索]] 。
+
+* 用户 API
+参考 [[https://github.com/pytorch/pytorch/blob/b5ff41a47a36def38b01aec8a2aaba2532833f35/torch/__init__.py#L1441][code]]， ~torch.compile~ 的实现主要是 ~_dynamo.optimize~
+
+** optimize()
+
+#+BEGIN_SRC python :results output :session
+import torch
+from torch import _dynamo
+from torch._dynamo import optimize
+
+# get the available backends
+print(_dynamo.list_backends())
+#+END_SRC
+
+#+RESULTS:
+: ['aot_ts_nvfuser', 'cudagraphs', 'inductor', 'ipex', 'nvprims_nvfuser', 'onnxrt', 'tensorrt', 'tvm']
+
+** 带 Control Flow 的简单模型的 compile
+常规的不带 control flow 的 TorchDynamo 应该都能解决，这里我们比较关注带 control flow 的情况
+
+*** Control Flow 导致的 graph break
+
+#+BEGIN_SRC python :results output :session
+def foo2(a:torch.tensor, b:torch.tensor):
+  x = a + b
+  if b.sum() < 0:
+    x = x * -1
+  if a.sum() < 0:
+    x = x * -1
+  x = 2 * x
+  return x
+
+foo2_ = optimize(my_compiler)(foo2)
+#+END_SRC
+
+#+RESULTS:
+
+为了方便分析，我们用一个表格的形式
+
+| lineno | code              |
+|--------+-------------------|
+|      2 | ~x = a + b~       |
+|      3 | ~if b.sum() < 0:~ |
+|      4 | ~x = x * -1~    |
+|      5 | ~if a.sum() < 0:~ |
+|      6 | ~x = x * -1~    |
+|      7 | ~x = 2 * x~       |
+|      8 | ~return x~        |
+
+
+执行之， Dynamo 应该能够捕捉 JIT 的 Python binary code，执行相应的 graph。
+
+**** 执行一种 case
+
+
+#+BEGIN_SRC python
+torch._dynamo.reset() # reset all che compilation cache
+my_graph_id = 0
+
+a = torch.ones((2, 3))
+b = torch.ones((2, 3))
+
+# It should tigger only one case of the if-else
+foo2_(a, b)
+#+END_SRC
+
+这里 a, b 均是 1，应该只会执行 kernel 中 2,3,5,7,8 行，其中
+
+- 第 3 行判定 condition 为 false，因此没有进入 then block
+- 第 5 行同理
+
+查看编译的 FX Graph，注意其中对应的代码行已经在生成的代码的注释里了
+
+#+BEGIN_SRC python
+my_compiler() called with FX graph-0:
+class GraphModule(torch.nn.Module):
+    def forward(self, a : torch.Tensor, b : torch.Tensor):
+        # File: <ipython-input-43-f6e4dc936826>:2, code: x = a + b
+        add = a + b;  a = None
+
+        # File: <ipython-input-43-f6e4dc936826>:3, code: if b.sum() < 0:
+        sum_1 = b.sum();  b = None
+        lt = sum_1 < 0;  sum_1 = None
+        return (add, lt
+
+
+my_compiler() called with FX graph-1:
+class GraphModule(torch.nn.Module):
+    def forward(self, a : torch.Tensor):
+        # File: <ipython-input-43-f6e4dc936826>:5, code: if a.sum() < 0:
+        sum_1 = a.sum();  a = None
+        lt = sum_1 < 0;  sum_1 = None
+        return (lt,)
+
+
+my_compiler() called with FX graph-2:
+class GraphModule(torch.nn.Module):
+    def forward(self, x : torch.Tensor):
+        # File: <ipython-input-43-f6e4dc936826>:7, code: x = 2 * x
+        mul = 2 * x;  x = None
+        return (mul,)
+#+END_SRC
+
+可以看到，这次执行，TorchDynamo 给切了 3 张 graph：
+
+1. 对应 2,3 行代码
+2. 对应第 5 行代码
+3. 对应第 7 行代码
+
+看起来 TorchDynamo 会因为 control flow 直接进行 graph break，具体 break 的方法放到后面 python binary code 进行讨论。
+
+
+**** 执行所有 4 种 case
+上面我们讨论了一种情况，比较所有输入的情况下，control flow 会带来的影响。
+
+#+BEGIN_SRC python
+torch._dynamo.reset() # reset all che compilation cache
+my_graph_id = 0
+
+# It should tigger all the four combinations of the if-conditions
+foo2_(a, b)
+foo2_(a, -b)
+foo2_(-a, b)
+foo2_(-a, -b)
+#+END_SRC
+
+这 4 个 case 理论上会激活 Kernel 中所有 2~8 行代码。
+
+实际输出了 5 个 graph：
+
+
+#+BEGIN_SRC python
+my_compiler() called with FX graph-0:
+class GraphModule(torch.nn.Module):
+    def forward(self, a : torch.Tensor, b : torch.Tensor):
+        # File: <ipython-input-43-f6e4dc936826>:2, code: x = a + b
+        add = a + b;  a = None
+
+        # File: <ipython-input-43-f6e4dc936826>:3, code: if b.sum() < 0:
+        sum_1 = b.sum();  b = None
+        lt = sum_1 < 0;  sum_1 = None
+        return (add, lt)
+
+
+my_compiler() called with FX graph-1:
+class GraphModule(torch.nn.Module):
+    def forward(self, a : torch.Tensor):
+        # File: <ipython-input-43-f6e4dc936826>:5, code: if a.sum() < 0:
+        sum_1 = a.sum();  a = None
+        lt = sum_1 < 0;  sum_1 = None
+        return (lt,)
+
+
+my_compiler() called with FX graph-2:
+class GraphModule(torch.nn.Module):
+    def forward(self, x : torch.Tensor):
+        # File: <ipython-input-43-f6e4dc936826>:7, code: x = 2 * x
+        mul = 2 * x;  x = None
+        return (mul,)
+
+
+my_compiler() called with FX graph-3:
+class GraphModule(torch.nn.Module):
+    def forward(self, a : torch.Tensor, x : torch.Tensor):
+        # File: <ipython-input-43-f6e4dc936826>:4, code: x = x * -1
+        mul = x * -1;  x = None
+
+        # File: <ipython-input-43-f6e4dc936826>:5, code: if a.sum() < 0:
+        sum_1 = a.sum();  a = None
+        lt = sum_1 < 0;  sum_1 = None
+        return (mul, lt)
+
+
+my_compiler() called with FX graph-4:
+class GraphModule(torch.nn.Module):
+    def forward(self, x : torch.Tensor):
+        # File: <ipython-input-43-f6e4dc936826>:6, code: x = x * -1
+        mul = x * -1;  x = None
+
+        # File: <ipython-input-43-f6e4dc936826>:7, code: x = 2 * x
+        mul_1 = 2 * mul;  mul = None
+        return (mul_1,)
+#+END_SRC
+
+这些 graph 与原有 kernel 的对应关系：
+
+[[/static/TorchDynamo/2.png]]
+
+简单理解如果两个 if 的 condition 都是 true，那激活 graph0, graph3, graph4 便可。
+
+从上图看，可以看出 graph break 有如下几个特点：
+
+1. 一个 kernel 切出的 graph 覆盖范围可能会重叠
+2. TorchDynamo 基本沿着 python code 从上之下切出连续的 code block 形成 graph，所以所谓的 graph(FX Graph) 只是个数据结构，并非真正的图
+   - 沿着 graph 不会包含 control flow 的角度去看， *FX Graph 很像 Compiler 里面的 Basic Block*
+
+从 AST 层面分析 graph break 还不算直观，毕竟 TorchDynamo 主要是从 bytecode 层次转的 graph，接下来我们 bytecode 角度分析。
+
+**** Python bytecode 角度分析
+
+#+BEGIN_SRC python
+import dis
+dis.dis(foo2)
+#+END_SRC
+
+#+RESULTS:
+
+:  2           0 LOAD_FAST                0 (a)
+:              2 LOAD_FAST                1 (b)
+:              4 BINARY_ADD
+:              6 STORE_FAST               2 (x)
+:
+:  3           8 LOAD_FAST                1 (b)
+:             10 LOAD_METHOD              0 (sum)
+:             12 CALL_METHOD              0
+:             14 LOAD_CONST               1 (0)
+:             16 COMPARE_OP               0 (<)
+:             18 POP_JUMP_IF_FALSE       28
+:
+:  4          20 LOAD_FAST                2 (x)
+:             22 LOAD_CONST               2 (-1)
+:             24 BINARY_MULTIPLY
+:             26 STORE_FAST               2 (x)
+:
+:  5     >>   28 LOAD_FAST                0 (a)
+:             30 LOAD_METHOD              0 (sum)
+:             32 CALL_METHOD              0
+:             34 LOAD_CONST               1 (0)
+:             36 COMPARE_OP               0 (<)
+:             38 POP_JUMP_IF_FALSE       48
+:
+:  6          40 LOAD_FAST                2 (x)
+:             42 LOAD_CONST               2 (-1)
+:             44 BINARY_MULTIPLY
+:             46 STORE_FAST               2 (x)
+:
+:  7     >>   48 LOAD_CONST               3 (2)
+:             50 LOAD_FAST                2 (x)
+:             52 BINARY_MULTIPLY
+:             54 STORE_FAST               2 (x)
+:
+:  8          56 LOAD_FAST                2 (x)
+:             58 RETURN_VALUE
+
+注意其中出现了两次 ~POP_JUMP_IF_FALSE~ ，这个对应着 AST 里面的 ~if~ ，简单理解下其语义， ~POP_JUMP_IF_FALSE 48~ 可以理解为，如果 stack 顶部的 value 为 false，则 goto 到第 48 行 opcode，也就是 Python 第 7 行代码，这个是对应的。
+
+在 bytecode 上看 TorchDynamo 的逻辑比较清晰，上面的例子的中切出 5 个 graph 如下对应
+
+
+[[/static/TorchDynamo/3.png]]
+
+
+可以看出明确的规律：
+
+1. 先沿着 ~POP_JUMP_IF_FALSE~ 为边界切割几个大的 graph；不会有任何 graph 能在中间 hold 一个 ~POP_JUMP_IF_FALSE~
+   - 上图 graph0, graph3, graph4 满足这个规律
+2. ~POP_JUMP_IF_FALSE~ 的 argument 中表示的 goto 的行号会导致进一步的 graph break
+   - 上图 graph1, graph2 满足此规律
+
+上面只是从静态的角度做的解释。
+
+*** TODO InlineCall 融合一些小的 function frame
+
+*** constant control flow 的化简
+
+* COMMENT TorchDynamo VM 实现
+
+- _compile
+
+
+** InstructionTranslatorBase 执行 bytecode 的基本逻辑
+~InstructionTranslatorBase~ 中包含了 bytecode 中每种 opcode 的逻辑，比如最简单的 ~LOAD_FAST~ ：
+
+#+BEGIN_SRC python
+    def LOAD_FAST(self, inst):
+        name = inst.argval
+
+        if name in self.f_locals and config.replay_record_enabled:
+            self.exec_recorder.add_local_var(name, self.f_locals[name])
+
+        if name.startswith(".") and name not in self.symbolic_locals:
+            # This happens in dict/list comprehensions
+            name = name.replace(".", "implicit")
+        assert name not in self.cell_and_freevars()
+        if name not in self.symbolic_locals:
+            unimplemented("undefined LOAD_FAST")
+        self.push(self.symbolic_locals[name])
+        if name.startswith("___stack"):
+            self.symbolic_locals.pop(name)
+#+END_SRC
+
+其执行逻辑在 ~run()~ 函数中，就依次执行 ~step()~
+
+
+主要逻辑在 ~step()~ 函数中，这里摘要部分核心代码
+
+#+BEGIN_SRC python
+def step(self):
+    inst = self.instructions[self.instruction_pointer]
+    self.instruction_pointer += 1
+
+    self.current_instruction = inst
+    self.next_instruction = self.instructions[self.instruction_pointer]
+
+    try:
+        if not hasattr(self, inst.opname):
+            unimplemented(f"missing: {inst.opname}")
+            # call instruction-handler like self.LOAD_FAST
+            getattr(self, instr.opname)(inst)
+    except ...:
+        ...
+    return inst.opname != "RETURN_VALUE"
+#+END_SRC
+
+** generic_jump 中对 ~POP_JUMP_IF_FALSE~ 等 jump 指令的处理
+
+
+** transform_code_object
+clean and assemble the instructions to bytecode
+
+** clean_and_assemble_instructions
+Clean and reassemble the insturctions to bytecode
+
+
+** Code Object of a simple function
+Lets take a naive kernel as example
+
+
+#+BEGIN_SRC python
+def foo1(a:torch.tensor, b:torch.tensor):
+  x = a + b
+  if b.sum() < 0:
+    x = x * -1
+  return x
+#+END_SRC
+
+Setting the input:
+
+
+#+BEGIN_SRC python
+a = torch.ones((3, 2))
+b = torch.ones((3, 2))
+#+END_SRC
+
+*** Call the case ~foo1(a, b)~ first
+
+The original bytecode of this function:
+
+
+#+BEGIN_SRC text
+  2           0 LOAD_FAST                0 (a)
+              2 LOAD_FAST                1 (b)
+              4 BINARY_ADD
+              6 STORE_FAST               2 (x)
+
+  3           8 LOAD_FAST                1 (b)
+             10 LOAD_METHOD              0 (sum)
+             12 CALL_METHOD              0
+             14 LOAD_CONST               1 (0)
+             16 COMPARE_OP               0 (<)
+             18 POP_JUMP_IF_FALSE       28
+
+  4          20 LOAD_FAST                2 (x)
+             22 LOAD_CONST               2 (-1)
+             24 BINARY_MULTIPLY
+             26 STORE_FAST               2 (x)
+
+  5     >>   28 LOAD_FAST                2 (x)
+             30 RETURN_VALUE
+#+END_SRC
+
+Modified bytecode:
+
+#+BEGIN_SRC text
+  1           0 LOAD_GLOBAL              1 (__compiled_fn_37) ;; the compiled graph
+              2 LOAD_FAST                0 (a)
+              4 LOAD_FAST                1 (b)
+              6 CALL_FUNCTION            2
+              8 UNPACK_SEQUENCE          2
+             10 STORE_FAST               2 (x) ;; get x = a + b
+             12 POP_JUMP_IF_FALSE       22
+             14 LOAD_GLOBAL              2 (__resume_at_20_38)
+             16 LOAD_FAST                2 (x)
+             18 CALL_FUNCTION            1
+             20 RETURN_VALUE
+        >>   22 LOAD_GLOBAL              3 (__resume_at_28_39)
+             24 LOAD_FAST                2 (x)
+             26 CALL_FUNCTION            1
+             28 RETURN_VALUE
+#+END_SRC
+
+Note, there are three new functions:
+
+1. ~__compiled_fn_37~, should be the compilation of the first graph
+2. ~__resume_at_20_38~, the if's then block
+3. ~__resume_at_28_39~, the block after the if
+
+
+
+The ~__resume_at_20_38~ simply clones the instuructions of the if's then block, without any modification,
+this approch should force the interpreter to create a frame object for this block.
+
+#+BEGIN_SRC text
+  3           0 JUMP_ABSOLUTE           22
+              2 LOAD_FAST                1 (a)
+              4 LOAD_FAST                2 (b)
+              6 BINARY_ADD
+              8 STORE_FAST               0 (x)
+             10 LOAD_FAST                2 (b)
+             12 LOAD_ATTR                0 (sum)
+             14 CALL_FUNCTION            0
+             16 LOAD_CONST               1 (0)
+             18 COMPARE_OP               0 (<)
+             20 POP_JUMP_IF_FALSE       30
+
+  4     >>   22 LOAD_FAST                0 (x)
+             24 LOAD_CONST               2 (-1)
+             26 BINARY_MULTIPLY
+             28 STORE_FAST               0 (x)
+
+  5     >>   30 LOAD_FAST                0 (x)
+             32 RETURN_VALUE
+#+END_SRC
+
+
+And the ~__resume_at_28_39~ clones the instructions of the block after if, this way force the interpreter to create a frame object for this block.
+
+#+BEGIN_SRC text
+3           0 JUMP_ABSOLUTE           30
+              2 LOAD_FAST                1 (a)
+              4 LOAD_FAST                2 (b)
+              6 BINARY_ADD
+              8 STORE_FAST               0 (x)
+             10 LOAD_FAST                2 (b)
+             12 LOAD_ATTR                0 (sum)
+             14 CALL_FUNCTION            0
+             16 LOAD_CONST               1 (0)
+             18 COMPARE_OP               0 (<)
+             20 POP_JUMP_IF_FALSE       30
+             22 LOAD_FAST                0 (x)
+             24 LOAD_CONST               2 (-1)
+             26 BINARY_MULTIPLY
+             28 STORE_FAST               0 (x)
+
+  5     >>   30 LOAD_FAST                0 (x)
+             32 RETURN_VALUE
+#+END_SRC
+
+*** Call the case ~foo1(a, -b)~ then
+In this case, the interpreter should get into the if's then block, and it break a new graph for it
+
+
+#+BEGIN_SRC text
+opcode         name    target                   args       kwargs
+-------------  ------  -----------------------  ---------  --------
+placeholder    x       x                        ()         {}
+call_function  mul     <built-in function mul>  (x, -1)    {}
+output         output  output                   ((mul,),)  {}
+#+END_SRC
+
+This should hit the original code of ~__resume_at_20_38~ above, since it is a function, so a it has frame object during running and the code object is
+
+#+BEGIN_SRC text
+  3           0 JUMP_ABSOLUTE           22
+              2 LOAD_FAST                1 (a)
+              4 LOAD_FAST                2 (b)
+              6 BINARY_ADD
+              8 STORE_FAST               0 (x)
+             10 LOAD_FAST                2 (b)
+             12 LOAD_ATTR                0 (sum)
+             14 CALL_FUNCTION            0
+             16 LOAD_CONST               1 (0)
+             18 COMPARE_OP               0 (<)
+             20 POP_JUMP_IF_FALSE       30
+
+  4     >>   22 LOAD_FAST                0 (x)
+             24 LOAD_CONST               2 (-1)
+             26 BINARY_MULTIPLY
+             28 STORE_FAST               0 (x)
+
+  5     >>   30 LOAD_FAST                0 (x)
+             32 RETURN_VALUE
+#+END_SRC
+
+it will be modified to below code, which is obvious that the ~__resume_at_20_38~ function is also a graph that get compiled by the backend.
+
+#+BEGIN_SRC text
+  3           0 LOAD_GLOBAL              1 (__compiled_fn_58)
+              2 LOAD_FAST                0 (x)
+              4 CALL_FUNCTION            1
+              6 UNPACK_SEQUENCE          1
+              8 RETURN_VALUE
+#+END_SRC
+
+
+It seems that the overall compiling procedure of Dynamo is
+
+1. The first time to exectue the code, all the ~POP_JUMP_IF_FALSE~ will break the original code object into several blocks, each block will be a new function named like ~__resume_at_20_38~
+   - to force each block to be a frame, and with a seperate code object
+2. Once the interpreter touch into a block, it will try to turn it into a graph (FX graph), and compile it with a backend, if success, the code object of the ~__resume_at_20_38~ will be altered to be a call of a graph function(~__compiled_fn_37~)
+
+
+There seems some patterns here:
+
+1. The first time of compilation, Dynamo will break the blocks and alter the original code of the kernel, turn it into some calling of ~__compiled_fn_37~ and ~__resume_at_20_38~ functions
+   - Once there is a ~POP_JUMP_IF_FALSE~ like instruction, it will break the graph
+     - There should be some optimization such as pruning unnecessary jumps if the condition is constant
+2. In the following execution, once the interpreter touch a block, it will try to compile the graph
+
+
+** A more complex example
+A case with two ifs:
+
+#+BEGIN_SRC python
+def foo2(a:torch.tensor, b:torch.tensor):
+  x = a + b
+  if b.sum() < 0:
+    x = x * -1
+  if a.sum() < 0:
+    x = x * -1
+  x = 2 * x
+  return x
+
+foo2_ = optimize(my_compiler)(foo2)
+#+END_SRC
+
+The original code is
+
+
+#+BEGIN_SRC latex
+  2           0 LOAD_FAST                0 (a)
+              2 LOAD_FAST                1 (b)
+              4 BINARY_ADD
+              6 STORE_FAST               2 (x)
+
+  3           8 LOAD_FAST                1 (b)
+             10 LOAD_METHOD              0 (sum)
+             12 CALL_METHOD              0
+             14 LOAD_CONST               1 (0)
+             16 COMPARE_OP               0 (<)
+             18 POP_JUMP_IF_FALSE       28
+
+  4          20 LOAD_FAST                2 (x)
+             22 LOAD_CONST               2 (-1)
+             24 BINARY_MULTIPLY
+             26 STORE_FAST               2 (x)
+
+  5     >>   28 LOAD_FAST                0 (a)
+             30 LOAD_METHOD              0 (sum)
+             32 CALL_METHOD              0
+             34 LOAD_CONST               1 (0)
+             36 COMPARE_OP               0 (<)
+             38 POP_JUMP_IF_FALSE       48
+
+  6          40 LOAD_FAST                2 (x)
+             42 LOAD_CONST               2 (-1)
+             44 BINARY_MULTIPLY
+             46 STORE_FAST               2 (x)
+
+  7     >>   48 LOAD_CONST               3 (2)
+             50 LOAD_FAST                2 (x)
+             52 BINARY_MULTIPLY
+             54 STORE_FAST               2 (x)
+
+  8          56 LOAD_FAST                2 (x)
+             58 RETURN_VALUE
+#+END_SRC
+
+
+First calling it like ~foo2_(a, b)~, it found a graph
+
+#+BEGIN_SRC text
+opcode         name    target                   args          kwargs
+-------------  ------  -----------------------  ------------  --------
+placeholder    a       a                        ()            {}
+placeholder    b       b                        ()            {}
+call_function  add     <built-in function add>  (a, b)        {}
+call_method    sum_1   sum                      (b,)          {}
+call_function  lt      <built-in function lt>   (sum_1, 0)    {}
+output         output  output                   ((add, lt),)  {}
+#+END_SRC
+
+
+*** call ~foo2_(-a, b) case
+
+
+* COMMENT 为 TorchDynamo 增加一个 backend
+
+
+现在在优化或分析 Pytorch 的模型时，~torch.compile~
+
+* COMMENT TorchDynamo 切图方法，如何避免切图
+
+* COMMENT QA 及思考
+
+** TorchDynamo 的 graph break 规律是啥，如何优化？
+
+** 如何测试 graph 的性能？
+
+* FYI
+** Debug on Dynamo
+如下设置开启可以让 TorchDynao 打印出不少中间结果帮助理解
+
+
+#+BEGIN_SRC python
+from torch._dynamo import config
+import logging
+
+config.log_level = logging.INFO
+config.output_code = True
+#+END_SRC

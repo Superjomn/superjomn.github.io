@@ -1,0 +1,47 @@
+#+title: Algorithm problem
+#+author: Chunwei Yan
+#+date: 2023-05-27
+
+* Classical algorithm
+** Graph
+*** Dijkstr'a algorithm to find the shortest path in a weighted graph
+
+
+
+
+
+* Skills
+** Remove a specific value in a unique array in O(1) time complexity
+
+It is easy to record the index of a newly inserted value with a hash map.
+
+To remove a value, we can swap the value to be removed with the last item of the array, and then pop back the last item, the time complexity is O(1).
+
+
+#+BEGIN_SRC C++
+std::map<int, int> index;
+std::vector<int> arr;
+
+void insert_value(int val) {
+  if (!index.count(val)) {
+    index[val] = arr.size();
+    arr.append(val);
+  }
+}
+
+void remove_val(int val) {
+  auto it = index.find(val);
+  if (it == index.end()) return;
+
+  // NOTE, update index
+  index[arr.back()]= it->second;
+  swap(arr.back(), arr[it->second]);
+  arr.pop_back();
+  index.erase(it);
+}
+#+END_SRC
+
+
+Related problem:
+
+- [[https://leetcode.com/problems/insert-delete-getrandom-o1/?envType=study-plan-v2&id=top-interview-150][380. Insert Delete GetRandom O(1)]]

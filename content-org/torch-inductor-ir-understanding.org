@@ -1,0 +1,100 @@
+#+title: TorchInductor IR 简单理解
+#+author: Chunwei Yan
+#+date: 2023-03-06
+#+hugo_tags: "triton,system"
+#+hugo_draft: true
+#+hugo_base_dir: ../
+#+hugo_section: ./posts
+#+toc: headlines nil
+
+* Real cases
+
+** Reduce case
+
+#+BEGIN_SRC python
+def fn(a, b):
+    return a.sum(0) + b.sum(0)
+
+_dynamo.reset()
+fn_ = torch.compile(fn)
+
+a = torch.randn((33, 44), device='cuda')
+b = torch.randn((33, 44), device='cuda')
+fn_(a,b)
+#+END_SRC
+
+
+Inductor 会获得一个 FX graph:
+
+
+#+BEGIN_SRC python
+class <lambda>(torch.nn.Module):
+    def forward(self, arg0_1: f32[33, 44], arg1_1: f32[33, 44]):
+        # File: /tmp/ipykernel_170086/1965302006.py:2, code: return a.sum(0) + b.sum(0)
+        sum_1: f32[44] = torch.ops.aten.sum.dim_IntList(arg0_1, [0]);  arg0_1 = None
+        sum_2: f32[44] = torch.ops.aten.sum.dim_IntList(arg1_1, [0]);  arg1_1 = None
+        add: f32[44] = torch.ops.aten.add.Tensor(sum_1, sum_2);  sum_1 = sum_2 = None
+        return (add,)
+#+END_SRC
+
+可以看到，其中存在两个 reduce 节点 (~a.sum~ 和 ~b.sum~)，以及 reduce 之后还有个 Elementwise 的操作，按推理应该需要 3 个 ~ComputedBuffer~ ，这与实际情况一致：
+
+最终会有 3 个主要的 IR Node：
+
+*reduce sum 0*
+
+
+#+BEGIN_SRC python
+TensorBox(StorageBox(
+  ComputedBuffer(name='buf0', layout=FlexibleLayout('cuda', torch.float32, size=[44], stride=[1]), data=Reduction(
+    'cuda',
+    torch.float32,
+    tmp0 = load(arg0_1, i0 + 44 * r0)
+    return tmp0
+    ,
+    ranges=[44],
+    reduction_ranges=[33],
+    reduction_type=sum,
+    origins={sum_1, arg0_1}
+  ))
+))
+#+END_SRC
+
+*reduce sum 1*
+
+
+#+BEGIN_SRC python
+TensorBox(StorageBox(
+  ComputedBuffer(name='buf1', layout=FlexibleLayout('cuda', torch.float32, size=[44], stride=[1]), data=Reduction(
+    'cuda',
+    torch.float32,
+    tmp0 = load(arg1_1, i0 + 44 * r0)
+    return tmp0
+    ,
+    ranges=[44],
+    reduction_ranges=[33],
+    reduction_type=sum,
+    origins={sum_2, arg1_1}
+  ))
+))
+#+END_SRC
+
+
+*elementwise add*
+
+
+#+BEGIN_SRC python
+TensorBox(StorageBox(
+  Pointwise(
+    'cuda',
+    torch.float32,
+    tmp0 = load(buf0, i0)
+    tmp1 = load(buf1, i0)
+    tmp2 = tmp0 + tmp1
+    return tmp2
+    ,
+    ranges=[44],
+    origins={sum_1, sum_2, arg0_1, add, arg1_1}
+  )
+))
+#+END_SRC

@@ -1,0 +1,101 @@
+\begin{thebibliography}{10}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{URL }
+
+\bibitem{agirre2009study}
+Agirre, E., Alfonseca, E., Hall, K., Kravalova, J., Pa{\c{s}}ca, M., Soroa, A.:
+  A study on similarity and relatedness using distributional and wordnet-based
+  approaches. In: Proceedings of Human Language Technologies: The 2009 Annual
+  Conference of the North American Chapter of the Association for Computational
+  Linguistics. pp. 19--27. Association for Computational Linguistics (2009)
+
+\bibitem{bengio2006neural}
+Bengio, Y., Schwenk, H., Sen{\'e}cal, J.S., Morin, F., Gauvain, J.L.: Neural
+  probabilistic language models. In: Innovations in Machine Learning, pp.
+  137--186. Springer (2006)
+
+\bibitem{blei2003latent}
+Blei, D.M., Ng, A.Y., Jordan, M.I.: Latent dirichlet allocation. the Journal of
+  machine Learning research  3,  993--1022 (2003)
+
+\bibitem{collobert2008unified}
+Collobert, R., Weston, J.: A unified architecture for natural language
+  processing: Deep neural networks with multitask learning. In: Proceedings of
+  the 25th international conference on Machine learning. pp. 160--167. ACM
+  (2008)
+
+\bibitem{huang2012improving}
+Huang, E.H., Socher, R., Manning, C.D., Ng, A.Y.: Improving word
+  representations via global context and multiple word prototypes. In:
+  Proceedings of the 50th Annual Meeting of the Association for Computational
+  Linguistics: Long Papers-Volume 1. pp. 873--882. Association for
+  Computational Linguistics (2012)
+
+\bibitem{klein2003accurate}
+Klein, D., Manning, C.D.: Accurate unlexicalized parsing. In: Proceedings of
+  the 41st Annual Meeting on Association for Computational Linguistics-Volume
+  1. pp. 423--430. Association for Computational Linguistics (2003)
+
+\bibitem{mikolov2013efficient}
+Mikolov, T., Chen, K., Corrado, G., Dean, J.: Efficient estimation of word
+  representations in vector space. arXiv preprint arXiv:1301.3781  (2013)
+
+\bibitem{mikolov2013distributed}
+Mikolov, T., Sutskever, I., Chen, K., Corrado, G.S., Dean, J.: Distributed
+  representations of words and phrases and their compositionality. In: Advances
+  in Neural Information Processing Systems. pp. 3111--3119 (2013)
+
+\bibitem{mikolov2013linguistic}
+Mikolov, T., Yih, W.t., Zweig, G.: Linguistic regularities in continuous space
+  word representations. In: Proceedings of NAACL-HLT. pp. 746--751 (2013)
+
+\bibitem{mnih2012fast}
+Mnih, A., Teh, Y.W.: A fast and simple algorithm for training neural
+  probabilistic language models. arXiv preprint arXiv:1206.6426  (2012)
+
+\bibitem{morin2005hierarchical}
+Morin, F., Bengio, Y.: Hierarchical probabilistic neural network language
+  model. In: Proceedings of the international workshop on artificial
+  intelligence and statistics. pp. 246--252 (2005)
+
+\bibitem{quasthoff2006corpus}
+Quasthoff, U., Richter, M., Biemann, C.: Corpus portal for search in
+  monolingual corpora. In: Proceedings of the fifth international conference on
+  language resources and evaluation. pp. 1799--1802 (2006)
+
+\bibitem{rumelhart1988learning}
+Rumelhart, D.E., Hinton, G.E., Williams, R.J.: Learning representations by
+  back-propagating errors. MIT Press, Cambridge, MA, USA (1988)
+
+\bibitem{salton1988term}
+Salton, G., Buckley, C.: Term-weighting approaches in automatic text retrieval.
+  Information processing \& management  24(5),  513--523 (1988)
+
+\bibitem{salton1975vector}
+Salton, G., Wong, A., Yang, C.S.: A vector space model for automatic indexing.
+  Communications of the ACM  18(11),  613--620 (1975)
+
+\bibitem{socher2011dynamic}
+Socher, R., Huang, E.H., Pennington, J., Ng, A.Y., Manning, C.D.: Dynamic
+  pooling and unfolding recursive autoencoders for paraphrase detection. In:
+  NIPS. vol.~24, pp. 801--809 (2011)
+
+\bibitem{socher2010learning}
+Socher, R., Manning, C.D., Ng, A.Y.: Learning continuous phrase representations
+  and syntactic parsing with recursive neural networks. In: Proceedings of the
+  NIPS-2010 Deep Learning and Unsupervised Feature Learning Workshop. pp. 1--9
+  (2010)
+
+\bibitem{socher2011semi}
+Socher, R., Pennington, J., Huang, E.H., Ng, A.Y., Manning, C.D.:
+  Semi-supervised recursive autoencoders for predicting sentiment
+  distributions. In: Proceedings of the Conference on Empirical Methods in
+  Natural Language Processing. pp. 151--161. Association for Computational
+  Linguistics (2011)
+
+\bibitem{zhang2013topicdsdr}
+Zhang, Z., Li, H., et~al.: Topicdsdr: combining topic decomposition and data
+  reconstruction for summarization. In: Web-Age Information Management, pp.
+  338--350. Springer (2013)
+
+\end{thebibliography}

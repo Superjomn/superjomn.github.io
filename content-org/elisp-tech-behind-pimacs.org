@@ -1,0 +1,48 @@
+#+title: Pimacs: Emacs lisp codegen
+* Core data types
+** Any
+~Any~ is a special built-in data-type, that it is the default result data-type of any call to externl elisp method.
+
+It could accept any value, e.g. ~var a: Any = 1~, but to work with other real data types, it should be cast to a real data type with method `to[T]`, such as ~a.to[T]() + 1~.
+
+The ~Any.to~ method will be lowered to the following code
+
+
+#+BEGIN_SRC emacs-lisp
+;; Suppose the Any object is x
+;; The Pimacs compiler will add the following runtime check
+(cl-assert (Person-p x))
+x ;; x is returned directly
+#+END_SRC
+
+* Class
+The class generation is based on ~cl-defstruct~ to define structs.
+
+For instance, the following Pimacs code defines a Person class,
+
+#+BEGIN_SRC python
+class Person:
+    var name: Str
+    var age: Int
+#+END_SRC
+
+The corresponding elisp code is
+
+#+BEGIN_SRC emacs-lisp
+(cl-defstruct Person name age)
+#+END_SRC
+
+For methods, Pimacs will generate the corresponding functions with the instance as the first argument. Suppose we are adding a ~get-name~ method to the ~Person~ class:
+
+#+BEGIN_SRC python
+def get-name(self) -> Str:
+    return self.name
+#+END_SRC
+
+The following elisp function will be generated:
+
+#+BEGIN_SRC emacs-lisp
+(defun Person-get-name (self)
+  (Person-name self)
+  )
+#+END_SRC

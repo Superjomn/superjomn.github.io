@@ -1,0 +1,50 @@
+#+title: OpenAI/Triton 中的核心 Pass 理解
+#+author: Chunwei Yan
+#+date: 2022-11-15
+#+hugo_tags: "triton,system"
+#+hugo_draft: true
+#+hugo_base_dir: ../
+#+hugo_section: ./posts
+#+toc: headlines 2
+
+经过了几个月的努力，OpenAI Triton 面向 MLIR Infra 的迁移工作已经告一段落，目前 master 分支里面已经是最新的 MLIR 的代码。
+这个工作主要是 OpenAI 和 Nvidia 团队的合作，其中也包含了 Meta 等团队的贡献。笔者尽管之前也在一些项目里面使用过 MLIR，但这个项目将一个比较成熟的编译器成体系地迁移到 MLIR Infra，并且几乎重新写了整个优化和后端，
+能够参与这样的项目还是非常让人振奋的。
+
+这篇文章主要介绍 Triton 基于 MLIR 的新架构，包括其中一些 Triton 特有的模块概念，以及其中的一些思考和权衡。
+
+* Triton 简介及旧设施
+在介绍 MLIR 的工作之前，请容我简要介绍下 Triton 以及这次 MLIR migration 的起点。
+** Triton: a language ...
+Triton 官方介绍是一个 language，这点类似于 Tensor Comprehension，但区别于我们熟知的 TVM 和 XLA。
+事实上，定位上确实有区别。简单而言，Triton 是一个基于 Python 的 DSL，用户可以利用该 DSL 的语义来编写高性能的 GPU Kernel。这点与 TVM 和 XLA 等 DL Compiler 的层次是不一样的。
+
+简单示例，
+
+# matmul 示例
+
+其中， ...
+
+** 旧有的基于 handcrafted IR 的设施及迁移的动力
+Triton 旧的 IR 是基于自定义的 IR，语法上很类似 LLVM IR，确保了 SSA 和类似的语法和 C++ 的使用界面。
+
+一段简单的示例如下
+
+# IR 示例
+
+旧的 IR 的表达能力肯定是足够的，事实上这次迁移的工作，只是切换了 IR，也并没有增加任何新的功能。
+但我们整体都觉得面向 MLIR 的迁移是非常 rewarding 的，具体我理解的迁移动力如下
+
+*** 1、旧的 IR 由于是完全的自研，周边设施比较薄弱，面向后续希望有一此升级
+*** 2、旧的 IR 层次单一，类似 LLVM IR 也并不特别适合整个 compiler/language End-to-end 的表示和优化，相对地，这正好是 MLIR 的优势
+*** 3、Triton 已有的代码期望重构增强，旧的代码由于主要是原作者一人写的（非常猛），个人风格比较强，经过一个重构更加健壮
+
+* Triton MLIR 设施
+** 整体架构
+** IR 层次
+** Frontend
+** Optimizer
+** Backend
+
+* MLIR 的一些收获
+** 抽象层次

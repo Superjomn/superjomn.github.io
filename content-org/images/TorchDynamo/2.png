@@ -1,0 +1,477 @@
+\documentclass[runningheads,a4paper]{llncs}%[runningheads,a4paper]
+\usepackage{makeidx}  % allows for indexgeneration
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{indentfirst}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{amsmath}
+\setcounter{tocdepth}{3}
+\usepackage{url}
+\begin{document}
+\title{A Model for Learning Distributed Representation for Word and Sentence}
+\maketitle
+
+\begin{abstract}
+Vector-space distributed representation of word can capture syntactic and semantic regularities in language and help learning algorithms to achieve better performance in neural language processing tasks by grouping similar words.
+With progress of machine learning techniques in recent years, much attention has been paid on this field.
+But many NLP tasks such as text summary and sentence matching treat sentences as atomic units.
+In this paper, we introduce a new model which can learn distributed representations for words and variable-length sentences.
+Feature vectors for words and sentences are learned on the basis of their probability of co-occurring of the words and  sentence using a neural network.
+To evaluate feature vectors learned by our model, we take the tasks of detecting word similarity and text summarization.
+Extensive experiments demonstrate the effectiveness of vectors learned by our proposed model.
+\end{abstract}
+
+\section{Introduction}
+With the rapid progress of machine learning techniques, training more complex models on much larger data set becomes possible. Recently, neural probabilistic language models has been drown much attention.
+They model the distribution for the next word as a smooth function of learned multi-dimensional real-valued representations of the context words and the target word.
+By training a neural network language model, one obtains not just the model itself, but also the learned word representations, which can be used for other tasks.
+Similar words will have similar representations and \cite{mikolov2013linguistic} found that these representations are good at capturing syntactic and semantic regularities in language, and relationships are characterized by relation-specific vector offsets.
+
+Huang\cite{huang2012improving} introduces a new neural-network-based language model that learns word's representation (WRGC) with both local and global contexts via a joint training objective.  Directly inspired by the concept of global context,
+    we treat sentence as the global context,
+    and get a new model which can generate better words' representations and fixed-length sentences' representations.
+
+To represent sentences with vectors,
+    we assume that there are two important points: the sentence's representation should 1) contain all the meanings of words contained in it. 2) record the words' order.
+The model learned word vector representation first,
+    then we embed sentence's vector to the local context and global context,
+    frozen model parameters and continue the training,  the semantics captured in word vectors will be incorporated into sentence's representation.
+
+We evaluate our new model on the standard WordSim-353 dataset that includes human similarity judgments on pairs of words, showing that combining both local and sentence as global context learned better representation of words.
+To evaluate the performance of sentences' representations, we take the task of text summarization, and test on the data set DUC 2006,
+    result shows the effectiveness of the syntax and semantics embedded in sentence vectors.
+
+\section{Related work}
+The idea of distributed representations for words were first proposed in \cite{rumelhart1988learning}, and \cite{bengio2006neural}\cite{morin2005hierarchical}\cite{mikolov2013distributed} further extended the work. The additional products of these models are word vector representations, which capture the syntax and semantics of corpus, \cite{mikolov2013linguistic} find that these representations are good at capturing syntactic and semantic regularities in language.
+Word vectors has been widely used in NLP tasks like part-of-seech tagging, chunking, named-entity recognition and semantic role-labeling\cite{collobert2008unified}\cite{socher2010learning}.
+
+The traditional way to represent sentence in vector-space is vector space model (VSM)\cite{salton1975vector},
+sentence can be represented as $s_i = (w_{1,i}, w_{2,i}, \cdots, w_{t,i})$, where $w_{t,i}$ is the weight of word.
+But VSM do not record the word order of the sentence and miss the syntax.
+\cite{mikolov2013distributed} introduced a method to represent phrase, in their model, each frequent phrase is replaced with a unique token in the vocabulary and is trained as a special word.
+But the method don't work for sentence-level representations.
+
+Recently, representing sentences received much attention.
+Socher\cite{socher2010learning} introduced a new model called Recursive Neural Network(RNN) which can learn fixed-length vector representations for variable-length sentences, but this model need to recursively merge children to build a tree like Huffman tree algorithm, leading to the complexity of $O(n\log n)$.
+\cite{socher2011semi} introduced Recursive Autoencoder (RAE), which is similar to RNN but used a parse tree to build the network, and the parse process is time-consuming, too.
+
+\section{The framework of WRGC}
+Huang\cite{huang2012improving} proposed the model that learns word's representation with both local context and global context (WRGC),
+    the structure is shown in the dashed box of Figure \ref{fig:model}.
+The contexts are fixed-length and sampled from a sliding window over the sentence.
+
+Given a sequence of words $s$ (local context) and document $d$ (global context) in which the sequence occurs,
+    WRGC's objective is to discriminate the correct last word in $s$ from other random selected words $s^w$.
+Scores $g(s,h)$ and $g(s^w, h)$ are computed where $s^w$ is $s$ with the last word replaced by random word $w^*$,
+and $g(.,.)$ is a neural network.
+To discriminate $s$ from $s^w$, $g(s,h)$ should be larger than $g(s^w, h)$ by a margin of 1,
+which corresponds to the training objective of minimizing the ranking loss for each $(s,d)$ found in the corpus:
+\begin{figure}[htbp]
+  \centering
+   \includegraphics[width=120pt]{images/nn.pdf}
+   \caption{the demostration of the two-layer neural network.}
+  \label{fig:nn}
+\end{figure}
+
+\begin{equation}
+\label{eq:max-score}
+C_{v,s} = \sum_{w\in V} \max(0, 1-g(s,d) + g(s^w, d)).
+\end{equation}
+WRGC treat document as global context, and the representation of document is a weighted average of all word vectors in the document:
+\begin{equation}
+    d = \sum_{i=1}^{k} w(t_i) x_{t_i}
+\end{equation}
+where $w(.)$ is the weight function for a word like idf-weighting.
+$t_i$ is the $i$-th word in document, and $x_{t_i}$ is the vector representation of $t_i$.
+The framework use two two-layer neural neural networks to compute the scores of local context and global context:
+\begin{equation}\label{eq:local-context}
+  score_l  =  W_2 f(W_1[x_1;x_2;\cdots;x_m]+b_1) + b_2
+\end{equation}
+\begin{equation}\label{eq:global-context}
+  score_g  =  W^g_2 f(W^g_1[d;x_m]+b^g_1) + b^g_2
+\end{equation}
+where $score_l$ is the score of local context,
+$score_g$ is the score of global context,
+$x_i$ is the embedding of word $i$ in the sequence, which is a column in the embedding matrix $L \in \mathbb{R}^{n \times |V|}$ where $|V|$ is the size of the vocabulary.
+$x_i$ is mapped to a column of word embedding matrix $L$ and will be learned and updated during training.
+$[x_1;x_2;\cdots;x_m]$ is the concatenation of the $m$ words.
+$W^{(.)}_1 \in \mathbb{R}^{h\times (mn)}, W^{(.)}_2 \in \mathbb{R}^{h \times 1}$ are respectively the first and second layer weights of the neural network,
+and $b^{(.)}_1 \in \mathbb{R}^{1\times m}$ and $b^{(.)}_2 \in \mathbb{R}^{h\times 1}$ are the bias of each layer.
+$f$ is an element-wise activation function such as $tanh$.
+
+The final score is the sum of the two scores:
+\begin{equation}\label{final-score}
+  score = score_l + score_g
+\end{equation}
+
+The structure of the two-layer neural network is shown in Figure \ref{fig:nn}.
+
+
+
+
+
+
+
+
+
+
+\section{New model with sentence as global context}
+In this section, we describe the details of our model based on WRGC.
+The model learns word vector representation first,
+then with a empty sentence embedding matrix added, the model continues to train and fill the matrix with semantics learned in the word vector representations.
+
+
+
+
+\subsection{Pretrain Word Vector}
+\begin{figure}[htbp]
+  \centering
+   \includegraphics[width=340pt]{images/paper---final.pdf}
+   \caption{An overview of the model.
+      The part in the dashed box is the model that learns word vector representation.
+      The model uses fixed-length sliding window as local context and sentence as global context to compute a score that should be large for the actual next word(bank in the example),
+      compared to the score for other randomly selected words.
+      The overall model (ignore the dashed box) is the part learning sentence vector representation. Two grey boxes are mapped to the same sentence vector. The one on the left side acts like a super item of local context which is shared across all the windows in this sentence, the one on the right side acts as the global context.
+  }
+  \label{fig:model}
+\end{figure}
+WRGC treat document as the global context,
+    but we think sentence is a more appropriate choice because it has a closer relationship with the local context,
+    and can be seen as a superset of the local contexts in it.
+We replace document $d$ to sentence $h$ in \eqref{eq:max-score}\eqref{eq:global-context},
+    and get the new formulas:
+\begin{equation}
+\label{eq:new-max-score}
+C_{v,s} = \sum_{w\in V} \max(0, 1-g(s,h) + g(s^w, h)).
+\end{equation}
+\begin{equation}\label{eq:new-global-context}
+  score_g  =  W^g_2 f(W^g_1[h;x_m]+b^g_1) + b^g_2
+\end{equation}
+and $h$ is the vector of the sentence where the local context in,
+    and can be filled with weighted average of the word vectors in it.
+\begin{equation}
+    \label{eq:h}
+    h = \sum_{i=1}^{k} w_{t_i} x_{t_i}
+\end{equation}
+where $t_i$ is a word in the sentence.
+
+the final score of WRGC is computed using \eqref{final-score},
+    which is just the sum of the local score and global score.
+The local score measures the model's ability to predict the words' sequence,
+while the global score demonstrates the ability to distinguish the words contained in the sentence.
+To adjust the degree of both sides, we add a weight parameter $\lambda$, and the final score is calculated as
+\begin{equation}\label{final-score}
+    score = (1-\lambda)score_l + \lambda score_g
+\end{equation}
+For different tasks, $\lambda$ will be adjusted to learn more suitable word representation.
+
+We use Noise Contrastive Estimation (NCE)\cite{mnih2012fast}\cite{mikolov2013distributed} to sample noise word $w^*$ and generate a wrong word sequence $s^w$ in \eqref{eq:new-max-score}.
+The word vectors are trained using stochastic gradient descent and the gradient is obtained via backpropagation.
+
+Define $X = [x_1, \cdots, x_m]$,
+$X^* = [x_1, \cdots, x^*_m]$,
+$X_g = [h;x_m]$, $X^*_g = [h;x^*_m]$.
+% TODO cases that max is 0
+If $1-g(s,d)+g^w(s,d)>0$ in \eqref{eq:max-score}, then the partial derivatives are as follows, otherwise all the partial derivatives are assigned to zero:
+
+\begin{equation}
+    \label{eq:word-partial}
+\begin{split}
+\frac{\partial C} {\partial X} & =
+    (\lambda -1)W_2 f(W_1 X + b_1) W_1 \\
+\frac{\partial C} {\partial X^g} & =
+    - \lambda W_2^g f'(W_1^g X^g + b_1^g) W_1^g \\
+\frac{\partial C} {\partial X^*} & =
+    (1-\lambda)W_2  f'(W_1 X^* + b_1) W_1 \\
+\frac{\partial C} {\partial X_g^*} & =
+    \lambda W^g_2 f'(W_1^g X^*_g + b_1^g) W_1^g \\
+\end{split}
+\end{equation}
+
+
+\begin{equation}
+    \label{eq:nn-partial}
+\begin{split}
+\frac{\partial C} {\partial W_2} &=
+    (1-\lambda) [f(W_1 X^* + b_1) - f(W_1 X + b_1)] \\
+\frac{\partial C} {\partial W_1} & =
+    (1-\lambda) W_2 [ f'(W_1 X^* + b_1) - f'(W_1 X + b_1) X] \\
+\frac{\partial C} {\partial b_1} & =
+    (1-\lambda) W_2 [ f'(W_1 X^* + b_1) - f'(W_1 X + b_1)] \\
+\frac{\partial C} {\partial W^g_2} & =
+    \lambda [f(W_1^g X^*_g + b_1^g) - f(W_1^g X^g + b_1^g)] \\
+\frac{\partial C} {\partial W^g_1} & =
+    \lambda W_2^g[ f'(W_1^g X^*_g + b_1^g) X_g^*
+        - f'(W_1^g X_g + b_1^g) X^g \\
+\frac{\partial C} {\partial b_1^g} & =
+    \lambda W_2^g [f'(W_1^g X^*_g + b_1^g) - f'(W_1^g X_g + b_1^g)] \\
+\end{split}
+\end{equation}
+
+all the model parameters including word embedding matrix $L$ and neural network parameters $W_1, W_2, W^g_1, w^g_2, b_1, b_2, b^g_1, b^g_2$ are updated during training:
+\begin{equation}
+    \label{eq:model-update}
+    (.) = (.) - \alpha \frac{\partial C}
+                        {\partial (.)}
+\end{equation}
+where $\alpha$ is the learning paramter.
+
+\begin{algorithm}
+\caption{the alogorithm of learning word vector using sentence as the global context}
+\label{alg:word-vector}
+Input:
+\begin{enumerate}[topsep=0pt, partopsep=0pt]
+    \item[\labelitemii] Sentence set: $S = \{s_j|j \in |S|\}$
+    \item[\labelitemii] Learning rate $\alpha$
+    \item[\labelitemii] weight of global context $\lambda$
+    \item[\labelitemii] size of  sliding window $n$
+\end{enumerate}
+Output:
+\begin{enumerate}[topsep=0pt, partopsep=0pt]
+    \item[\labelitemii] Word embedding matrix $L$
+\end{enumerate}
+
+\begin{algorithmic}[1]
+\Procedure : {}{} \\
+    initialize $L$ with random samples from the standard normal distribution
+    \Repeat
+    \For{$j=1$ to $|S|$}
+        \State calculate sentence representation $h$ as global context using \eqref{eq:h}
+        \For{$t=1$ to $length(sentence_j)-n+1$}
+            \State word sequence $s_t \leftarrow (w_{t-n+1}, w_{t-n+2}, \cdots, w_t)$
+            \State generate $k$ negative samples $D \leftarrow \{w_t | t=t^{(1)}, \cdots, t^{(k)}\}$
+            \State generate $k$ wrong sequences using $s_t$ and $D$.
+            \State train the model with neural network in Figure \ref{fig:nn}
+            \State update neural network parameters and $L$ via \eqref{eq:nn-partial}\eqref{eq:word-partial}\eqref{eq:model-update}.
+        \EndFor
+    \EndFor
+    \Until {converge}
+\EndProcedure
+
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\subsection{Learning Sentence Vector}
+
+After words' vectors are learned,
+    we get word vector representation and a neural network that captured semantic and syntax of the corpus.
+We treat sentence as the global context in the previous period which learns word representation,
+but sentence's vector are directly filled with weighted average of all words' vectors those it contains using \eqref{eq:h}.
+
+In this section,
+    we describe the approach of learning sentence vector representation.
+    Different from \eqref{eq:h},
+    in the following period,
+    each sentence is mapped to a unique vector,
+    and all the sentence vectors are learned by the model not computed using \eqref{eq:h} during the trainning process.
+
+A randomly initialized matrix $H$ is created,
+    and each sentence in corpus is mapped to a unique vector,
+    represented by a column in matrix $H$.
+We frozen the parameters of the model learned in the previous process  and concatenate sentence vector to each window in it as a super item of the local context,
+    the sentence vector is shown as the grey box in the left side of Figure \ref{fig:model}.
+    which records the information of the whole sentence and helps to predict the next word of the local context.
+
+The overall framework is shown in Figure \ref{fig:model} (ignore the dashed box),
+    both the grey boxes in the left and right parts are mapped to the same sentence vector.
+On the left side of Figure \ref{fig:model},
+    sentence's vector acts like a super item in a local context which is shared across the local contexts in the same sentence and helps to predict the word behind each window.
+    On the right side,
+    sentence's vector acts as a global context, which records the meaning of the whole sentence and discriminates word in it.
+
+Score of the local context is computed like
+\begin{equation}
+  score_l  =  W_2 f(W_1[s;x_1;x_2;\cdots;x_{m-1}]+b_1) + b_2
+\end{equation}
+and sentence vector $h$'s partial derivatives is
+\begin{equation}
+\begin{split}
+\frac{\partial C} {\partial h}   =  & (1-\lambda)\{W_2 f'([h,X'])W_1 -W_2 f'(h,x'^*)W_1\}^{[1:|h|]}   \\
+                                    & + \lambda\{W^g_2 f'([h,x^*_m])W^g_1 -W^g_2 f'(h,x_m^*)W^g_1\}^{[1:|h|]} \\
+\end{split}
+\label{eq:sentence-vector}
+\end{equation}
+where $(.)^{[1:|h|]}$ means take the first $|h|$ elements as a new vector.
+
+
+Through the sentence's vectors are initialized randomly,
+    based on the word vectors and parameters of neural networks learned before,
+    the model will follow the target function and force sentence vectors to record the syntax and semantics of the corpus during the training period,
+    and finally we get well trained sentence vectors.
+
+\begin{algorithm}
+\caption{the algorithm of learning sentence vector}
+Input:
+\begin{enumerate}[topsep=0pt, partopsep=0pt]
+    \item[\labelitemii] Sentences set: $S = \{s_j|j \in |S|\}$
+    \item[\labelitemii] Learning rate $\alpha$
+    \item[\labelitemii] Word embedding matrix $L$ which have been learned.
+    \item[\labelitemii] Neural network parameters which have been learned.
+    \item[\labelitemii] size of  sliding window $n$
+\end{enumerate}
+Output:
+\begin{enumerate}[topsep=0pt, partopsep=0pt]
+    \item[\labelitemii] Sentence embedding matrix $H$
+\end{enumerate}
+
+\begin{algorithmic}[1]
+\Procedure : {}{} \\
+    initialize senetence embedding matrix $H$.
+    \Repeat
+    \For{$j=1$ to $|S|$}
+        \For{$t=1$ to $length(sentence_j)-n+1$}
+            \State word sequence $s_t \leftarrow (w_{t-n+1}, w_{t-n+2}, \cdots, w_t)$
+            \State generate $k$ negative samples $D \leftarrow \{w_t | t=t^{(1)}, \cdots, t^{(k)}\}$
+            \State generate $k$ wrong sequences using $s_t$ and $D$.
+            \State train the model using neural network in Figure \ref{fig:model} (ignore the dashed box)
+            \State update sentence embedding matrix $H$ via \eqref{eq:sentence-vector} \eqref{eq:model-update}.
+        \EndFor
+    \EndFor
+    \Until {converge}
+\EndProcedure
+
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+\section{Experiments}
+In following experiments, we used a mixed corpus (mixed-corpus) including DUC2002-2007, science news from Australian Broadcasting Commission 2006, 2009-news-300K\cite{quasthoff2006corpus}.
+The mixed corpus has a total of 558k sentences and 10M words.
+
+We get another corpus by cleaning the mixed-corpus sentence by sentence using processing methods as follows:
+\begin{enumerate}
+    \item split punctuations from words, and treat punctuations as words
+    \item lower-wise all the words
+    \item remove stop words and words that appear less than 5 times
+\end{enumerate}
+and finally get another corpus (cleaned corpus).
+
+\subsection{Word Vector}
+We took the task of word similarity using the WordSim-353 data set\cite{agirre2009study}, which consists of 353 pairs of nouns.
+Each pair of words is presented with human judgments on similarity on a scale from 0 to 10.
+
+Table \ref{table:word-vector} shows our results compared to WRGC.
+Both model use 5 as the window size.
+We cross validate the weight parameter $\lambda$ and find that $\lambda = 0.3$ is a better choice for final score\eqref{final-score} in this task.
+
+\begin{table}[h]
+\caption{OurModel-0.5 is our model with $\lambda=0.5$ in \eqref{final-score} which is the final score formula in WRGC. Ourmodel-0.3 is our model with $\lambda=0.3$.}
+\centering
+\setlength{\tabcolsep}{9pt}
+\begin{tabular}{lll}
+   \hline\noalign{\smallskip}
+    Model   &   Corpus  &   $\rho \times 100 $ \\
+    \noalign{\smallskip}
+\hline
+\noalign{\smallskip}
+    WRGC            &   mixed-corpus        &   $63.1$  \\
+    WRGC           &   cleaned-corpus     &   $69.7$  \\
+    OurModel-0.5    &   mixed-corpus        &   $65.2$  \\
+    OurModel-0.3    &   mixed-corpus        &   $68.3$  \\
+    Ourmodel-0.3    &   \textbf{cleaned-corpus}     &   $\textbf{71.6}$  \\
+    \hline
+\end{tabular}
+\label{table:word-vector}
+\end{table}
+% TODO add a image for weight selection
+\begin{figure}[htbp]
+  \centering
+   \includegraphics[width=280pt]{images/parameter.pdf}
+   \caption{adjust parameter for $\lambda$ in OurModel on mixed-corpus}
+  \label{fig:word-vectro-lambda-parameter}
+\end{figure}
+Our model is able to learn more semantic word embeddings and noticeably improves upon WRGC.
+Note that trained on mixed-corpus, OurModel-0.5 has the same final score formula is the same to WRGC, but get higher score(65.2), shows that the effectness of sentence as global context.
+The global context weight $\lambda$ has an adjust effection,
+we cross validate $\lambda$ by the step of $0.3$ and we get a best result when $\lambda=0.3$,
+the result is shown in Figure \ref{fig:word-vectro-lambda-parameter}.
+Notice that, our model only cares about local context when $\lambda = 0$, and it trains only with global context when $\lambda=1.0$.
+It seems that trains only with local context has a better performance than with only global context,
+    because the model tries to capture the semantics and syntax of a sequence of words via predicting a word with local context,
+    while it needs less information to determine whether a word is contained in the sentence with global context, thus less information is learned.
+A cleaned corpus help our model to get the best score $71.6$, which is a $4.8\%$ improvement compared to uncleaned corpus.
+
+\subsection{Sentence Vector}
+Sentence vectors generated by our model were evaluated by taking the task of text summary.
+
+\subsubsection{Data Sets and Evaluation Systen}
+We use the standard summarization benchmark data sets DUC 2006, which  contain 50 documents. And every sentence is either used in its entirety or not at all for constructing a summary.
+The length of a result summary is limited by 250 tokens(whitespace delimited).
+
+The final result is evaluated by the ROUGE(Recall-Oriented Understudy for Gisting Evaluation) toolkit.
+It measures the quality of a summary by counting the unit overlaps between the candidate summary and a set of references summaries.
+ROUGE measures summary quality by counting overlapping units such as the n-gram, word sequences and word pairs between the peer summary (produced by algorithms) and the model summary (produced by humans).
+
+\subsubsection{Implemented Systems and Result Analysis}
+We used data reconstruction based summary algorithm (NonTopicDSDR) \cite{zhang2013topicdsdr} to generate summary.
+NonTopicDSDR attempts to find an optimal set of representative sentences $X$ to approximate the entire document $V$.
+The optimal objective function of NonTopicDSDR like:
+\begin{eqnarray}
+\min_{a_i}\enspace \sum_{i=1}^{N}||v_i-f_i(X;a_i)||^{2}
+\end{eqnarray}
+where $a_i$ is the parameter determine wheather sentence $i$ will be selected to summary. $f_i(X;a_i)$ is a linear function. $||.||$ is the $L_2$-norm.
+
+% TODO tell the framework of DSDR
+The input of NonTopicDSDR can be any fixed-length vectors that can represent the meaning of sentences.
+The original algorithm used Latent Dirichlet allocation(LDA)\cite{blei2003latent} to detect the topic distribution of sentences,
+    and put the sentence-to-topic probabilities as input(NonTopicDSDR-LDA).
+
+To compare with other methods of generating sentence representation, we implement the following sentence representation methods as the baseline systems.
+(1) VSM. (2) RAE\cite{socher2011dynamic}. (3) average of the word vectors(AWV) generate by word2vec\footnote{https://code.google.com/p/word2vec/}\cite{mikolov2013efficient} in a sentence.
+All the three Method learns vector-space representation for sentence, we just put the vectors to NonTopicDSDR and generate the summary.
+% TODO add more description of baseline models
+In method (1), we filled the sentence vector with word's TFIDF\cite{salton1988term}, the vector length is the size of the vocabulary.
+In method (2), We used the Stanford parser\cite{klein2003accurate} to create the parse trees for all
+sentences. for initial word embeddings for RAE we used the 100-dimensional vectors computed via word2vec.
+All the models are trained on cleaned-corpus.
+
+\begin{table}[h]
+\caption{OurModel-0.5 is our model with $\lambda=0.5$ in \eqref{final-score} which is the final score formula in WRGC. OurModel-0.6 is our model with $\lambda=0.6$.}
+\label{table:word-vector}
+\caption{Comparison results on DUC2006}
+\centering
+\setlength{\tabcolsep}{9pt}
+\begin{tabular}{lllll}
+\hline
+Algorithm       &   Rouge-1 &   Rouge-2 &   Rouge-3 &   Rouge-L \\ \hline
+NonTopicDSDR-LDA    &   0.37635 &   0.07073 &   0.34172 &   0.1319  \\
+VSM             &   0.33168 &   0.06047 &   0.01482 &   0.29850 \\
+RAE             &   0.38032 &   0.06723 &   0.32741 &   0.12048 \\
+AWV             &   0.38273 &   0.07121 &   0.34942 &   0.13597 \\
+OurModel-0.5    &   0.38822 &   0.07662 &   0.36271 &   0.14201 \\
+OurModel-0.6    &   \textbf{0.39022}&   \textbf{0.07931} &   \textbf{0.37212} &   \textbf{0.14873} \\
+\hline
+\end{tabular}
+\end{table}
+
+We show two kinds of $F$ measures of ROUGE metrics: ROUGE-N and ROUGE-L.
+ROUGE-N is an $n$-gram recall between a candidate summary nd a set of reference summaries and ROUGE-L uses the longest common subsequence (LCS) matric.
+% TODO add the analysis of result
+Table \ref{table:word-vector} shows the experiment results between our sentence vector between other sentence vectors.
+From the results, we have the following observation:
+VSM get the lowest score, because it is very space for each sentence, and can't capture the relationship between words in a sentence.
+NonTopicDSDR-LDA focus on the distribution of sentence, without the syntax. Scores of RAE and AWV are very close and are better than NonTopicDSDR-LDA.
+OurModel with $\lambda=0.6$ get the best result, and have an improvement of $3\%$ on ROUGE-1.
+
+
+\section{Conclusion}
+In this paper, we propose a new model based on WRGC  which treats sentence as the global context, and add a weight parameter $\lambda$ to adjust effects of the local context and the global context.
+We train the word vector model first,
+then based on the parameters learned in word vector period, our model map each sentence to a unique vector,
+and treat the sentence vector as a super item of local context and global context.
+Both the word vector and sentence vector were evaluated effective in capturing syntax and semantics of text.
+
+\bibliographystyle{plain}%Choose a bibliograhpic style
+\bibliography{re}
+
+
+
+
+\end{document}

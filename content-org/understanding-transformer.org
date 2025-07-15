@@ -1,0 +1,117 @@
+#+title: Transformer 笔记
+#+author: Chunwei Yan
+#+date:2023-04-12
+
+* Model structure
+[[./images/transformer/model.png]]
+
+类似经典的 seq2seq 模型， Transformer 包含了 encoder 和 decoder 两大部分。
+
+** Notations
+- $s$, Source 序列长度
+- $d$, Embedding 尺寸
+- $d_k$, Q,K,V vector size
+- $n$, Batch size
+- $N_{MHA}$, Encoder 和 Decoder 中 Multi-Head Attention 的 Head 数目，这里简化设置为同一个
+- $N_E$, Encoder block 的个数
+- $N_D$, Decoder block 的个数
+
+** Encoder
+
+[[./images/transformer/encoder.png]]
+
+自底网上，网络中逐层涉及到的信息如下
+
+*** Input
+Word ID 构成的 tensor，单个记录的 shape 为 $(S)$
+
+*** Input Embedding
+- $X$
+- shape: $(s, d)$
+
+*** Position Encoding
+Elementwise add 一个与 Word Embedding 等长的向量，shape 是 $(s,d)$
+
+*** Self Attention
+
+
+**** Step 1，计算 QKV
+
+- $Q = X W^Q$
+- $K = X W^K$
+- $V = X W^V$
+- 每个 shape 都是 $(s, d_k)$
+**** Step 2，计算 score
+
+比如，第 $i$ 个 token 与 第 $j$ 个 token 间的关系 score 是
+
+$$
+score_{ij} = q_i \dot k_j
+$$
+
+按矩阵的表示
+
+$$
+score_{qk} = Q K^T
+$$
+
+shape: $(s, 1)$
+**** Step 3，计算权重
+这里通过 softmax，希望将 Step 2 中的 score 变成一个概率分布，即每个 sentence 的概率和为 1。
+
+$$
+score'_{qk} = \softmax( \frac{score_{qk}}{\sqrt{d_k}} ) = \softmax( \frac{QK^T}{\sqrt{d_k}} )
+$$
+
+
+$score'_{qk}$ 的 shape： $(s,1)$
+
+
+**** Step 4，计算加权和
+$$
+Attention(Q,K,V) = score'_{qk}V = \softmax(\frac{QK^T}{\sqrt{d_k}})V
+$$
+
+如此得到了一个 head 下的 Self Attention 的 output。
+
+
+*** Multi-Head Attention
+Multi-Head Attention 包含了 $N_{MHA}$ 个上述 Self Attention。
+
+$$
+MultiHead(Q,K,V) = Concat(head_1, \cdots, head_h)W^O
+$$
+
+其中
+
+- $head_i = Attention(Q_i, K_i, V_i)$
+- $Q_i = X W_i^Q$
+- $K_i = X W_i^K$
+- $V_i = X W_i^V$
+
+Shape 是 $(s, h\times d_O)$
+
+*** Add&Norm
+这里是一次 residul，此外进行一次 LayerNorm，这两个操作都不更改 shape。
+
+Encoder 最终输出还包含一次 Add&Norm 的操作，下面忽略。
+
+*** Feed Forward
+这一步会对每个 token 对应的 Multi-Head Attention 的 Output 逐个做一次 Linear 的变换，这里参数是所有 token 复用同一个。
+
+$$
+F = MultiHead(Q,K,V) W_F
+$$
+
+公式里面忽略了 Add&Norm。
+
+Shape: $(s, d_F)$
+
+** Decoder
+
+
+
+
+
+* Incremental Decoding
+

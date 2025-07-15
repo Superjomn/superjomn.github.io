@@ -1,0 +1,88 @@
+#+title: Journey Into LLMs
+#+author: Chunwei Yan
+#+date: 2023-05-03
+
+While I have some experience with language models, my expertise has primarily been in deploying the model from the 2017 paper "Neural Machine Translation by Jointly Learning to Align and Translate" to an online sponsor engine at Baidu. As such, the Transformer and GPT models are relatively new to me, particularly when it comes to hands-on LLM inference.
+
+There are some excellent posts in the web to introduce Transformer and its various variants, including
+
+- [[https://lilianweng.github.io/posts/2023-01-27-the-transformer-family-v2/][The Transformer Family Version 2.0 -- Lilian Weng blog]]
+- [[https://jalammar.github.io/illustrated-transformer/][The Illustrated Transformer -- Jay Alammar blog]]
+
+In this post, I will share some personal notes on several LLM papers, delving into some details to ensure my understanding is clear.
+
+* Vanilla Transformer basics
+While I highly recommend starting with the detailed explanation of transformer basics found in [[https://lilianweng.github.io/posts/2023-01-27-the-transformer-family-v2/#transformer-basics][this resource]], I will briefly touch on the key points in order to provide a complete overview.
+
+** Notations
+| Symbol                                   | Meaning                                                |
+|------------------------------------------+--------------------------------------------------------|
+| $d$ or $d_{model}$                       | Overall dimension of the model layers.                 |
+| $h$                                      | The number of heads in multi-head attention(MHA) layer |
+| $L$                                      | The lengh of the input sequence                        |
+| $N$                                      | The number of Transformer layers                       |
+| $d_q=d_k=d/h$                            | The dimension of single query, key vector    |
+| $W^Q \in \mathbb{R}^{d\times d_q}$       | The query weight matrix                                |
+| $W^K \in \mathbb{R}^{d\times d_k}$       | The key weight matrix                                  |
+| $W^V \in \mathbb{R}^{d\times d_v}$       | The value weight matrix                                |
+| $W^O \in \mathbb{R}^{d_v\times d}$       | The output weight matrix                               |
+| $X \in \mathbb{R}^{L\times d}$           | The input embeddings.                                  |
+| $Q = X W^Q \in \mathbb{R}^{L\times d_k}$ | The query embeddings                                   |
+| $K = X W^k \in \mathbb{R}^{L\times d_k}$ | The key embeddings                                     |
+| $V = X W^v \in \mathbb{R}^{L\times d_v}$ | The value embeddings                                   |
+
+** Self-attention
+Self-attention is a mechanism that allows a model to weigh the importance of different tokens in a given input sequence, focusing more on the relevant parts and less on the less important parts.
+
+#+CAPTION: self-attention scores for a single token, from [[https://jalammar.github.io/illustrated-transformer/][Alammar, J (2018). The Illustrated Transformer [Blog post]​]]
+[[./images/transformer/transformer_self-attention_visualization.png]]
+
+$$
+Attention(Q,K,V) = softmax(\frac{QK^T}{\sqrt{d_k}})V
+$$
+
+** Multi-Head Attention
+MHA linearly project the queries, keys and values $h$ times with projections to $d_k$, $d_k$ and $d_v$ dimensions.
+
+\begin{aligned}
+MultiHead(Q,K,V) &= Concat(head_1, \cdots, head_h)W^O \\
+\text{where } head_i &= Attention(QW_i^Q, KW_i^K, VW_i^V)
+\end{aligned}
+
+This is benficial, since
+
+- compuatation of each head is small with a smaller $d_k$
+- the heads could be computed parallelly
+
+
+** Positional encodings
+
+* RETRO: Improving language models from retrieving from trillions of tokens
+While larger models with more parameters can offer higher performance for GPT-like LLMs, this approach comes with some drawbacks:
+
+1. Additional computations during training and inference result in higher costs.
+2. Increased memorization of training data can lead to issues when trying to correct for bias or out-of-date information.
+
+This paper introduces a semi-parametric approach that allows the model to query a large corpus during both training and inference phases.
+This approach scales well in both model parameter and corpus size, and can even compete with GPT-3(175B) despite having only 7.5B parameters (1/20th of GPT3's size).
+
+** Core concepts
+*** Chunks
+
+
+
+** Overall workflow
+
+#+CAPTION: RETRO workflow from [[https://www.deepmind.com/publications/improving-language-models-by-retrieving-from-trillions-of-tokens][DeepMind page]]
+[[./images/transformer/retro0.png]]
+
+The input to this system is fed into two distinct execution paths:
+
+1. The Transformer encoder
+2. A database built from a corpus
+
+In the first component (comp-1), the system retrieves neighboring records by querying the input sequences against a pre-built database. These neighbors are then passed through a BERT model (comp-2) to generate the K and V vectors used by the Transformer blocks.
+
+During the generation phase of the Transformer (comp-3), context information from the encoder provides the semantics of the input sequences, while information from neighbors is integrated using cross-attention (combining K and V from neighbors with Q from the context and generated tokens).
+
+Finally, in the fourth component (comp-4), a normal FeedForward layer is used to generate logits. With the addition of sampling and beam search algorithms, the model is able to generate sequences in an autoregressive manner.

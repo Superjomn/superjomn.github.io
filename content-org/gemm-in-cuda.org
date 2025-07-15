@@ -1,0 +1,96 @@
+\relax 
+\bibstyle{splncs03}
+\citation{mikolov2013linguistic}
+\citation{huang2012improving}
+\@writefile{toc}{\contentsline {title}{DRWS: A Model for Learning Distributed Representations for Words and Sentences}{1}}
+\@writefile{toc}{\authcount {1}}
+\@writefile{toc}{\contentsline {author}{Chunwei Yan}{1}}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}}
+\citation{rumelhart1988learning}
+\citation{bengio2006neural}
+\citation{morin2005hierarchical}
+\citation{mikolov2013distributed}
+\citation{mikolov2013linguistic}
+\citation{collobert2008unified}
+\citation{socher2010learning}
+\citation{salton1975vector}
+\citation{mikolov2013distributed}
+\citation{socher2010learning}
+\citation{socher2011semi}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Works}{2}}
+\citation{huang2012improving}
+\citation{huang2012improving}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Model Description}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Learning Word Vector}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces  An overview of the part of our model that learns word vectors. The model uses fixed-width sliding window as local context and sentence as global context to compute a score that should be large for the actual next word ("bank" shown in the example), compared to the score for other randomly selected words. Paramter $\lambda $ is the weight of the score of global context. }}{3}}
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:word-vector}{{1}{3}}
+\citation{mnih2012fast}
+\citation{mikolov2013distributed}
+\newlabel{eq:max-score}{{1}{4}}
+\newlabel{eq:h}{{2}{4}}
+\newlabel{eq:local-context}{{3}{4}}
+\newlabel{eq:global-context}{{4}{4}}
+\newlabel{eq:final-score}{{5}{4}}
+\newlabel{eq:word-partial}{{6}{4}}
+\newlabel{eq:nn-partial}{{7}{5}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces the alogorithm of learning word vector using sentence as the global context}}{5}}
+\newlabel{alg:word-vector}{{1}{5}}
+\newlabel{eq:model-update}{{9}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Learning Sentence Vector}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces An overview of the model. The the part of DRWS which learns sentence vector representations. }}{6}}
+\newlabel{fig:sentence-vector}{{2}{6}}
+\newlabel{eq:sentence-vector}{{11}{7}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces the algorithm of learning sentence vector}}{7}}
+\newlabel{alg:sentence-vector}{{2}{7}}
+\citation{quasthoff2006corpus}
+\citation{agirre2009study}
+\citation{huang2012improving}
+\citation{huang2012improving}
+\citation{huang2012improving}
+\citation{huang2012improving}
+\citation{huang2012improving}
+\citation{huang2012improving}
+\citation{huang2012improving}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{8}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Evoluation on Word Vector}{8}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces  Spearman’s $\rho $ correlation on WordSim-353, DRWS-0.5 is our model with $\lambda =0.5$ in Equation\textup  {\hbox {\mathsurround \z@ \normalfont  (\ignorespaces 5\hbox {}\unskip \@@italiccorr )}} which is the final score formula in Huang\cite  {huang2012improving}. DRWS-0.3 is our model with $\lambda =0.3$.}}{8}}
+\newlabel{table:word-vector}{{1}{8}}
+\citation{zhang2013topicdsdr}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces adjust parameter for $\lambda $ in DRWS on mixed-corpus}}{9}}
+\newlabel{fig:word-vectro-lambda-parameter}{{3}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Evaluation on Sentence Vector}{9}}
+\@writefile{toc}{\contentsline {subsubsection}{Data Sets and Evaluation System}{9}}
+\citation{blei2003latent}
+\citation{socher2011dynamic}
+\citation{mikolov2013efficient}
+\citation{salton1988term}
+\citation{klein2003accurate}
+\citation{huang2012improving}
+\citation{huang2012improving}
+\@writefile{toc}{\contentsline {subsubsection}{Implemented Systems and Result Analysis}{10}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces DRWS-0.5 is our model with $\lambda =0.5$ in Equation\textup  {\hbox {\mathsurround \z@ \normalfont  (\ignorespaces 5\hbox {}\unskip \@@italiccorr )}} which is the final score formula in Huang\cite  {huang2012improving}. DRWS-0.6 is our model with $\lambda =0.6$.}}{10}}
+\newlabel{table:word-vector}{{2}{10}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Comparison results on DUC2006}}{10}}
+\bibstyle{plain}
+\bibdata{re-second-version}
+\bibcite{agirre2009study}{1}
+\bibcite{bengio2006neural}{2}
+\bibcite{blei2003latent}{3}
+\bibcite{collobert2008unified}{4}
+\bibcite{huang2012improving}{5}
+\bibcite{klein2003accurate}{6}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusions and Future Work}{11}}
+\bibcite{mikolov2013efficient}{7}
+\bibcite{mikolov2013distributed}{8}
+\bibcite{mikolov2013linguistic}{9}
+\bibcite{mnih2012fast}{10}
+\bibcite{morin2005hierarchical}{11}
+\bibcite{quasthoff2006corpus}{12}
+\bibcite{rumelhart1988learning}{13}
+\bibcite{salton1988term}{14}
+\bibcite{salton1975vector}{15}
+\bibcite{socher2011dynamic}{16}
+\bibcite{socher2010learning}{17}
+\bibcite{socher2011semi}{18}
+\bibcite{zhang2013topicdsdr}{19}

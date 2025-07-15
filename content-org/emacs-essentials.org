@@ -1,0 +1,429 @@
+#+title: Emacs Essentials
+#+author: Chunwei Yan
+#+subtitle:
+#+date: 2022-10-15
+#+hugo_tags: "emacs" "tech"
+
+It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience
+
+1. the lisp syntax and functional programming
+2. the fragmented methods and libraries
+
+For the 1st issue, it is easy to master the syntax after writing several programs and getting used to them, but for the 2nd one, one needs to take notes or remember something.
+
+In this blog, I focus on the 2nd point and keep updating the notes of some methods and libraries that I think are essential for writing Emacs lisp packages.
+
+* builtin methods
+** buffer
+*** current-buffer: get the current buffer
+#+BEGIN_SRC emacs-lisp
+(current-buffer)
+#+END_SRC
+
+#+RESULTS:
+: #<buffer emacs-essentials.org>
+*** get-buffer: get a buffer by name
+#+BEGIN_SRC emacs-lisp
+(get-buffer "*scratch*")
+#+END_SRC
+
+#+RESULTS:
+: #<buffer *scratch*>
+
+*** get-buffer-create: create the buffer if not exist
+
+#+BEGIN_SRC emacs-lisp
+(get-buffer-create "yaya")
+#+END_SRC
+
+#+RESULTS:
+: #<buffer yaya>
+
+
+*** changing the current buffer
+
+#+BEGIN_SRC emacs-lisp
+(progn
+  (set-buffer (get-buffer "*scratch*"))
+  (current-buffer))
+#+END_SRC
+
+*** Goto a buffer
+
+#+BEGIN_SRC emacs-lisp
+(with-current-buffer "*BUF*"
+  ;; do something like progn
+  )
+#+END_SRC
+
+
+*** Changing the current buffer safely
+It will return to the original buffer after the operation finished.
+
+#+BEGIN_SRC emacs-lisp
+(progn
+  (save-current-buffer
+    (set-buffer "*scratch*")
+    (message "Current buffer: %s" (current-buffer)))
+  (current-buffer))
+#+END_SRC
+
+#+RESULTS:
+: #<buffer 20210801162858-emacs_lisp.org>
+
+*** Working with file buffers
+To get the full file path for the file that the buffer represents
+
+
+#+BEGIN_SRC emacs-lisp
+(buffer-file-name)
+#+END_SRC
+
+#+RESULTS:
+: /Users/yanchunwei/project/myblog2022/content-org/emacs-essentials.org
+
+To find a buffer that represents a particular file
+
+#+BEGIN_SRC emacs-lisp
+(get-file-buffer "/Users/yanchunwei/project/myblog2022/content-org/emacs-essentials.org")
+#+END_SRC
+
+#+RESULTS:
+: #<buffer emacs-essentials.org>
+
+*** Loading a file into a buffer without display it
+
+#+BEGIN_SRC emacs-lisp
+(find-file-noselect "xx.org")
+#+END_SRC
+
+*** Get all buffer names
+
+#+BEGIN_SRC emacs-lisp
+(mapcar #'buffer-name (buffer-list))
+#+END_SRC
+
+
+*** save-execution: Operate on other buffers without altering the current context
+Buffer is a core data structure in elisp, so it is normial to switch to other buffers, do some operations and return back. ~save-execution~ helps to restore the previous context when switching to other buffers.
+
+#+BEGIN_SRC emacs-lisp
+(save-excursion
+  (progn
+
+    ;; do anything on other buffers
+
+    )
+  )
+
+;; Return to the previous context: buffer and point
+#+END_SRC
+
+** point
+
+The "point" is the location of the cursor in the buffer.
+#+BEGIN_SRC emacs-lisp
+(point)
+#+END_SRC
+
+#+RESULTS:
+: 7508
+
+
+#+BEGIN_SRC emacs-lisp
+(point-max)
+#+END_SRC
+
+#+RESULTS:
+: 8010
+
+
+#+BEGIN_SRC emacs-lisp
+(point-min)
+#+END_SRC
+
+#+RESULTS:
+: 1
+
+*** Moving the point
+
+#+BEGIN_SRC emacs-lisp
+(goto-char 1)
+(goto-char (point-max))
+
+;; goto the begining of the buffer
+(beginning-of-buffer)
+
+;; goto the end of the buffer
+(end-of-buffer)
+
+(forward-char)
+(forward-char 5)
+
+(forward-word)
+(backward-word)
+#+END_SRC
+
+*** Preserving the point
+
+#+BEGIN_SRC emacs-lisp
+(save-excursion
+  (goto-char (point-max))
+  (point)
+  )
+#+END_SRC
+
+#+RESULTS:
+: 8471
+
+
+*** Examining buffer text
+To look at text in the buffer.
+
+#+BEGIN_SRC emacs-lisp
+(char-after)
+(char-after (point))
+(char-after (point-min))
+#+END_SRC
+
+#+RESULTS:
+: 58
+
+
+*** The Thing
+The ~thing-at-point~ function is very useful for grabbing the text at the point if it matches a particular type of "thing".
+
+
+#+BEGIN_SRC emacs-lisp
+(thing-at-point 'word)
+#+END_SRC
+
+#+RESULTS:
+
+
+#+BEGIN_SRC emacs-lisp
+(thing-at-point 'sentence)
+#+END_SRC
+
+#+RESULTS:
+: (thing-at-point 'sentence)
+: #+END_SRC
+
+
+#+BEGIN_SRC emacs-lisp
+(thing-at-point 'sentence t)
+#+END_SRC
+
+#+RESULTS:
+: (thing-at-point 'sentence t)
+: #+END_SRC
+
+*** Serching for text
+
+#+BEGIN_SRC emacs-lisp
+(search-forward "thing")
+#+END_SRC
+
+*** Inserting text
+
+#+BEGIN_SRC emacs-lisp
+(insert "000")
+(insert "\n" "This is" ?\s ?\n "Sparta!")
+#+END_SRC
+
+*** Deleting text
+
+#+BEGIN_SRC emacs-lisp
+(with-current-buffer ".gitignore"
+  (delete-region (point) (point-max)))
+#+END_SRC
+
+*** Saving a buffer
+To save the contents of a buffer back to the file it is associated with
+
+#+BEGIN_SRC emacs-lisp
+(save-buffer)
+#+END_SRC
+
+** org-model programming
+
+*** Tags related
+Tags in org-mode are as below:
+
+#+BEGIN_SRC org
+,* heading :tag0:tag1:
+#+END_SRC
+
+**** Get tags
+To get tags on the current entry:
+
+#+BEGIN_SRC emacs-lisp
+(org-get-tags)
+#+END_SRC
+
+**** Set tags
+To set tags on the current entry:
+
+#+BEGIN_SRC emacs-lisp
+(org-set-tags '("hello"))  :hello:
+#+END_SRC
+
+*** Properties related
+Properties in org-mode is as follows, where a property called "prop" has a "value". It is handy to store some meta data using properties.
+
+#+BEGIN_SRC org
+,* headline
+:PROPERTIES:
+:prop: value
+:END:
+#+END_SRC
+
+**** Get properties
+Get properties of the current entry:
+
+#+BEGIN_SRC emacs-lisp
+(org-entry-properties)
+#+END_SRC
+
+**** Set property
+To set a property on the current entry:
+
+#+BEGIN_SRC emacs-lisp
+(org-set-property "name" "tom")
+#+END_SRC
+
+
+
+
+
+
+** file and path
+*** Get the path of the current file
+The ~buffer-file-name~ is a buffer builtin variable holding the file name of the current buffer.
+
+#+BEGIN_SRC emacs-lisp
+(file-truename buffer-file-name)
+#+END_SRC
+
+#+RESULTS:
+: /tmp/emacs-essentials.org
+
+*** Get path without suffix
+
+#+BEGIN_SRC emacs-lisp
+(file-name-sans-extension "/tmp/a.org")
+#+END_SRC
+
+#+RESULTS:
+: /tmp/a
+*** Write to file
+Overwrite the content:
+
+#+BEGIN_SRC emacs-lisp
+(with-temp-file "/tmp/1.org"
+  (insert "hello world")
+  (message "file content: %s" (buffer-string))
+  )
+#+END_SRC
+
+#+RESULTS:
+: file content: hello world
+
+** execute shell command
+
+#+BEGIN_SRC emacs-lisp
+(shell-command "echo hello")
+#+END_SRC
+
+#+RESULTS:
+: 0
+
+** condition-case: try-catch in elisp
+Like the try-catch in Python, where a try-catch can launch some unsafe function and catch the error.
+
+#+BEGIN_SRC emacs-lisp
+(condition-case err
+    (progn
+      (message "No error"))
+  (error "some error")
+  )
+#+END_SRC
+
+#+RESULTS:
+: No error
+
+
+* Modern libraries
+** ht.el for hashtables
+Reference [[https://github.com/Wilfred/ht.el][ht.el]] for more details.
+
+*** creating a hash table
+
+Create an empty hash table
+
+#+BEGIN_SRC emacs-lisp
+(let* ((the-dic (ht-create)))
+  the-dic
+  )
+#+END_SRC
+
+#+RESULTS:
+: #s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data ())
+
+Create a hash table with initial records
+
+
+#+BEGIN_SRC emacs-lisp
+(let* ((the-dic (ht
+                 ("name" "Tom")
+                 ("sex" 'male))))
+  the-dic
+  )
+#+END_SRC
+
+#+RESULTS:
+: #s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data ("name" "Tom" "sex" male))
+
+
+*** accessing the hash table
+
+#+BEGIN_SRC emacs-lisp
+(let* ((the-dic (ht ("name" "Tom") ("sex" 'male))))
+  ;; get a record
+  ;; returns "Tom"
+  (ht-get the-dic "name")
+  )
+#+END_SRC
+
+#+RESULTS:
+: Tom
+
+*** Iterating over the hash table
+Readonly mapping:
+
+#+BEGIN_SRC emacs-lisp
+(let* ((the-dic (ht ("name" "Tom") ("sex" 'male) ("age" 18))))
+  (ht-map (lambda (key value) (message "%S: %S" key value)) the-dic)
+  )
+#+END_SRC
+
+#+RESULTS:
+| "age": 18 | "sex": male | "name": "Tom" |
+
+Mutable mapping:
+
+#+BEGIN_SRC emacs-lisp
+(let* ((the-dic (ht ("name" "Tom") ("sex" 'male) ("age" 18))))
+  (ht-map (lambda (key value)
+            ;; modify the value if is string
+            (setf value (if (stringp value)
+                            (concat "modified " value)
+                          value))) the-dic))
+#+END_SRC
+
+#+RESULTS:
+| 18 | male | modified Tom |
+
+
+* Debug and development in Elisp
+One handly tool is ~toggle-debug-on-error~, it will print the error stack.

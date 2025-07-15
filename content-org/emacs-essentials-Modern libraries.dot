@@ -1,0 +1,14 @@
+digraph "[stackcollapse]" {
+ graph [fontname="RW Chancery L, Apple Chancery, Comic Sans MS, cursive" overlap=false concentrate=true rank=sink rankdir=LR outputorder=edgesfirst splines=curved nodesep=0.1 ranksep=0.6];
+ node [style="filled" penwidth=0 fillcolor="#f0f0ffA0" fontcolor="indigo"];
+ edge [penwidth=5 color="#f0f0ff"];
+ "n4" [label="Iterating over the hash table"];
+ "n3" [label="accessing the hash table"];
+ "n2" [label="creating a hash table"];
+ "n1" [label="ht.el for hashtables"];
+ "n0" [label="Modern libraries"];
+ "n1" -> "n2";
+ "n1" -> "n3";
+ "n1" -> "n4";
+ "n0" -> "n1";
+}

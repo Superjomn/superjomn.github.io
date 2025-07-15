@@ -1,0 +1,18 @@
+#+title: Tree in Algorithm
+#+author: Chunwei Yan
+#+subtitle:
+#+date: 2022-12-11
+#+hugo_tags: "algorithm"
+#+hugo_draft: true
+#+hugo_base_dir: ../
+#+hugo_section: ./posts
+#+toc: nil
+
+* Tree in Algorithm
+** Binary tree
+*** Inorder retrival
+*** preorder retrival
+*** postorder retrval
+
+** Classical problems
+- [[https://leetcode.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal/description/][106. Construct Binary Tree from Inorder and Postorder Traversal]]

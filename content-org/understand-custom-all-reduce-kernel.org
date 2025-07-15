@@ -1,0 +1,4 @@
+#+title: Understanding the custom all reduce kernel
+
+* PTX
+- ~st.global.release.sys.b32~

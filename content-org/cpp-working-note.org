@@ -1,0 +1,6 @@
+#+TITLE: C++ Programming, a Work Note
+#+AUTHOR: Superjomn
+#+DATE: 2024-07-05
+#+hugo_tags: "C++" "tech"
+#+hugo_draft: true
+#+toc: nil

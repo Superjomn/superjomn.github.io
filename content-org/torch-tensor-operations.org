@@ -1,0 +1,11 @@
+#+title: Torch Tensor Operations: a Work Note
+* Dimention
+** Insert dimentions
+
+#+BEGIN_SRC python
+x = arange(8) # shape: (8,)
+# Add one dimension to the beginning of the tensor
+x[None, :] # shape: (1, 8)
+# Add one dimension to the end of the tensor
+x[:, None] # shape: (8, 1)
+#+END_SRC

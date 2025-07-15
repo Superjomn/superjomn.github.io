@@ -1,0 +1,88 @@
+#+title: Algorithm: Number theory related
+#+subtitle:
+#+author: Chunwei Yan
+#+date: 2023-01-04
+#+hugo_tags: "algorithm"
+#+hugo_draft: false
+#+hugo_base_dir: ../
+#+hugo_section: ./posts
+#+toc: headlines 2
+
+* The basics
+** Prime number
+A *prime number* (or a prime) is a natural number greater than 1 that is not a product of two smaller natural numbers.
+
+*** Get prime factors of a number
+https://leetcode.com/problems/distinct-prime-factors-of-product-of-array/
+
+#+BEGIN_SRC C++
+set<int> collect_primes(int num) {
+  set<int> res;
+  while(num % 2 == 0) {
+    res.insert(2);
+    num /= 2;
+  }
+  for (int i = 3; i < sqrt(num); i+=2) {
+    while(num % i == 0) {
+      set.insert(i);
+      num /= i;
+    }
+  }
+
+  if (num > 2) { // num is a prime itself
+    res.insert(num);
+  }
+
+  return res;
+}
+#+END_SRC
+
+*** Get prime numbers between a range
+https://leetcode.com/problems/closest-prime-numbers-in-range/
+
+#+BEGIN_SRC C++
+vector<int> prime_in_range(int L, int R) {
+  vector<int> res;
+  for (int i = L; i <= R; ++i)
+    if (is_prime(i)) res.push_back(i);
+
+  return res;
+}
+
+bool is_prime(int num) {
+  if (num == 0 || num == 1) return false;
+  if (num == 2 || num == 3) return true;
+  if (num % 2 == 0 || num % 3 == 0) return false;
+  for (int i = 5; i <= sqrt(num); i+=2) {
+    if (num % i == 0) return false;
+  }
+  return true;
+}
+#+END_SRC
+
+** Binary Exponentiation
+*** Power
+$$
+a^n = \left(a^{n/2}\right)^2 * (a or 1)
+$$
+
+Here is the recursive approach:
+
+#+BEGIN_SRC C++
+int64_t binary_power(int64_t a, int64_t b) {
+  if (b == 0) return 1;
+  int64_t res = binary_power(a, b/2);
+  if (b % 2 == 0) return res * res;
+  return res * res * a;
+}
+#+END_SRC
+
+** Greatest common divisor
+Difinition:
+
+From wikipedia: In mathematics, the *greatest common divisor* (GCD) of two or more integers, which are not all zero, is the largest positive integer that divides each of the integers.
+
+In C++, there is a builtin ~__gcd~ method.
+
+** TODO Modular arithmetic
+TODO

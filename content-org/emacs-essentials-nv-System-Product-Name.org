@@ -1,0 +1,349 @@
+#+title: Emacs essentials
+#+author: Chunwei Yan
+#+subtitle:
+#+date: 2022-10-15
+#+hugo_tags: "emacs"
+#+hugo_base_dir: ../
+#+hugo_section: ./posts
+#+toc: headlines 3
+
+It is a steep learning curve to master Emacs lisp, there are mainly two issues in it from my experience
+
+1. the lisp syntax and functional programming
+2. the fragmented methods and libraries
+
+For the 1st issue, it is easy to master the syntax after writing several programs and getting used to them, but for the 2nd one, one needs to take notes or remember something.
+
+In this blog, I focus on the 2nd point and keep updating the notes of some methods and libraries that I think are essential for writing Emacs lisp packages.
+
+* builtin methods
+** buffer
+*** current-buffer: get the current buffer
+#+BEGIN_SRC emacs-lisp
+(current-buffer)
+#+END_SRC
+
+#+RESULTS:
+: #<buffer emacs-essentials.org>
+*** get-buffer: get a buffer by name
+#+BEGIN_SRC emacs-lisp
+(get-buffer "*scratch*")
+#+END_SRC
+
+#+RESULTS:
+: #<buffer *scratch*>
+
+*** get-buffer-create: create the buffer if not exist
+
+#+BEGIN_SRC emacs-lisp
+(get-buffer-create "yaya")
+#+END_SRC
+
+#+RESULTS:
+: #<buffer yaya>
+
+
+*** changing the current buffer
+
+#+BEGIN_SRC emacs-lisp
+(progn
+  (set-buffer (get-buffer "*scratch*"))
+  (current-buffer))
+#+END_SRC
+
+*** Goto a buffer
+
+#+BEGIN_SRC emacs-lisp
+(with-current-buffer "*BUF*"
+  ;; do something like progn
+  )
+#+END_SRC
+
+
+*** Changing the current buffer safely
+It will return to the original buffer after the operation finished.
+
+#+BEGIN_SRC emacs-lisp
+(progn
+  (save-current-buffer
+    (set-buffer "*scratch*")
+    (message "Current buffer: %s" (current-buffer)))
+  (current-buffer))
+#+END_SRC
+
+#+RESULTS:
+: #<buffer 20210801162858-emacs_lisp.org>
+
+*** Working with file buffers
+To get the full file path for the file that the buffer represents
+
+
+#+BEGIN_SRC emacs-lisp
+(buffer-file-name)
+#+END_SRC
+
+#+RESULTS:
+: /Users/yanchunwei/project/myblog2022/content-org/emacs-essentials.org
+
+To find a buffer that represents a particular file
+
+#+BEGIN_SRC emacs-lisp
+(get-file-buffer "/Users/yanchunwei/project/myblog2022/content-org/emacs-essentials.org")
+#+END_SRC
+
+#+RESULTS:
+: #<buffer emacs-essentials.org>
+
+*** Loading a file into a buffer without display it
+
+#+BEGIN_SRC emacs-lisp
+(find-file-noselect "xx.org")
+#+END_SRC
+
+*** Get all buffer names
+
+#+BEGIN_SRC emacs-lisp
+(mapcar #'buffer-name (buffer-list))
+#+END_SRC
+
+#+RESULTS:
+| 20210801162858-emacs_lisp.org | *Minibuf-1* | 20210808180928-git.org | *scratch* | 20210816124631-english_learning.org | 20210926110243-paddle_core_weekly_report_2021_9_26.org | 20210807151327-ubuntu_system_related.org | 20210916144218-paddle_core_weekly_report_2021_9_16.org | *Minibuf-0* | 20210926134202-paddle_inference_enhancement.org | *Agenda Commands* | 20210810094124-paddle_notes.org | 20210807163552-agenda_inbox.org | 20210925120858-leetcode_anki.org | 20210807145408-classical_algorithm_questions.org | *Org todo* | 20210921113038-bookmarks.org | *Org Attach* | config.el | 20210824221448-english_anki.org | 2021-09-23.org | chun-mode.el | 2021-09-22.org | *Minibuf-2* | 20210911161729-beamer-cinnrt_desig.org | 20210917184731-beamer-paddle_inference_framework_plan_2021_q4_to_2022_q1.org | *Org tags* | *doom* | *code-conversion-work* | *Echo Area 0* | *Echo Area 1* | *jka-compr-wr-temp* | *emacsql-sqlite* | 20210803124941-inference_2021_q3_enhancement_agenda.org | 20210803112751-paddle_inference_agenda.org | 20210806130344-cinn_compiler_agenda.org | 2021-09-06.org | 2021-09-18.org | *code-converting-work* | *org-src-fontification:latex-mode* | *org-src-fontification:emacs-lisp-mode* | *org-src-fontification:text-mode* | *server* | *modal-ivy* | *org-src-fontification:org-mode* | *org-src-fontification:sh-mode* | *org-src-fontification:c++-mode* | *org-src-fontification:c-mode* | *Org PDF LaTeX Output* | *Completions* | *Messages* | *helm-mode-magit-status* | *helm candidates:helpful-callable* | *helm-mode-helpful-callable* | *chun-mode* | *helm buffers* | *helm candidates:org-set-tags-command* | *helm-mode-org-set-tags-command* | *helm candidates:org-match-sparse-tree* | *helm-mode-org-match-sparse-tree* | *helm find files* | *helm candidates:org-insert-link* | *helm-mode-org-insert-link* | *Calendar* | 2021-09-24.org | *helm candidates:org-tags-view* | *helm-mode-org-tags-view* | *helm candidates:org-roam-node-insert* | *helm-mode-org-roam-node-insert* | *which-key* | *helm candidates:Emacs Commands history* | *helm candidates:Emacs Commands* | *helm M-x* | *helm candidates:org-roam-node-find* | *helm-mode-org-roam-node-find* |
+** point
+
+The "point" is the location of the cursor in the buffer.
+#+BEGIN_SRC emacs-lisp
+(point)
+#+END_SRC
+
+#+RESULTS:
+: 7508
+
+
+#+BEGIN_SRC emacs-lisp
+(point-max)
+#+END_SRC
+
+#+RESULTS:
+: 8010
+
+
+#+BEGIN_SRC emacs-lisp
+(point-min)
+#+END_SRC
+
+#+RESULTS:
+: 1
+
+*** Moving the point
+
+#+BEGIN_SRC emacs-lisp
+(goto-char 1)
+(goto-char (point-max))
+
+;; goto the begining of the buffer
+(beginning-of-buffer)
+
+;; goto the end of the buffer
+(end-of-buffer)
+
+(forward-char)
+(forward-char 5)
+
+(forward-word)
+(backward-word)
+#+END_SRC
+
+*** Preserving the point
+
+#+BEGIN_SRC emacs-lisp
+(save-excursion
+  (goto-char (point-max))
+  (point)
+  )
+#+END_SRC
+
+#+RESULTS:
+: 8471
+
+
+*** Examining buffer text
+To look at text in the buffer.
+
+#+BEGIN_SRC emacs-lisp
+(char-after)
+(char-after (point))
+(char-after (point-min))
+#+END_SRC
+
+#+RESULTS:
+: 58
+
+
+*** The Thing
+The ~thing-at-point~ function is very useful for grabbing the text at the point if it matches a particular type of "thing".
+
+
+#+BEGIN_SRC emacs-lisp
+(thing-at-point 'word)
+#+END_SRC
+
+#+RESULTS:
+
+
+#+BEGIN_SRC emacs-lisp
+(thing-at-point 'sentence)
+#+END_SRC
+
+#+RESULTS:
+: (thing-at-point 'sentence)
+: #+END_SRC
+
+
+#+BEGIN_SRC emacs-lisp
+(thing-at-point 'sentence t)
+#+END_SRC
+
+#+RESULTS:
+: (thing-at-point 'sentence t)
+: #+END_SRC
+
+*** Serching for text
+
+#+BEGIN_SRC emacs-lisp
+(search-forward "thing")
+#+END_SRC
+
+*** Inserting text
+
+#+BEGIN_SRC emacs-lisp
+(insert "000")
+(insert "\n" "This is" ?\s ?\n "Sparta!")
+#+END_SRC
+
+*** Deleting text
+
+#+BEGIN_SRC emacs-lisp
+(with-current-buffer ".gitignore"
+  (delete-region (point) (point-max)))
+#+END_SRC
+
+*** Saving a buffer
+To save the contents of a buffer back to the file it is associated with
+
+#+BEGIN_SRC emacs-lisp
+(save-buffer)
+#+END_SRC
+
+** org-element
+** file and path
+*** Get the path of the current file
+The ~buffer-file-name~ is a buffer builtin variable holding the file name of the current buffer.
+
+#+BEGIN_SRC emacs-lisp
+(file-truename buffer-file-name)
+#+END_SRC
+
+#+RESULTS:
+: /tmp/emacs-essentials.org
+
+*** Get path without suffix
+
+#+BEGIN_SRC emacs-lisp
+(file-name-sans-extension "/tmp/a.org")
+#+END_SRC
+
+#+RESULTS:
+: /tmp/a
+*** Write to file
+Overwrite the content:
+
+#+BEGIN_SRC emacs-lisp
+(with-temp-file "/tmp/1.org"
+  (insert "hello world")
+  (message "file content: %s" (buffer-string))
+  )
+#+END_SRC
+
+#+RESULTS:
+: file content: hello world
+
+** execute shell command
+
+#+BEGIN_SRC emacs-lisp
+(shell-command "echo hello")
+#+END_SRC
+
+#+RESULTS:
+: 0
+
+
+* Modern libraries
+** ht.el for hashtables
+Reference [[https://github.com/Wilfred/ht.el][ht.el]] for more details.
+
+*** creating a hash table
+
+Create an empty hash table
+
+#+BEGIN_SRC emacs-lisp
+(let* ((the-dic (ht-create)))
+  the-dic
+  )
+#+END_SRC
+
+#+RESULTS:
+: #s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data ())
+
+Create a hash table with initial records
+
+
+#+BEGIN_SRC emacs-lisp
+(let* ((the-dic (ht
+                 ("name" "Tom")
+                 ("sex" 'male))))
+  the-dic
+  )
+#+END_SRC
+
+#+RESULTS:
+: #s(hash-table size 65 test equal rehash-size 1.5 rehash-threshold 0.8125 data ("name" "Tom" "sex" male))
+
+
+*** accessing the hash table
+
+#+BEGIN_SRC emacs-lisp
+(let* ((the-dic (ht ("name" "Tom") ("sex" 'male))))
+  ;; get a record
+  ;; returns "Tom"
+  (ht-get the-dic "name")
+  )
+#+END_SRC
+
+#+RESULTS:
+: Tom
+
+*** Iterating over the hash table
+Readonly mapping:
+
+#+BEGIN_SRC emacs-lisp
+(let* ((the-dic (ht ("name" "Tom") ("sex" 'male) ("age" 18))))
+  (ht-map (lambda (key value) (message "%S: %S" key value)) the-dic)
+  )
+#+END_SRC
+
+#+RESULTS:
+| "age": 18 | "sex": male | "name": "Tom" |
+
+Mutable mapping:
+
+#+BEGIN_SRC emacs-lisp
+(let* ((the-dic (ht ("name" "Tom") ("sex" 'male) ("age" 18))))
+  (ht-map (lambda (key value)
+            ;; modify the value if is string
+            (setf value (if (stringp value)
+                            (concat "modified " value)
+                          value))) the-dic))
+#+END_SRC
+
+#+RESULTS:
+| 18 | male | modified Tom |

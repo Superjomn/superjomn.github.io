@@ -1,0 +1,32 @@
+This is BibTeX, Version 0.99dThe top-level auxiliary file: langauge model-second.aux
+The style file: plain.bst
+Database file #1: re-second-version.bib
+Repeated entry---line 21 of file re-second-version.bib
+ : @inproceedings{mikolov2013linguistic
+ :                                     ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 52 of file re-second-version.bib
+ : @inproceedings{mikolov2013distributed
+ :                                      ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 88 of file re-second-version.bib
+ : @inproceedings{mikolov2013distributed
+ :                                      ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 134 of file re-second-version.bib
+ : @inproceedings{socher2011semi
+ :                              ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 142 of file re-second-version.bib
+ : @inproceedings{socher2010learning
+ :                                  ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 157 of file re-second-version.bib
+ : @inproceedings{socher2011semi
+ :                              ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 174 of file re-second-version.bib
+ : @inproceedings{socher2011dynamic
+ :                                 ,
+I'm skipping whatever remains of this entry
+(There were 7 error messages)

@@ -1,0 +1,51 @@
+#+title: Symbolic Tracing in PyTorch
+#+author: Chunwei Yan
+#+date: 2024-8-6
+#+hugo_draft: true
+#+hugo_tags: "pytorch" "tech"
+#+toc: nil
+
+* Introduction
+Brief introduction to PyTorch
+Importance of model tracing and its applications
+Introduction to symbolic tracing
+* What is Symbolic Tracing?
+Definition and purpose
+Differences between symbolic tracing and other tracing methods (e.g., eager execution, JIT tracing)
+* Key Concepts and Terminology
+Trace
+Graph
+Nodes and Edges
+Operations and Tensors
+* How Symbolic Tracing Works
+Overview of the tracing process
+Detailed explanation of the steps involved in symbolic tracing
+Recording operations
+Creating and managing the computation graph
+Handling control flow and data dependencies
+* Implementation Details
+Code walkthrough of symbolic tracing in PyTorch
+Key classes and functions
+How PyTorch's autograd system interacts with symbolic tracing
+Example code snippets to illustrate the implementation
+* Practical Use Cases
+Use cases in model optimization
+Deployment scenarios
+Debugging and profiling
+* Challenges and Limitations
+Common pitfalls and how to avoid them
+Current limitations of symbolic tracing in PyTorch
+* Extending Symbolic Tracing
+Customizing and extending symbolic tracing for specific needs
+Example of extending symbolic tracing for a custom operation
+* Future Directions
+Upcoming features and improvements in PyTorch symbolic tracing
+Research and developments in the field
+Conclusion
+Recap of the importance and benefits of symbolic tracing
+Encouragement to explore and experiment with symbolic tracing in PyTorch
+* Additional Resources
+Links to official PyTorch documentation and tutorials
+Recommended reading and further learning materials
+References
+List of academic papers, articles, and other resources referenced in the blog
