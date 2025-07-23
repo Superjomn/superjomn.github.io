@@ -1,0 +1,754 @@
+#+title: Reading SGLang Code
+#+date: 2025-07-23
+#+STARTUP: inlineimages
+#+hugo_tags: "cuda" "basics" "tech"
+#+hugo_draft: true
+#+toc: nil
+#+hugo_base_dir: ../
+#+hugo_section: ./posts
+
+* Structure
+** ~python/sglang/src~
+
+models/ - Model implementations and configurations
+model_executor/ - Model execution engine
+model_loader/ - Model loading utilities
+entrypoints/ - API entry points (OpenAI-compatible, etc.)
+sampling/ - Text sampling and generation logic
+speculative/ - Speculative decoding implementations
+multimodal/ - Multimodal model support
+lora/ - LoRA (Low-Rank Adaptation) support
+layers/ - Neural network layer implementations
+function_call/ - Function calling capabilities
+constrained/ - Constrained generation
+distributed/ - Distributed computing support
+disaggregation/ - Model disaggregation features
+mem_cache/ - Memory caching systems
+metrics/ - Performance metrics and monitoring
+managers/ - Resource management
+connector/ - External system connectors
+configs/ - Configuration management
+eplb/ - Load balancing components
+
+* ~configs~
+This directory serves as the central configuration hub for model support
+
+*Core configuration files*:
+
+- ~model_config.py~ - The main ~ModelConfig~ class that handles universal model configuration
+- ~device_config.py~ - Hardware device configuration (CUDA, CPU and so on)
+- ~load_config.py~ - Model loading strategies and formats
+
+*Model-Specific Configurations*:
+
+- ~chatglm.py~ - ChatGLM model family
+- ...
+
+*Core Architecture*:
+
+#+BEGIN_SRC plantuml :file images/read-sglang/model-config.png :results output replace
+@startuml
+class ModelConfig {
+    model_path: str
+    revision: str
+    quantization: str
+    hf_config: transformers.PretrainedConfig
+    is_generation: bool
+    is_multimodal: bool
+    is_image_gen: bool
+    is_multimodal_gen: bool
+    is_audio_model: bool
+    is_encoder_decoder: bool
+}
+class LoadConfig {
+    download_dir: str
+    load_format: str
+}
+class DeviceConfig {
+    device: Optional[torch.device]
+}
+
+class transformers.PretrainedConfig {
+    model_type: str
+    vocab_size: int
+    hidden_size: int
+    num_attention_heads: int
+    num_hidden_layers: int
+}
+
+class DeepseekV2Config {}
+class KimiVLConfig {}
+
+ModelConfig *-- transformers.PretrainedConfig
+transformers.PretrainedConfig <|-- DeepseekV2Config
+transformers.PretrainedConfig <|-- KimiVLConfig
+@enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:images/read-sglang/model-config.png]]
+
+
+* Model Loader in ~model_loader~
+
+Modern LLMs can have huge number of parameters, stored in various formats (SafeTensors, PyTorch, GGUF), potentially quantized (4-bit, 8-bit). The model loader is introduced to help
+
+- Support different file formats and storage locations
+- Handle various quantization schemes
+- Support distributed loading across multiple devices
+
+- ~BaseModelLoader~ - The base class for all the model loaders.
+  - ~DefaultModelLoader~ - Model loader that can load different file types from disk.
+    - ~LayeredModelLoader~ - Model loader that loads weights layer by layer so that one can quantize a layer before loading another to make the peak memory envelope smaller.
+  - ~DummyModelLoader~ - Model loader that will set model weights to random values.
+  - ~ShardedStateLoader~ - Model loader that directly loads each worker's model state dict, which enables a fast load path for large tensor-parallel models where each worker only needs to read its own shard rather than the entire checkpoint.
+  - ~BitsAndBytesModelLoader~ - Model loader to load model weights with BitAndBytes quantization.
+  - ~GGUFModelLoader~ - Model loader that can load GGUF files.
+  - ~RemoteModelLoader~ - Model loader that can load Tensors from remote database.
+
+
+#+BEGIN_SRC plantuml :file images/read-sglang/model_loader.png :width 800 :height 400 :results output replace
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam classFontColor black
+skinparam classBorderColor black
+skinparam classBackgroundColor lightyellow
+skinparam packageStyle rectangle
+
+abstract class BaseModelLoader {
+    load_config: LoadConfig
+
+    +download_model(model_config: ModelConfig) -> None
+    +load_model(model_config: ModelConfig, device_config: DeviceConfig)
+}
+
+class DefaultModelLoader {
+    -download_model(model_config: ModelConfig) -> None
+    -load_model(model_config: ModelConfig, device_config: DeviceConfig)
+}
+
+class LayeredModelLoader {
+    -download_model(model_config: ModelConfig) -> None
+    -load_model(model_config: ModelConfig, device_config: DeviceConfig)
+}
+
+class DummyModelLoader {
+    -download_model(model_config: ModelConfig) -> None
+    -load_model(model_config: ModelConfig, device_config: DeviceConfig)
+}
+
+class ShardedStateLoader {
+    -download_model(model_config: ModelConfig) -> None
+    -load_model(model_config: ModelConfig, device_config: DeviceConfig)
+}
+
+class BitsAndBytesModel {
+    -download_model(model_config: ModelConfig) -> None
+    -load_model(model_config: ModelConfig, device_config: DeviceConfig)
+}
+
+class GGUFModelLoader {
+    -download_model(model_config: ModelConfig) -> None
+    -load_model(model_config: ModelConfig, device_config: DeviceConfig)
+}
+
+BaseModelLoader <|-- DefaltModelLoader
+DefaultModelLoader <|-- LayeredModelLoader
+BaseModelLoader <|-- DummyModelLoader
+BaseModelLoader <|-- ShardedStateLoader
+BaseModelLoader <|-- BitsAndBytesModel
+BaseModelLoader <|-- GGUFModelLoader
+
+@enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:images/read-sglang/model_loader.png]]
+
+* lora
+** The files
+- ~lora_config.py~ - Configuration management for LoRA adapters, handling HuggingFace adapter configs and parameter validation
+- ~lora.py~ - Core LoRA adapter and layer classes
+
+** Efficient design
+*** Two-Tier Memory Architecture
+There are two levels of memory pools:
+
+1. The Disk to the host memory managed by ~LoRAAdapter~
+2. The host memory to the device memory managed by ~LoRAMemoryPool~
+
+*** Buffer reusing
+SGLang will try to reuse the loras in the two levels of memory pools by grouping the requests of the same lora and point them to the same buffer.
+
+** Architecture
+
+#+BEGIN_SRC plantuml :file images/read-sglang/lora.png :results output replace
+@startuml SGLang LoRA Architecture
+scale 0.8
+!theme vibrant
+skinparam backgroundColor #FAFAFA
+skinparam roundcorner 10
+
+skinparam classAttributeIconSize 0
+skinparam classFontColor black
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+
+package "lora_config" {
+    class LoRAConfig {
+        +path: str
+        +hf_config: dict
+        +target_modules: list
+        +r: int
+        +lora_alpha: float
+        --
+        +get_lora_config(dummy: bool)
+    }
+}
+
+package "Core Components" {
+    class LoRAManager {
+        +base_model: torch.nn.Module
+        +base_hf_config: AutoConfig
+        +max_loras_per_batch: int
+        +lora_backend: BaseLoRABackend
+        +memory_pool: LoRAMemoryPool
+        +loras: Dict[str, LoRAAdapter]
+        +configs: Dict[str, LoRAConfig]
+        --
+        +load_lora_adapters(lora_paths: dict[str, str])
+        +unload_lora_adapters(lora_names: set[str])
+        +prepare_lora_batch(forward_batch: ForwardBatch)
+        +add_adapter()
+        +remove_adapter()
+        +prepare_batch_info()
+    }
+    note right of LoRAManager::max_loras_per_batch
+        This controls the buffer size in LoraMemoryPool
+    end note
+
+    class LoRAAdapter {
+        +uid: str
+        +config: LoRAConfig
+        +scaling: float
+        +layers: List[LoRALayer]
+        +weights: Dict[str, torch.Tensor]
+        --
+        +initialize_weights()
+        +normalize_qkv_proj()
+        +normalize_gate_up_proj()
+    }
+
+    note bottom of LoRAAdapter
+        This manages the batch required loras in the host memory.
+    end note
+
+    class LoRALayer {
+        +config: LoRAConfig
+        +base_hf_config: AutoConfig
+        +weights: Dict[str, torch.Tensor]
+    }
+}
+
+package "Backend System" {
+    abstract class BaseLoRABackend {
+        +name: str
+        +batch_info: LoRABatchInfo
+        +fuse_output_add: bool
+        +fuse_stacked_lora_b: bool
+        --
+        +run_lora_a_sgemm()
+        +run_lora_b_sgemm()
+        +run_qkv_lora()
+        +run_gate_up_lora()
+        +set_batch_info()
+    }
+
+    class TritonLoRABackend {
+        +run_lora_a_sgemm()
+        +run_lora_b_sgemm()
+        +run_qkv_lora()
+        +run_gate_up_lora()
+    }
+
+    class FlashInferLoRABackend {
+        +run_lora_a_sgemm()
+        +run_lora_b_sgemm()
+        +run_qkv_lora()
+        +run_gate_up_lora()
+    }
+}
+
+package "Layer System" {
+    abstract class BaseLayerWithLoRA {
+        +base_layer: nn.Module
+        +set_lora: bool
+        +lora_backend: BaseLoRABackend
+        --
+        +forward()
+        +set_lora_info()
+        +slice_lora_a_weights()
+        +slice_lora_b_weights()
+        +apply_lora()
+    }
+
+    class ColumnParallelLinearWithLoRA {
+        +A_buffer: torch.Tensor
+        +B_buffer: torch.Tensor
+        --
+        +apply_lora()
+        +forward()
+    }
+
+    class QKVParallelLinearWithLoRA {
+        +A_buffer_qkv: torch.Tensor
+        +B_buffer_qkv: torch.Tensor
+        +output_offset: torch.Tensor
+        --
+        +apply_lora()
+        +set_lora_info()
+    }
+
+    class MergedColumnParallelLinearWithLoRA {
+        +A_buffer_gate_up: torch.Tensor
+        +B_buffer_gate_up: torch.Tensor
+        --
+        +apply_lora()
+        +set_lora_info()
+    }
+
+    class RowParallelLinearWithLoRA {
+        +apply_lora()
+    }
+
+    class VocabParallelEmbeddingWithLoRA {
+        +weight: torch.Tensor
+    }
+}
+
+package "Memory & Batch Management" {
+    class LoRAMemoryPool {
+        +base_memory_pool: dict
+        +num_layer: int
+        +max_loras_per_batch: int
+        +tp_size
+        +tp_rank
+        +A_buffer
+        +B_buffer
+        +uid_to_buffer_id
+        +buffer_id_to_uid
+        --
+        +get_lora_A_shape() -> tuple[int]
+        +get_lora_B_shape() -> tuple[int]
+        +init_buffers(lora_weight_names:tuple[set[str]], base_model, max_lora_dim:int)
+        +prepare_lora_batch(cur_uids, lora_adapaters:dict[str, LoRAAdapter], lora_modules: dict[str, BaseLayerWithLoRA])
+        +load_lora_weight_to_buffer(uid, buffer_id, lora_adapter, lora_modules)
+        +get_tensor(weight_name:str, layer_id:int, lora_type: LoRAType)
+    }
+
+    note right of LoRAMemoryPool::prepare_lora_batch
+        Weight of the same lora in the batch will be reused
+    end note
+
+    note bottom of LoRAMemoryPool
+        Maybe one potential optimiation: reorder the request batch to maximum the reusing of the existing LoRA weights
+    end note
+
+    class LoRABatchInfo <<dataclass>> {
+        +bs: int
+        +seg_lens: torch.Tensor
+        +seg_indptr: torch.Tensor
+        +max_len: int
+        +weight_indices: torch.Tensor
+        +lora_ranks: torch.Tensor
+        +scalings: torch.Tensor
+    }
+}
+
+package "Triton Operations" {
+    class TritonOps {
+        +sgemm_lora_a_fwd()
+        +sgemm_lora_b_fwd()
+        +qkv_lora_b_fwd()
+        +gate_up_lora_b_fwd()
+    }
+}
+
+' Relationships
+LoRAManager ||--o{ LoRAAdapter : manages
+LoRAManager ||--|| LoRAMemoryPool : uses
+LoRAManager ||--|| BaseLoRABackend : uses
+LoRAManager ||--o{ LoRAConfig : stores
+LoRAManager ||--|| LoRABatchInfo : creates
+
+LoRAAdapter ||--o{ LoRALayer : contains
+LoRAAdapter ||--|| LoRAConfig : configured_by
+
+BaseLoRABackend <|-- TritonLoRABackend
+BaseLoRABackend <|-- FlashInferLoRABackend
+BaseLoRABackend ||--|| LoRABatchInfo : processes
+
+BaseLayerWithLoRA ||--|| BaseLoRABackend : uses
+BaseLayerWithLoRA <|-- ColumnParallelLinearWithLoRA
+BaseLayerWithLoRA <|-- QKVParallelLinearWithLoRA
+BaseLayerWithLoRA <|-- MergedColumnParallelLinearWithLoRA
+BaseLayerWithLoRA <|-- RowParallelLinearWithLoRA
+BaseLayerWithLoRA <|-- VocabParallelEmbeddingWithLoRA
+
+ColumnParallelLinearWithLoRA <|-- QKVParallelLinearWithLoRA
+ColumnParallelLinearWithLoRA <|-- MergedColumnParallelLinearWithLoRA
+
+TritonLoRABackend ||--|| TritonOps : delegates_to
+
+note bottom of LoRAManager : "Central orchestrator managing\nmultiple LoRA adapters,\nmemory allocation, and\nbatch coordination"
+
+note top of BaseLoRABackend : "Pluggable backend system\nsupporting different\nexecution engines"
+
+note top of TritonOps : "Custom GPU kernels\nfor high-performance\nLoRA operations"
+
+@enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:images/read-sglang/lora.png]]
+
+
+*** LoraConfig
+The members ([[https://github.com/sgl-project/sglang/blob/e79f7420bec0aa9d9ed8d58ac2590ed67133c413/python/sglang/srt/lora/lora_config.py#L21][here]]):
+
+#+BEGIN_SRC python
+self.path = path
+self.hf_config = self.get_lora_config()
+self.target_modules = self.hf_config["target_modules"]
+self.r = self.hf_config["r"]
+self.lora_alpha = self.hf_config["lora_alpha"]
+#+END_SRC
+
+The alpha is used in the original equation:
+
+$$
+y' = W x + \alpha AB x + b
+$$
+
+*** ~A_buffer~ and ~B_buffer~ to hold the LoRA parameters
+The ~A_buffer~ and ~B_buffer~ are defined [[https://github.com/sgl-project/sglang/blob/1998ce40466577a9563149e1449f997dcd162cee/python/sglang/srt/lora/mem_pool.py#L36-L42][here]]
+
+#+BEGIN_SRC python
+        # Both A_buffer and B_buffer maps lora weight names to its buffer space.
+        # A_buffer contains num_layer number of row-major tensors with shape
+        #   (max_loras_per_batch, stacked_num * max_lora_dim, input_dim)
+        # B_buffer contains num_layer number of column-major tensors with shape
+        #   (stacked_num, max_loras_per_batch, output_dim, max_lora_dim)
+        self.A_buffer: Dict[str, List[torch.Tensor]] = {}
+        self.B_buffer: Dict[str, List[torch.Tensor]] = {}
+#+END_SRC
+
+Regarding the shapes, SGLang will pack the whole request batch and related LoRAs into a single batch, and here are explanation for each dimentions:
+
+- ~max_loras_per_batch~: Max number of loras in a batch
+- ~stacked_num~: 3 for packing QKV
+- ~max_lora_dim~: Max lora rank
+
+*** LoRAManager
+
+
+*** LoRAMemoryPool
+
+
+
+*** LoRABatchInfo
+
+
+
+*** BaseLoRABackend
+
+* ~model_executor~
+The ModelRunner orchestrates everything from loading the model weights to running inference and managing resources. It's responsible for:
+
+1. Setup and Initialization: Prepares the model, memory, and distributed environment.
+2. Inference Execution: Runs the forward passes for both prompt processing (prefill) and token generation (decode).
+3. Resource Management: Manages GPU memory for the model weights and the KV cache.
+4. Advanced Feature Integration: Handles features like LoRA, speculative decoding, and online weight updates.
+
+#+BEGIN_SRC plantuml :file images/read-sglang/model_executor.png :results output replace
+@startuml SGLang Model Executor Architecture
+
+!theme vibrant
+skinparam backgroundColor #FAFAFA
+skinparam roundcorner 10
+
+package "SGLang Model Executor Architecture" {
+
+  ' Data Flow Pipeline
+  rectangle "Data Flow Pipeline" as pipeline {
+    class ScheduleBatch <<CPU>> {
+      + high_level_scheduling_data
+      + requests: List[Request]
+      + managed_by: Scheduler
+    }
+
+    class ModelWorkerBatch <<GPU Prep>> {
+      + input_ids: torch.Tensor
+      + seq_lens: torch.Tensor
+      + forward_mode: ForwardMode
+      + managed_by: TpModelWorker
+    }
+
+    class ForwardBatch <<GPU Tensors>> {
+      + forward_mode: ForwardMode
+      + batch_size: int
+      + input_ids: torch.Tensor
+      + positions: torch.Tensor
+      + req_pool_indices: torch.Tensor
+      + seq_lens: torch.Tensor
+      + out_cache_loc: torch.Tensor
+      + sampling_info: SamplingBatchInfo
+      + attn_backend: AttentionBackend
+      + req_to_token_pool: ReqToTokenPool
+      + token_to_kv_pool: KVCache
+      --
+      + init_new(batch, model_runner)
+      + prepare_inputs_positions()
+      + compute_mrope_positions()
+    }
+
+    ScheduleBatch -> ModelWorkerBatch : transform
+    ModelWorkerBatch -> ForwardBatch : init_new()
+  }
+
+  note right of ForwardBatch
+    Store all inputs of a forward batch
+  end note
+
+  ' Core Execution Engine
+  rectangle "Core Execution Engine" as engine {
+    class ModelRunner <<Central Orchestrator>> {
+      + model_config: ModelConfig
+      + server_args: ServerArgs
+      + tp_rank: int
+      + tp_size: int
+      + device: str
+      + model: torch.nn.Module
+      + sampler: Sampler
+      + attn_backend: AttentionBackend
+      + cuda_graph_runner: CudaGraphRunner
+      + req_to_token_pool: ReqToTokenPool
+      + token_to_kv_pool: KVCache
+      + lora_manager: LoRAManager
+      + expert_location_updater: ExpertLocationUpdater
+      --
+      + initialize(min_per_gpu_memory)
+      + load_model()
+      + forward(forward_batch): LogitsOutput
+      + forward_extend(forward_batch)
+      + forward_decode(forward_batch)
+      + sample(logits_output, forward_batch)
+      + init_memory_pool()
+      + init_attention_backend()
+      + init_cuda_graphs()
+    }
+
+    class CudaGraphRunner <<Performance Optimizer>> {
+      + model_runner: ModelRunner
+      + graph_pool: Dict[int, CudaGraph]
+      + static_inputs: Dict
+      + num_captured_sizes: int
+      --
+      + capture_one_batch_size(bs, forward)
+      + can_run(forward_batch): bool
+      + replay(forward_batch): LogitsOutput
+      + warm_up()
+    }
+
+    class ExpertLocationUpdater <<MoE Manager>> {
+      + _first_execution: bool
+      --
+      + update(routed_experts_weights, metadata, layer_ids)
+      + _update_expert_weights()
+      + _get_canary_value()
+    }
+  }
+
+  ' Forward Modes and States
+  enum ForwardMode {
+    EXTEND (Prefill)
+    DECODE (Generation)
+    MIXED (Chunked Prefill)
+    IDLE (No Sequence for DP)
+    TARGET_VERIFY (Spec Decode)
+    DRAFT_EXTEND (Spec Decode)
+    DUMMY_FIRST (Pipeline)
+    --
+    + is_prefill(): bool
+    + is_decode(): bool
+    + is_cuda_graph(): bool
+  }
+
+  ' Memory and Attention Components
+  rectangle "Memory & Attention" as memory {
+    interface AttentionBackend {
+      + init_forward_metadata()
+      + forward()
+    }
+
+    class FlashInferAttnBackend
+    class TritonAttnBackend
+    class TorchNativeAttnBackend
+    class FlashAttentionBackend
+
+    interface KVCache {
+      + get_key_buffer()
+      + get_value_buffer()
+    }
+
+    class MHATokenToKVPool
+    class MLATokenToKVPool
+    class DoubleSparseTokenToKVPool
+
+    class ReqToTokenPool {
+      + size: int
+      + max_context_len: int
+      + device: str
+    }
+
+    AttentionBackend <|-- FlashInferAttnBackend
+    AttentionBackend <|-- TritonAttnBackend
+    AttentionBackend <|-- TorchNativeAttnBackend
+    AttentionBackend <|-- FlashAttentionBackend
+
+    KVCache <|-- MHATokenToKVPool
+    KVCache <|-- MLATokenToKVPool
+    KVCache <|-- DoubleSparseTokenToKVPool
+  }
+
+  ' Additional Data Structures
+  rectangle "Supporting Structures" as support {
+    class PPProxyTensors <<Pipeline Parallel>> {
+      + layer_hidden_states: torch.Tensor
+      + layer_attention_metadata: Any
+    }
+
+    class LogitsProcessorOutput {
+      + next_token_logits: torch.Tensor
+      + next_token_logprobs: torch.Tensor
+      + normalized_prompt_logprobs: torch.Tensor
+      + input_token_logprobs: torch.Tensor
+      + input_top_logprobs: List
+      + output_top_logprobs: List
+    }
+
+    enum CaptureHiddenMode {
+      NULL
+      LAST
+      FULL
+      --
+      + need_capture(): bool
+      + is_full(): bool
+    }
+  }
+
+  ' Relationships
+  ModelRunner *-- CudaGraphRunner : manages
+  ModelRunner *-- ExpertLocationUpdater : manages
+  ModelRunner *-- AttentionBackend : uses
+  ModelRunner *-- KVCache : manages
+  ModelRunner *-- ReqToTokenPool : manages
+
+  ForwardBatch *-- ForwardMode : contains
+  ForwardBatch *-- AttentionBackend : references
+  ForwardBatch *-- KVCache : references
+  ForwardBatch *-- ReqToTokenPool : references
+  ForwardBatch *-- CaptureHiddenMode : contains
+
+  ModelRunner ..> ForwardBatch : processes
+  CudaGraphRunner ..> ForwardBatch : optimizes
+  ForwardBatch ..> LogitsProcessorOutput : produces
+
+  ' Flow annotations
+  note top of pipeline : "Data transformation pipeline\nCPU → GPU preparation → GPU execution"
+  note right of engine : "Core execution components\nHandle model inference,\nmemory management,\nand optimization"
+  note bottom of memory : "Pluggable backends for\nattention and memory\nmanagement"
+
+}
+
+@enduml
+#+END_SRC
+
+#+RESULTS:
+
+
+** Distributed Environment
+It sets up the ~torch.distributed~ for TP and PP in ~init_torch_distributed()~
+
+** CudaGraphRunner
+*** Initialization
+It determines a list of common batch sizes, this is handled by ~get_batch_sizes_to_capture~ with the following code:
+
+#+BEGIN_SRC python
+        if server_args.speculative_algorithm is None:
+            if server_args.disable_cuda_graph_padding:
+                capture_bs = list(range(1, 33)) + list(range(48, 161, 16))
+            else:
+                capture_bs = [1, 2, 4, 8] + list(range(16, 161, 8))
+#+END_SRC
+
+*** Capture
+For each of the batch size, it performs a capture ([[https://github.com/sgl-project/sglang/blob/ed0a0b692cf6bb91e97f623d3317b2d8f1c4792c/python/sglang/srt/model_executor/cuda_graph_runner.py#L402][here]]):
+
+#+BEGIN_SRC python
+        with graph_capture() as graph_capture_context:
+            ...
+                capture_range = (
+                    tqdm.tqdm(list(reversed(self.capture_bs)))
+                    if get_tensor_model_parallel_rank() == 0
+                    else reversed(self.capture_bs)
+                )
+                for i, bs in enumerate(capture_range):
+                    ...
+                    with patch_model(
+                        self.model_runner.model,
+                        bs in self.compile_bs,
+                        num_tokens=bs * self.num_tokens_per_bs,
+                        tp_group=self.model_runner.tp_group,
+                    ) as forward:
+                        (
+                            graph,
+                            output_buffers,
+                        ) = self.capture_one_batch_size(bs, forward)
+                        self.graphs[bs] = graph
+                        self.output_buffers[bs] = output_buffers
+#+END_SRC
+
+
+*** Execution and Replay
+When a real inference request (a ~ForwardBatch~) arrives, the ~can_run~ [[https://github.com/sgl-project/sglang/blob/ed0a0b692cf6bb91e97f623d3317b2d8f1c4792c/python/sglang/srt/model_executor/cuda_graph_runner.py#L342][method]] checks if it can be handled by an existing CUDA graph. If not, it will fallback to the original forward model ([[https://github.com/sgl-project/sglang/blob/05c9bc8956912060968635ba90a140314cde260d/python/sglang/srt/model_executor/model_runner.py#L1248-L1253][here]]):
+
+#+BEGIN_SRC python
+        if can_run_cuda_graph:
+            ret = self.cuda_graph_runner.replay(
+                forward_batch,
+                skip_attn_backend_init=skip_attn_backend_init,
+                pp_proxy_tensors=pp_proxy_tensors,
+            )
+        elif forward_batch.forward_mode.is_decode():
+            ret = self.forward_decode(forward_batch, pp_proxy_tensors=pp_proxy_tensors)
+        ...
+#+END_SRC
+
+The ~replay_prepare~ [[https://github.com/sgl-project/sglang/blob/ed0a0b692cf6bb91e97f623d3317b2d8f1c4792c/python/sglang/srt/model_executor/cuda_graph_runner.py#L627-L631][method]] takes the incoming batch, copies its data (like ~input_ids~, ~positions~, etc) into the pre-allocated GPU tensors that are part of the captured graph. If the batch size doesn't exactly match a capture size, it pads the inputs to fit into the next-largest captured graph.
+
+Finally, the ~replay~ [[https://github.com/sgl-project/sglang/blob/ed0a0b692cf6bb91e97f623d3317b2d8f1c4792c/python/sglang/srt/model_executor/cuda_graph_runner.py#L702-L707][method]] is called. Instead of running the Python forward pass, it execute the pre-recorded graph which should be faster ([[https://github.com/sgl-project/sglang/blob/ed0a0b692cf6bb91e97f623d3317b2d8f1c4792c/python/sglang/srt/model_executor/cuda_graph_runner.py#L716-L718][here]]):
+
+#+BEGIN_SRC python
+        # Replay
+        self.graphs[self.bs].replay()
+
+        output = self.output_buffers[self.bs]
+
+        # do the following logits processors
+#+END_SRC
+
+
+* References
+-
