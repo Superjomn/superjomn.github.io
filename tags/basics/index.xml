@@ -1,4 +1,366 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Basics on Superjomn's blog</title><link>/tags/basics/</link><description>Recent content in Basics on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Mon, 25 Mar 2024 00:00:00 +0000</lastBuildDate><atom:link href="/tags/basics/index.xml" rel="self" type="application/rss+xml"/><item><title>Reduce kernel in CUDA</title><link>/posts/reduce-cuda/</link><pubDate>Mon, 25 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/reduce-cuda/</guid><description>&lt;h2 id="question-definition">Question definition&lt;/h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Basics on Superjomn's blog</title><link>/tags/basics/</link><description>Recent content in Basics on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Tue, 12 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="/tags/basics/index.xml" rel="self" type="application/rss+xml"/><item><title>Reduce Kernel in CUDA (2)</title><link>/posts/element-add-kernel-in-cuda-org-executor.executed/</link><pubDate>Tue, 12 Aug 2025 00:00:00 +0000</pubDate><guid>/posts/element-add-kernel-in-cuda-org-executor.executed/</guid><description>&lt;p>In this post, I will walk through the reduce kernels in &lt;a href="https://github.com/xlite-dev/LeetCUDA/tree/main/kernels">LeetCUDA&lt;/a> and implement them interactively in this file using org-executor.&lt;/p>
+&lt;h2 id="background">Background&lt;/h2>
+&lt;p>In CUDA programming, an elementwise kernel is a fundamental building block that applies a given operation independently to each element of an input array (or arrays), producing an output array of the same shape. This is highly parallelizable, as each thread can process a single element without dependencies on others.&lt;/p>
+&lt;p>Elementwise kernels are commonly used for operations such as vector addition, scaling, activation functions in neural networks, and more. Understanding how to implement an efficient elementwise kernel is essential before moving on to more complex patterns like reductions.&lt;/p>
+&lt;p>In the following sections, we will review how to write a basic elementwise kernel in CUDA, discuss its memory access patterns, and explore best practices for maximizing performance.&lt;/p>
+&lt;h2 id="environment-setting">Environment setting&lt;/h2>
+&lt;p>Just follow the LeetCUDA&amp;rsquo;s settings, we will expose all the kernels to PyTorch and use its facilities to do performance and precession evaluation.&lt;/p>
+&lt;h3 id="pytorch">PyTorch&lt;/h3>
+&lt;p>The python version:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">torch&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(torch&lt;span style="color:#666">.&lt;/span>__version__)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>2.8.0a0+5228986c39.nv25.06&lt;/p>
+&lt;h3 id="hardware">Hardware&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span> NVIDIA H100 80GB HBM3, 81559 MiB, 81080 MiB, 0 MiB, 575.57.08, 23, 0 %
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="kernel-launching-utils">Kernel Launching Utils&lt;/h3>
+&lt;p>Common C++ header content:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#pragma once
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;lt;algorithm&amp;gt;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;lt;cuda_bf16.h&amp;gt;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;lt;cuda_fp16.h&amp;gt;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;lt;cuda_fp8.h&amp;gt;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;lt;cuda_runtime.h&amp;gt;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;lt;float.h&amp;gt;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;lt;stdio.h&amp;gt;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;lt;stdlib.h&amp;gt;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;lt;torch/extension.h&amp;gt;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;lt;torch/types.h&amp;gt;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;lt;vector&amp;gt;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>There are some common code for launching kernel with torch facilities.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#define CEIL(x, y) (((x) + (y) - 1) / (y))
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#define WARP_SIZE 32
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#define INT4(value) (reinterpret_cast&amp;lt;int4*&amp;gt;(&amp;amp;(value))[0])
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#define FLOAT4(value) (reinterpret_cast&amp;lt;float4*&amp;gt;(&amp;amp;(value))[0])
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#define FLOAT4(value) (reinterpret_cast&amp;lt;float4*&amp;gt;(&amp;amp;(value))[0])
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#define HALF2(value) (reinterpret_cast&amp;lt;half2*&amp;gt;(&amp;amp;(value))[0])
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#define BFLOAT2(value) (reinterpret_cast&amp;lt;__nv_bfloat162*&amp;gt;(&amp;amp;(value))[0])
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#define LDST128BITS(value) (reinterpret_cast&amp;lt;float4*&amp;gt;(&amp;amp;(value))[0])
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">inline&lt;/span> &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">check_torch_dtype&lt;/span>(torch&lt;span style="color:#666">::&lt;/span>Tensor tensor,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> torch&lt;span style="color:#666">::&lt;/span>ScalarType expected_dtype) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (tensor.dtype() &lt;span style="color:#666">!=&lt;/span> expected_dtype) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">throw&lt;/span> std&lt;span style="color:#666">::&lt;/span>runtime_error(&lt;span style="color:#4070a0">&amp;#34;Tensor dtype mismatch&amp;#34;&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">inline&lt;/span> std&lt;span style="color:#666">::&lt;/span>tuple&lt;span style="color:#666">&amp;lt;&lt;/span>dim3, dim3&lt;span style="color:#666">&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>get_launch_dimensions(&lt;span style="color:#902000">int&lt;/span> N, &lt;span style="color:#902000">int&lt;/span> elements_per_block &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">256&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> element_per_thread &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">const&lt;/span> &lt;span style="color:#902000">int&lt;/span> threads_per_block &lt;span style="color:#666">=&lt;/span> elements_per_block &lt;span style="color:#666">/&lt;/span> element_per_thread;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dim3 &lt;span style="color:#06287e">block_size&lt;/span>(threads_per_block);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dim3 &lt;span style="color:#06287e">grid_size&lt;/span>(CEIL(N, elements_per_block));
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> {grid_size, block_size};
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#define TORCH_BINDING_COMMON_EXTENSION(func) m.def(#func, &amp;amp;func, #func);
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#define TORCH_BINDING_ELEM_ADD(packed_type, th_type, element_type, \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> elements_per_thread) \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> __global__ void elementwise_add_##packed_type##_kernel( \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> element_type* __restrict__ a, \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> element_type* __restrict__ b, \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> element_type* __restrict__ c, int N); \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> void elementwise_add_##packed_type(torch::Tensor A, torch::Tensor B, \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> torch::Tensor C, \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> int elements_per_block) { \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> check_torch_dtype(A, th_type); \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> check_torch_dtype(B, th_type); \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> check_torch_dtype(C, th_type); \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> auto [grid, block] = get_launch_dimensions(A.numel(), elements_per_block, \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> elements_per_thread); \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> elementwise_add_##packed_type##_kernel&amp;lt;&amp;lt;&amp;lt;grid, block&amp;gt;&amp;gt;&amp;gt;( \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> reinterpret_cast&amp;lt;element_type*&amp;gt;(A.data_ptr()), \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> reinterpret_cast&amp;lt;element_type*&amp;gt;(B.data_ptr()), \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> reinterpret_cast&amp;lt;element_type*&amp;gt;(C.data_ptr()), A.numel()); \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020"> }
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="kernels">Kernels&lt;/h2>
+&lt;h3 id="basic-kernel">Basic kernel&lt;/h3>
+&lt;p>This kernel demonstrates a basic elementwise addition operation in CUDA, where each thread adds two corresponding elements from the input arrays:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;#34;elementwise_add.cuh&amp;#34;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">elementwise_add_f32_kernel&lt;/span>(&lt;span style="color:#902000">float&lt;/span>&lt;span style="color:#666">*&lt;/span> __restrict__ a,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">float&lt;/span>&lt;span style="color:#666">*&lt;/span> __restrict__ b,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">float&lt;/span>&lt;span style="color:#666">*&lt;/span> __restrict__ c, &lt;span style="color:#902000">int&lt;/span> N) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> tid &lt;span style="color:#666">=&lt;/span> blockIdx.x &lt;span style="color:#666">*&lt;/span> blockDim.x &lt;span style="color:#666">+&lt;/span> threadIdx.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (tid &lt;span style="color:#666">&amp;lt;&lt;/span> N) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> c[tid] &lt;span style="color:#666">=&lt;/span> a[tid] &lt;span style="color:#666">+&lt;/span> b[tid];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="explain">Explain&lt;/h4>
+&lt;p>Each thread loads one float (4 bytes) independently, this should result in poor memory coalescing.&lt;/p>
+&lt;h3 id="floatx4-vector-load">floatx4 vector load&lt;/h3>
+&lt;p>This kernel introduces vectorized load and store operations using `float4`, which allows each thread to process four floats at once. By loading 16 bytes (128 bits) per memory transaction instead of 4 bytes, this approach significantly improves memory bandwidth utilization and coalescing efficiency. Each thread processes 4 elements simultaneously, reducing the total number of memory transactions by 4x compared to the basic kernel:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;#34;elementwise_add.cuh&amp;#34;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">elementwise_add_f32x4_kernel&lt;/span>(&lt;span style="color:#902000">float&lt;/span>&lt;span style="color:#666">*&lt;/span> __restrict__ a,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">float&lt;/span>&lt;span style="color:#666">*&lt;/span> __restrict__ b,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">float&lt;/span>&lt;span style="color:#666">*&lt;/span> __restrict__ c, &lt;span style="color:#902000">int&lt;/span> N) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> idx &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">4&lt;/span> &lt;span style="color:#666">*&lt;/span> (blockIdx.x &lt;span style="color:#666">*&lt;/span> blockDim.x &lt;span style="color:#666">+&lt;/span> threadIdx.x);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (idx &lt;span style="color:#666">+&lt;/span> &lt;span style="color:#40a070">3&lt;/span> &lt;span style="color:#666">&amp;lt;&lt;/span> N) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> float4 reg_a &lt;span style="color:#666">=&lt;/span> FLOAT4(a[idx]);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> float4 reg_b &lt;span style="color:#666">=&lt;/span> FLOAT4(b[idx]);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> float4 reg_c;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> reg_c.x &lt;span style="color:#666">=&lt;/span> reg_a.x &lt;span style="color:#666">+&lt;/span> reg_b.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> reg_c.y &lt;span style="color:#666">=&lt;/span> reg_a.y &lt;span style="color:#666">+&lt;/span> reg_b.y;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> reg_c.z &lt;span style="color:#666">=&lt;/span> reg_a.z &lt;span style="color:#666">+&lt;/span> reg_b.z;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> reg_c.w &lt;span style="color:#666">=&lt;/span> reg_a.w &lt;span style="color:#666">+&lt;/span> reg_b.w;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> FLOAT4(c[idx]) &lt;span style="color:#666">=&lt;/span> reg_c;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="fp16x2-kernel">fp16x2 kernel&lt;/h3>
+&lt;p>This kernel leverages half-precision (fp16) data types with vectorized operations using `half2`. Each thread processes 2 half-precision values simultaneously using CUDA&amp;rsquo;s native half2 intrinsics. This provides both memory bandwidth improvements (loading 4 bytes per transaction) and computational efficiency through packed arithmetic operations:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;#34;elementwise_add.cuh&amp;#34;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">elementwise_add_f16x2_kernel&lt;/span>(half&lt;span style="color:#666">*&lt;/span> __restrict__ a, half&lt;span style="color:#666">*&lt;/span> __restrict__ b, half&lt;span style="color:#666">*&lt;/span> __restrict__ c, &lt;span style="color:#902000">int&lt;/span> N) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#902000">int&lt;/span> idx &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">2&lt;/span> &lt;span style="color:#666">*&lt;/span> (blockIdx.x &lt;span style="color:#666">*&lt;/span> blockDim.x &lt;span style="color:#666">+&lt;/span> threadIdx.x);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (idx &lt;span style="color:#666">+&lt;/span> &lt;span style="color:#40a070">1&lt;/span> &lt;span style="color:#666">&amp;lt;&lt;/span> N) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> half2 reg_a &lt;span style="color:#666">=&lt;/span> HALF2(a[idx]);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> half2 reg_b &lt;span style="color:#666">=&lt;/span> HALF2(b[idx]);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> half2 reg_c &lt;span style="color:#666">=&lt;/span> __hadd2(reg_a, reg_b);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> HALF2(c[idx]) &lt;span style="color:#666">=&lt;/span> reg_c;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="fp16x8-kernel">fp16x8 kernel&lt;/h3>
+&lt;p>This kernel extends the vectorization approach to process 8 half-precision values per thread, using four `half2` packed operations.
+This maximizes memory throughput by loading 16 bytes (128 bits) per thread while maintaining efficient packed arithmetic.
+The kernel includes proper bounds checking for each half2 pair to handle cases where the array size is not perfectly divisible by 8:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;#34;elementwise_add.cuh&amp;#34;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>__global__ &lt;span style="color:#902000">void&lt;/span> &lt;span style="color:#06287e">elementwise_add_f16x8_kernel&lt;/span>(half&lt;span style="color:#666">*&lt;/span> __restrict__ a,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> half&lt;span style="color:#666">*&lt;/span> __restrict__ b,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> half&lt;span style="color:#666">*&lt;/span> __restrict__ c, &lt;span style="color:#902000">int&lt;/span> N) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">const&lt;/span> &lt;span style="color:#902000">int&lt;/span> linearThreadId &lt;span style="color:#666">=&lt;/span> blockIdx.x &lt;span style="color:#666">*&lt;/span> blockDim.x &lt;span style="color:#666">+&lt;/span> threadIdx.x;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">const&lt;/span> &lt;span style="color:#902000">int&lt;/span> idx &lt;span style="color:#666">=&lt;/span> linearThreadId &lt;span style="color:#666">*&lt;/span> &lt;span style="color:#40a070">8&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">const&lt;/span> &lt;span style="color:#902000">int&lt;/span> remaining &lt;span style="color:#666">=&lt;/span> N &lt;span style="color:#666">-&lt;/span> idx;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (remaining &lt;span style="color:#666">&amp;lt;=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Fast path: full 8 elements
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (remaining &lt;span style="color:#666">&amp;gt;=&lt;/span> &lt;span style="color:#40a070">8&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Single 128-bit loads for A and B
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> float4 vec_a &lt;span style="color:#666">=&lt;/span> LDST128BITS(a[idx]);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> float4 vec_b &lt;span style="color:#666">=&lt;/span> LDST128BITS(b[idx]);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Reinterpret as four half2 lanes, compute, then store as 128-bit
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#007020;font-weight:bold">union&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Pack16&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> float4 f4;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> half2 h2[&lt;span style="color:#40a070">4&lt;/span>];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> } pa, pb, pc;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> pa.f4 &lt;span style="color:#666">=&lt;/span> vec_a;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> pb.f4 &lt;span style="color:#666">=&lt;/span> vec_b;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> pc.h2[&lt;span style="color:#40a070">0&lt;/span>] &lt;span style="color:#666">=&lt;/span> __hadd2(pa.h2[&lt;span style="color:#40a070">0&lt;/span>], pb.h2[&lt;span style="color:#40a070">0&lt;/span>]);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> pc.h2[&lt;span style="color:#40a070">1&lt;/span>] &lt;span style="color:#666">=&lt;/span> __hadd2(pa.h2[&lt;span style="color:#40a070">1&lt;/span>], pb.h2[&lt;span style="color:#40a070">1&lt;/span>]);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> pc.h2[&lt;span style="color:#40a070">2&lt;/span>] &lt;span style="color:#666">=&lt;/span> __hadd2(pa.h2[&lt;span style="color:#40a070">2&lt;/span>], pb.h2[&lt;span style="color:#40a070">2&lt;/span>]);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> pc.h2[&lt;span style="color:#40a070">3&lt;/span>] &lt;span style="color:#666">=&lt;/span> __hadd2(pa.h2[&lt;span style="color:#40a070">3&lt;/span>], pb.h2[&lt;span style="color:#40a070">3&lt;/span>]);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Single 128-bit store for C
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> LDST128BITS(c[idx]) &lt;span style="color:#666">=&lt;/span> pc.f4;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic">// Tail path: handle &amp;lt;8 remaining elements
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic">&lt;/span> &lt;span style="color:#902000">int&lt;/span> i &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> (; i &lt;span style="color:#666">+&lt;/span> &lt;span style="color:#40a070">1&lt;/span> &lt;span style="color:#666">&amp;lt;&lt;/span> remaining; i &lt;span style="color:#666">+=&lt;/span> &lt;span style="color:#40a070">2&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> half2 ra &lt;span style="color:#666">=&lt;/span> HALF2(a[idx &lt;span style="color:#666">+&lt;/span> i]);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> half2 rb &lt;span style="color:#666">=&lt;/span> HALF2(b[idx &lt;span style="color:#666">+&lt;/span> i]);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> HALF2(c[idx &lt;span style="color:#666">+&lt;/span> i]) &lt;span style="color:#666">=&lt;/span> __hadd2(ra, rb);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> (i &lt;span style="color:#666">&amp;lt;&lt;/span> remaining) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> c[idx &lt;span style="color:#666">+&lt;/span> i] &lt;span style="color:#666">=&lt;/span> __hadd(a[idx &lt;span style="color:#666">+&lt;/span> i], b[idx &lt;span style="color:#666">+&lt;/span> i]);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="register-the-kernels-and-benchmark">Register the kernels and benchmark&lt;/h3>
+&lt;p>Register the kernel:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">#include&lt;/span> &lt;span style="color:#007020">&amp;#34;elementwise_add.cuh&amp;#34;&lt;/span>&lt;span style="color:#007020">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>TORCH_BINDING_ELEM_ADD(f32, torch&lt;span style="color:#666">::&lt;/span>kFloat32, &lt;span style="color:#902000">float&lt;/span>, &lt;span style="color:#40a070">1&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>TORCH_BINDING_ELEM_ADD(f32x4, torch&lt;span style="color:#666">::&lt;/span>kFloat32, &lt;span style="color:#902000">float&lt;/span>, &lt;span style="color:#40a070">4&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>TORCH_BINDING_ELEM_ADD(f16x2, torch&lt;span style="color:#666">::&lt;/span>kFloat16, half, &lt;span style="color:#40a070">2&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>TORCH_BINDING_ELEM_ADD(f16x8, torch&lt;span style="color:#666">::&lt;/span>kFloat16, half, &lt;span style="color:#40a070">8&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> TORCH_BINDING_COMMON_EXTENSION(elementwise_add_f32)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> TORCH_BINDING_COMMON_EXTENSION(elementwise_add_f32x4)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> TORCH_BINDING_COMMON_EXTENSION(elementwise_add_f16x2)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> TORCH_BINDING_COMMON_EXTENSION(elementwise_add_f16x8)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Compile PyTorch module&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">setuptools&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> setup
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">torch.utils.cpp_extension&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> BuildExtension, CppExtension
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>source_files &lt;span style="color:#666">=&lt;/span> [
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#34;elementwise_add_basic.cu&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#34;elementwise_add_f32x4.cu&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#34;elementwise_add_f16x2.cu&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#34;elementwise_add_f16x8.cu&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#34;elementwise_add_lib.cu&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>setup(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> name&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#4070a0">&amp;#39;elementwise_lib&amp;#39;&lt;/span>, &lt;span style="color:#60a0b0;font-style:italic"># The name of your module&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ext_modules&lt;span style="color:#666">=&lt;/span>[
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> CppExtension(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#39;elementwise_lib&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> source_files
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ],
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cmdclass&lt;span style="color:#666">=&lt;/span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#39;build_ext&amp;#39;&lt;/span>: BuildExtension
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Launching in PyTorch:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">time&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">functools&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> partial
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">typing&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> Optional
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">torch&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">os&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">sys&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>workspace &lt;span style="color:#666">=&lt;/span> os&lt;span style="color:#666">.&lt;/span>environ[&lt;span style="color:#4070a0">&amp;#34;__WORKSPACE__&amp;#34;&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># The built torch lib is in the following path&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>lib_dir &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>workspace&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">/build/lib.linux-x86_64-cpython-312&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;lib: &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>lib_dir&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>sys&lt;span style="color:#666">.&lt;/span>path&lt;span style="color:#666">.&lt;/span>append(lib_dir)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">elementwise_lib&lt;/span> &lt;span style="color:#007020;font-weight:bold">as&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">lib&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>torch&lt;span style="color:#666">.&lt;/span>set_grad_enabled(&lt;span style="color:#007020;font-weight:bold">False&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Compiling Torch kernel&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># Load the CUDA kernel as a python module&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">hashlib&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">os&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">get_file_hash&lt;/span>(filepath):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#34;&amp;#34;&amp;#34;Get MD5 hash of file content&amp;#34;&amp;#34;&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">with&lt;/span> &lt;span style="color:#007020">open&lt;/span>(filepath, &lt;span style="color:#4070a0">&amp;#39;rb&amp;#39;&lt;/span>) &lt;span style="color:#007020;font-weight:bold">as&lt;/span> f:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> hashlib&lt;span style="color:#666">.&lt;/span>md5(f&lt;span style="color:#666">.&lt;/span>read())&lt;span style="color:#666">.&lt;/span>hexdigest()[:&lt;span style="color:#40a070">8&lt;/span>] &lt;span style="color:#60a0b0;font-style:italic"># Use first 8 chars&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;running benchmark&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">run_benchmark&lt;/span>(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> perf_func: callable,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> a: torch&lt;span style="color:#666">.&lt;/span>Tensor,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> b: torch&lt;span style="color:#666">.&lt;/span>Tensor,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> tag: &lt;span style="color:#007020">str&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out: Optional[torch&lt;span style="color:#666">.&lt;/span>Tensor] &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020;font-weight:bold">None&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> warmup: &lt;span style="color:#007020">int&lt;/span> &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">10&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> iters: &lt;span style="color:#007020">int&lt;/span> &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">1000&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> show_all: &lt;span style="color:#007020">bool&lt;/span> &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020;font-weight:bold">False&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> elements_per_block &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">256&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> out &lt;span style="color:#007020;font-weight:bold">is&lt;/span> &lt;span style="color:#007020;font-weight:bold">not&lt;/span> &lt;span style="color:#007020;font-weight:bold">None&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out&lt;span style="color:#666">.&lt;/span>fill_(&lt;span style="color:#40a070">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Warmup&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> _ &lt;span style="color:#007020;font-weight:bold">in&lt;/span> &lt;span style="color:#007020">range&lt;/span>(warmup):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> perf_func(a, b, out, elements_per_block)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> torch&lt;span style="color:#666">.&lt;/span>cuda&lt;span style="color:#666">.&lt;/span>synchronize()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Benchmark&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> start_event &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>cuda&lt;span style="color:#666">.&lt;/span>Event(enable_timing&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020;font-weight:bold">True&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> end_event &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>cuda&lt;span style="color:#666">.&lt;/span>Event(enable_timing&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020;font-weight:bold">True&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> start_event&lt;span style="color:#666">.&lt;/span>record()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> _ &lt;span style="color:#007020;font-weight:bold">in&lt;/span> &lt;span style="color:#007020">range&lt;/span>(iters):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> perf_func(a, b, out, elements_per_block)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> end_event&lt;span style="color:#666">.&lt;/span>record()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> torch&lt;span style="color:#666">.&lt;/span>cuda&lt;span style="color:#666">.&lt;/span>synchronize()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> total_time &lt;span style="color:#666">=&lt;/span> start_event&lt;span style="color:#666">.&lt;/span>elapsed_time(end_event) &lt;span style="color:#60a0b0;font-style:italic"># ms&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> mean_time &lt;span style="color:#666">=&lt;/span> total_time &lt;span style="color:#666">/&lt;/span> iters
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_info &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;out_&lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>tag&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_val &lt;span style="color:#666">=&lt;/span> out&lt;span style="color:#666">.&lt;/span>flatten()&lt;span style="color:#666">.&lt;/span>detach()&lt;span style="color:#666">.&lt;/span>cpu()&lt;span style="color:#666">.&lt;/span>numpy()&lt;span style="color:#666">.&lt;/span>tolist()[:&lt;span style="color:#40a070">2&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_val &lt;span style="color:#666">=&lt;/span> [&lt;span style="color:#007020">round&lt;/span>(v, &lt;span style="color:#40a070">8&lt;/span>) &lt;span style="color:#007020;font-weight:bold">for&lt;/span> v &lt;span style="color:#007020;font-weight:bold">in&lt;/span> out_val]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>out_info&lt;span style="color:#70a0d0">:&lt;/span>&lt;span style="color:#4070a0">&amp;gt;18&lt;/span>&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">: &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>out_val&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">, time:&lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>mean_time&lt;span style="color:#70a0d0">:&lt;/span>&lt;span style="color:#4070a0">.8f&lt;/span>&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">ms&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> show_all:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(out)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> out, mean_time
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Run the benchmark:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>shapes &lt;span style="color:#666">=&lt;/span> [
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (&lt;span style="color:#40a070">2096&lt;/span>, &lt;span style="color:#40a070">4096&lt;/span>), (&lt;span style="color:#40a070">2048&lt;/span>, &lt;span style="color:#40a070">2048&lt;/span>), (&lt;span style="color:#40a070">2048&lt;/span>, &lt;span style="color:#40a070">1024&lt;/span>), (&lt;span style="color:#40a070">1024&lt;/span>, &lt;span style="color:#40a070">1024&lt;/span>), (&lt;span style="color:#40a070">512&lt;/span>, &lt;span style="color:#40a070">512&lt;/span>), (&lt;span style="color:#40a070">256&lt;/span>, &lt;span style="color:#40a070">256&lt;/span>)]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">for&lt;/span> shape &lt;span style="color:#007020;font-weight:bold">in&lt;/span> shapes:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Running benchmark for shape: &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>shape&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> A &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randn(&lt;span style="color:#666">*&lt;/span>shape, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>float32, device&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#4070a0">&amp;#34;cuda&amp;#34;&lt;/span>)&lt;span style="color:#666">.&lt;/span>contiguous()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> B &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>randn(&lt;span style="color:#666">*&lt;/span>shape, &lt;span style="color:#40a070">1024&lt;/span>, dtype&lt;span style="color:#666">=&lt;/span>torch&lt;span style="color:#666">.&lt;/span>float32, device&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#4070a0">&amp;#34;cuda&amp;#34;&lt;/span>)&lt;span style="color:#666">.&lt;/span>contiguous()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> C &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>zeros_like(A)&lt;span style="color:#666">.&lt;/span>contiguous()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Create fp16 tensors for fp16 kernels&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> A_fp16 &lt;span style="color:#666">=&lt;/span> A&lt;span style="color:#666">.&lt;/span>half()&lt;span style="color:#666">.&lt;/span>contiguous()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> B_fp16 &lt;span style="color:#666">=&lt;/span> B&lt;span style="color:#666">.&lt;/span>half()&lt;span style="color:#666">.&lt;/span>contiguous()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> C_fp16 &lt;span style="color:#666">=&lt;/span> torch&lt;span style="color:#666">.&lt;/span>zeros_like(A_fp16)&lt;span style="color:#666">.&lt;/span>contiguous()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> elements_per_block &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">256&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;elements_per_block: &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>elements_per_block&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Increase elements_per_block to make sure that each kernel has same threads_per_block&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> run_benchmark(lib&lt;span style="color:#666">.&lt;/span>elementwise_add_f32, A, B, &lt;span style="color:#4070a0">&amp;#34;basic&amp;#34;&lt;/span>, C, elements_per_block)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> run_benchmark(lib&lt;span style="color:#666">.&lt;/span>elementwise_add_f32x4, A, B, &lt;span style="color:#4070a0">&amp;#34;f32x4&amp;#34;&lt;/span>, C, elements_per_block &lt;span style="color:#666">*&lt;/span> &lt;span style="color:#40a070">4&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> run_benchmark(lib&lt;span style="color:#666">.&lt;/span>elementwise_add_f16x2, A_fp16, B_fp16, &lt;span style="color:#4070a0">&amp;#34;f16x2&amp;#34;&lt;/span>, C_fp16, elements_per_block &lt;span style="color:#666">*&lt;/span> &lt;span style="color:#40a070">2&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> run_benchmark(lib&lt;span style="color:#666">.&lt;/span>elementwise_add_f16x8, A_fp16, B_fp16, &lt;span style="color:#4070a0">&amp;#34;f16x8&amp;#34;&lt;/span>, C_fp16, elements_per_block &lt;span style="color:#666">*&lt;/span> &lt;span style="color:#40a070">8&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;--&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Results:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span> lib: /workspace/project/superjomn.github.io/content-org/_build/build/lib.linux-x86_64-cpython-312
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Compiling Torch kernel
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> running benchmark
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Running benchmark for shape: (2096, 4096)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> elements_per_block: 256
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_basic: [0.62899578, -3.16506243], time:0.04013546ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f32x4: [0.62899578, -3.16506243], time:0.03716669ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f16x2: [0.62890625, -3.1640625], time:0.02376186ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f16x8: [0.62890625, -3.1640625], time:0.02382634ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> --
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Running benchmark for shape: (2048, 2048)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> elements_per_block: 256
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_basic: [0.98603237, -2.21596098], time:0.02142691ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f32x4: [0.98603237, -2.21596098], time:0.01876467ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f16x2: [0.98632812, -2.21484375], time:0.01224410ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f16x8: [0.98632812, -2.21484375], time:0.01231584ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> --
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Running benchmark for shape: (2048, 1024)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> elements_per_block: 256
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_basic: [-1.68364513, 0.07630849], time:0.00754973ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f32x4: [-1.68364513, 0.07630849], time:0.00768909ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f16x2: [-1.68359375, 0.07666016], time:0.00720714ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f16x8: [-1.68359375, 0.07666016], time:0.00725242ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> --
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Running benchmark for shape: (1024, 1024)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> elements_per_block: 256
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_basic: [0.41730967, -2.56410193], time:0.00473962ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f32x4: [0.41730967, -2.56410193], time:0.00490102ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f16x2: [0.41723633, -2.56445312], time:0.00471936ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f16x8: [0.41723633, -2.56445312], time:0.00484266ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> --
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Running benchmark for shape: (512, 512)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> elements_per_block: 256
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_basic: [-0.84098238, -0.51086581], time:0.00448192ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f32x4: [-0.84098238, -0.51086581], time:0.00438221ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f16x2: [-0.84130859, -0.51074219], time:0.00443571ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f16x8: [-0.84130859, -0.51074219], time:0.00444208ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> --
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Running benchmark for shape: (256, 256)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> elements_per_block: 256
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_basic: [2.76621795, 1.71955645], time:0.00438445ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f32x4: [2.76621795, 1.71955645], time:0.00440973ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f16x2: [2.765625, 1.71972656], time:0.00444272ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> out_f16x8: [2.765625, 1.71972656], time:0.00445354ms
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> --
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>Reduce kernel in CUDA</title><link>/posts/reduce-cuda/</link><pubDate>Mon, 25 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/reduce-cuda/</guid><description>&lt;h2 id="question-definition">Question definition&lt;/h2>
 &lt;p>Given an array of \(n\) integers, the goal is to compute the sum of all elements within the array.&lt;/p>
 &lt;h2 id="solutions">Solutions&lt;/h2>
 &lt;p>The implementations for all kernel versions can be found at &lt;a href="https://github.com/Superjomn/cuda-from-scratch/blob/dev/2-reduce.cu">2-reduce.cu on GitHub&lt;/a>.&lt;/p>

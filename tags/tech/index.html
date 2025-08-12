@@ -9,7 +9,11 @@ Archive
 </a><a class=nav-link href=/tags/><i data-feather=tag></i>
 Tags
 </a><a class=nav-link href=/posts/about/><i data-feather=info></i>
-About</a></nav></div><div class=container><main id=main><h1>Tech</h1><p><h3><a class=title href=/posts/flash-attention-usage/>flash-attention Usage: a Worknote for LLM inference</a></h3><i data-feather=calendar></i> <time datetime=2025-03-30>Mar 30, 2025</time>
+About</a></nav></div><div class=container><main id=main><h1>Tech</h1><p><h3><a class=title href=/posts/element-add-kernel-in-cuda-org-executor.executed/>Reduce Kernel in CUDA (2)</a></h3><i data-feather=calendar></i> <time datetime=2025-08-12>Aug 12, 2025</time>
+<span id=social></span><i data-feather=tag></i>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/cuda>cuda</a>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/basics>basics</a>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><p>In this post, I will walk through the reduce kernels in <a href=https://github.com/xlite-dev/LeetCUDA/tree/main/kernels>LeetCUDA</a> and implement them interactively in this file using org-executor.</p><h2 id=background>Background</h2><p>In CUDA programming, an elementwise kernel is a fundamental building block that applies a given operation independently to each element of an input array (or arrays), producing an output array of the same shape. This is highly parallelizable, as each thread can process a single element without dependencies on others.</p></p></p><p><h3><a class=title href=/posts/flash-attention-usage/>flash-attention Usage: a Worknote for LLM inference</a></h3><i data-feather=calendar></i> <time datetime=2025-03-30>Mar 30, 2025</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/llm>llm</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><h2 id=background>Background</h2><p>The <a href=https://github.com/Dao-AILab/flash-attention/tree/main>flash-attention</a> project provides <code>flash_attn</code> package in Python, and it provides multiple APIs in the interface.
