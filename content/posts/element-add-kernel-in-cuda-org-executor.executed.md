@@ -1,5 +1,5 @@
 +++
-title = "Reduce Kernel in CUDA (2)"
+title = "Elementwise Add Kernel in CUDA"
 author = ["Chunwei Yan"]
 date = 2025-08-12
 tags = ["cuda", "basics", "tech"]
