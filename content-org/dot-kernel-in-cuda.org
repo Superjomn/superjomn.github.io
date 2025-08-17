@@ -5,7 +5,7 @@
 #+hugo_draft: true
 #+toc: nil
 
-In this post, I will walk through the dot kernels in [[https://github.com/xlite-dev/LeetCUDA/tree/main/kernels][LeetCUDA]] and implement them interactively in this file using org-executor.
+In this post, I will walk through some dot product kernels  and implement them interactively in this file using org-executor.
 
 * Background
 
@@ -23,24 +23,26 @@ Just follow the LeetCUDA's settings, we will expose all the kernels to PyTorch a
 ** PyTorch
 The python version:
 
-#+begin_src python :file ./_torch_check.py :command python3 %f :exports both
+#+begin_src python :file ./_torch_check.py :command python3 %f
 import torch
 print(torch.__version__)
 #+end_src
+#+RESULTS:
+  2.8.0a0+5228986c39.nv25.06
 
 ** Hardware
 
-#+begin_src bash :file ./query_gpu_info.sh :key main :command bash ./query_gpu_info.sh :exports results :wrap "export md"
+#+begin_src bash :file ./query_gpu_info.sh :key main :command bash ./query_gpu_info.sh
 nvidia-smi --query-gpu=gpu_name,memory.total,memory.free,memory.used,driver_version,temperature.gpu,utilization.gpu --format=csv,noheader
 #+end_src
 #+RESULTS:
+  NVIDIA H100 80GB HBM3, 81559 MiB, 81080 MiB, 0 MiB, 580.65.06, 41, 0 %
 
 ** Kernel Launching Utils
 
 Common C++ header content:
 
-#+begin_src cuda :file dot_product.cuh :id header
-#pragma once
+#+begin_src cuda :file dot_product.cu :id header
 #include <algorithm>
 #include <cuda_bf16.h>
 #include <cuda_fp16.h>
@@ -56,12 +58,13 @@ Common C++ header content:
 
 There are some common code for launching kernel with torch facilities.
 
-#+begin_src cuda :file dot_product.cuh :id lauching-utils
+#+begin_src cuda :file dot_product.cu :id lauching-utils
 #define CEIL(x, y) (((x) + (y) - 1) / (y))
 
 #define WARP_SIZE 32
 #define INT4(value) (reinterpret_cast<int4*>(&(value))[0])
 #define FLOAT4(value) (reinterpret_cast<float4*>(&(value))[0])
+#define FLOAT2(value) (reinterpret_cast<float2*>(&(value))[0])
 #define HALF2(value) (reinterpret_cast<half2*>(&(value))[0])
 #define BFLOAT2(value) (reinterpret_cast<__nv_bfloat162*>(&(value))[0])
 #define LDST128BITS(value) (reinterpret_cast<float4*>(&(value))[0])
@@ -86,7 +89,7 @@ get_launch_dimensions(int N, int elements_per_block = 256,
 
 #define TORCH_BINDING_DOT_PRODUCT(packed_type, th_type, element_type,          \
                                   elements_per_thread)                         \
-  __global__ void dot_product_##packed_type##_kernel(                          \
+  template __global__ void dot_product_##packed_type##_kernel(                          \
       element_type* __restrict__ a, element_type* __restrict__ b,              \
       element_type* __restrict__ c, int N);                                    \
                                                                                \
@@ -98,7 +101,7 @@ get_launch_dimensions(int N, int elements_per_block = 256,
     C.zero_();                                                                 \
     auto [grid, block] = get_launch_dimensions(A.numel(), elements_per_block,  \
                                                elements_per_thread);           \
-    dot_product_##packed_type##_kernel<256><<<grid, block>>>(                       \
+    dot_product_##packed_type##_kernel<256><<<grid, block>>>(                  \
         reinterpret_cast<element_type*>(A.data_ptr()),                         \
         reinterpret_cast<element_type*>(B.data_ptr()),                         \
         reinterpret_cast<element_type*>(C.data_ptr()), A.numel());             \
@@ -110,9 +113,7 @@ get_launch_dimensions(int N, int elements_per_block = 256,
 
 This is a basic kernel for computing the dot product of two vectors, it utilize ~atomicAdd~ to accumulate the results.
 
-#+BEGIN_SRC cuda :file dot_product_basic.cu
-#include "dot_product.cuh"
-
+#+BEGIN_SRC cuda :file dot_product.cu
 template<int NUM_THREADS=256>
 __global__ void dot_product_basic_f32_kernel(float* __restrict__ a,
                                              float* __restrict__ b,
@@ -131,21 +132,28 @@ It will have $N$ writes to the output tensor, which can be a bottleneck for larg
 ** Warp reduce to reduce global store (1)
 We can use warp-level primitives to reduce the number of global memory writes. The idea is to perform a reduction within each warp, and only the first thread in each warp will write the result to global memory via ~atomicAdd~.
 
-#+begin_src cuda :file dot_product_warp_reduce_f32.cu
-#include "dot_product.cuh"
-
-__forceinline__ __device__ float warp_reduce_sum(float val) {
+#+begin_src cuda :file dot_product.cu
+template <typename T> __forceinline__ __device__ T warp_reduce_sum(T val) {
+#pragma unroll
   for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
     val += __shfl_down_sync(0xFFFFFFFF, val, offset);
   }
   return val;
 }
 
-template<int NUM_THREADS=256>
-__global__ void dot_product_warp_reduce_f32_kernel(float* __restrict__ a,
-                                                   float* __restrict__ b,
-                                                   float* __restrict__ c,
-                                                   int N) {
+template <> __forceinline__ __device__ half warp_reduce_sum<half>(half val) {
+#pragma unroll
+  for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
+    half other = __shfl_down_sync(0xFFFFFFFF, val, offset);
+    val = __float2half(__half2float(val) + __half2float(other));
+  }
+  return val;
+}
+
+template <int NUM_THREADS = 256>
+__global__ void
+dot_product_warp_reduce_f32_kernel(float* __restrict__ a, float* __restrict__ b,
+                                   float* __restrict__ c, int N) {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
   float val = (idx < N) ? a[idx] * b[idx] : 0.0f;
   val = warp_reduce_sum(val);
@@ -163,17 +171,7 @@ __global__ void dot_product_warp_reduce_f32_kernel(float* __restrict__ a,
 Shared memory is much faster than global memory, so we can use it to store intermediate results. 
 Each block will perform a reduction in shared memory, and only the first thread in each block will write the final result to global memory.
 
-#+begin_src cuda :file dot_product_warp_reduce_shared_f32.cu
-#include "dot_product.cuh"
-
-// same as above
-__forceinline__ __device__ float warp_reduce_sum(float val) {
-  for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
-    val += __shfl_down_sync(0xFFFFFFFF, val, offset);
-  }
-  return val;
-}
-
+#+begin_src cuda :file dot_product.cu
 template <int NUM_THREADS = 256>
 __global__ void dot_product_warp_reduce_shared_f32_kernel(float* __restrict__ a,
                                                           float* __restrict__ b,
@@ -211,16 +209,7 @@ The dot product is mainly memory bound, to increase the reading bandwidth specif
 
 This kernel just replace the float type with float4 type, the main implementation is based on the warp reduce approach.
 
-#+begin_src cuda :file dot_product_warp_reduce_f32x4.cu
-#include "dot_product.cuh"
-
-__forceinline__ __device__ float warp_reduce_sum(float val) {
-  for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
-    val += __shfl_down_sync(0xFFFFFFFF, val, offset);
-  }
-  return val;
-}
-
+#+begin_src cuda :file dot_product.cu
 template <int NUM_THREADS = 256>
 __global__ void dot_product_warp_reduce_f32x4_kernel(float* __restrict__ a,
                                          float* __restrict__ b,
@@ -269,23 +258,98 @@ __global__ void dot_product_warp_reduce_f32x4_kernel(float* __restrict__ a,
 }
 #+end_src
 
+
+** Float16 kernel
+
+#+begin_src cuda :file dot_product.cu
+template <int NUM_THREADS = 256>
+__global__ void
+dot_product_warp_reduce_f16x8_kernel(half* __restrict__ a, half* __restrict__ b,
+                                     float* __restrict__ c, int N) {
+  const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+  int offset = tid * 8;
+  int remaining = N - tid * 8;
+  const int warp_id = threadIdx.x / WARP_SIZE;
+  const int lane_id = threadIdx.x % WARP_SIZE;
+  const int NUM_WARPS = NUM_THREADS / WARP_SIZE;
+
+  // Used for reduce wraps for each block
+  __shared__ float smem[NUM_WARPS];
+
+  if (remaining <= 0)
+    return;
+
+  float sum = 0.0f;
+  if (remaining >= 8) { // fastest path: 8xfp16
+    union Packed {
+      float4 f4;
+      half2 h2[4];
+    } pa, pb;
+
+    // load 128B
+    pa.f4 = LDST128BITS(a[offset]);
+    pb.f4 = LDST128BITS(b[offset]);
+
+#pragma unroll
+    for (int i = 0; i < 4; ++i) {
+      auto tmp = __hmul2(pa.h2[i], pb.h2[i]);
+      sum += __half2float(tmp.x);
+      sum += __half2float(tmp.y);
+    }
+  } else { // slow path
+    for (int i = 0; i < remaining; ++i) {
+      sum += __half2float(a[i]) * __half2float(b[i]);
+    }
+  }
+
+  // warp reduce sum and store to smem
+  sum = warp_reduce_sum(sum);
+  if (lane_id == 0) {
+    smem[warp_id] = sum;  // Now sum is float, matches smem type
+  }
+  __syncthreads();
+
+  // reduce the smem with the first warp
+  if (warp_id == 0) {
+    float val = lane_id < NUM_WARPS ? smem[lane_id] : 0.0f;
+    val = warp_reduce_sum(val);
+    if (lane_id == 0) {
+      atomicAdd(c, val);  // Add float value to float pointer
+    }
+  }
+}
+#+end_src
+
 ** Register the kernels and benchmark
 
 *** Register the kernels
 
-#+BEGIN_SRC cuda :key register_torch :file dot_product_lib.cu
-#include "dot_product.cuh"
-
+#+BEGIN_SRC cuda :key register_torch :file dot_product.cu
 TORCH_BINDING_DOT_PRODUCT(basic_f32, torch::kFloat32, float, 1)
 TORCH_BINDING_DOT_PRODUCT(warp_reduce_f32, torch::kFloat32, float, 1)
 TORCH_BINDING_DOT_PRODUCT(warp_reduce_shared_f32, torch::kFloat32, float, 1)
 TORCH_BINDING_DOT_PRODUCT(warp_reduce_f32x4, torch::kFloat32, float, 4)
+//TORCH_BINDING_DOT_PRODUCT(warp_reduce_f16x8, torch::kFloat16, half, 8)
+
+void dot_product_warp_reduce_f16x8(torch::Tensor A, torch::Tensor B,
+                                      torch::Tensor C, int elements_per_block) {
+  check_torch_dtype(A, torch::kFloat16);
+  check_torch_dtype(B, torch::kFloat16);
+  check_torch_dtype(C, torch::kFloat32);  // Output is float for precision
+  C.zero_();
+  auto [grid, block] = get_launch_dimensions(A.numel(), elements_per_block, 8);
+  dot_product_warp_reduce_f16x8_kernel<256><<<grid, block>>>(
+      reinterpret_cast<half*>(A.data_ptr()),
+      reinterpret_cast<half*>(B.data_ptr()),
+      reinterpret_cast<float*>(C.data_ptr()), A.numel());
+}
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   TORCH_BINDING_COMMON_EXTENSION(dot_product_basic_f32)
   TORCH_BINDING_COMMON_EXTENSION(dot_product_warp_reduce_f32)
   TORCH_BINDING_COMMON_EXTENSION(dot_product_warp_reduce_shared_f32)
   TORCH_BINDING_COMMON_EXTENSION(dot_product_warp_reduce_f32x4)
+  TORCH_BINDING_COMMON_EXTENSION(dot_product_warp_reduce_f16x8)
 }
 #+END_SRC
 
@@ -296,11 +360,7 @@ from setuptools import setup
 from torch.utils.cpp_extension import BuildExtension, CppExtension
 
 source_files = [
-  "dot_product_basic.cu",
-  "dot_product_warp_reduce_f32.cu",
-  "dot_product_warp_reduce_shared_f32.cu",
-  "dot_product_warp_reduce_f32x4.cu",
-  "dot_product_lib.cu",
+  "dot_product.cu",
 ]
 
 setup(
@@ -412,22 +472,88 @@ for shape in shapes:
     print(f"Running benchmark for shape: {shape}")
     A = torch.randn(*shape, dtype=torch.float32, device="cuda").contiguous()
     B = torch.randn(*shape, dtype=torch.float32, device="cuda").contiguous()
-    C = torch.zeros_like(A).contiguous()
+    C = torch.zeros((1,), dtype=torch.float32, device="cuda").contiguous()
 
     # Create fp16 tensors for fp16 kernels
     A_fp16 = A.half().contiguous()
     B_fp16 = B.half().contiguous()
-    C_fp16 = torch.zeros_like(A_fp16).contiguous()
 
     elements_per_block = 256
 
     print(f"elements_per_block: {elements_per_block}")
     # Increase elements_per_block to make sure that each kernel has same threads_per_block
+    # fp32
     run_benchmark(dot_product_torch, A, B, "torch_baseline_f32", C)
     run_benchmark(lib.dot_product_basic_f32, A, B, "basic_f32", C, elements_per_block)
     run_benchmark(lib.dot_product_warp_reduce_f32, A, B, "warp_reduce_f32", C, elements_per_block)
     run_benchmark(lib.dot_product_warp_reduce_f32x4, A, B, "warp_reduce_f32x4", C, elements_per_block * 4)
-    # run_benchmark(lib.dot_product_f16x2, A_fp16, B_fp16, "f16x2", C_fp16, elements_per_block * 2)
-    # run_benchmark(lib.dot_product_f16x8, A_fp16, B_fp16, "f16x8", C_fp16, elements_per_block * 8)
+
+    # fp16
+    run_benchmark(dot_product_torch, A_fp16, B_fp16, "torch_f16", C, elements_per_block * 8)
+    run_benchmark(lib.dot_product_warp_reduce_f16x8, A_fp16, B_fp16, "warp_reduce_f16x8", C, elements_per_block * 8)
     print(f"--")
 #+END_SRC
+
+#+RESULTS:
+#+begin_src text
+  lib: /workspace/project/superjomn.github.io/content-org/_build/build/lib.linux-x86_64-cpython-312
+  Compiling Torch kernel
+  running benchmark
+  Running benchmark for shape: (65536,)
+  elements_per_block: 256
+  out_torch_baseline_f32: [162.43014526], time:0.02388525ms
+       out_basic_f32: [162.43000793], time:0.11861382ms
+  out_warp_reduce_f32: [162.4302063], time:0.01312960ms
+  out_warp_reduce_f32x4: [413.75238037], time:0.01296038ms
+       out_torch_f16: [162.5], time:0.02181830ms
+  out_warp_reduce_f16x8: [536.10473633], time:0.01291818ms
+  --
+  Running benchmark for shape: (262144,)
+  elements_per_block: 256
+  out_torch_baseline_f32: [-245.72050476], time:0.02338707ms
+       out_basic_f32: [-245.72119141], time:0.46365411ms
+  out_warp_reduce_f32: [-245.720047], time:0.01799827ms
+  out_warp_reduce_f32x4: [-413.5668335], time:0.01299930ms
+       out_torch_f16: [-245.75], time:0.02208234ms
+  out_warp_reduce_f16x8: [-639.40722656], time:0.01293677ms
+  --
+  Running benchmark for shape: (1048576,)
+  elements_per_block: 256
+  out_torch_baseline_f32: [-241.51846313], time:0.02336285ms
+       out_basic_f32: [-241.52642822], time:1.84453882ms
+  out_warp_reduce_f32: [-241.51870728], time:0.06116378ms
+  out_warp_reduce_f32x4: [95.10560608], time:0.01131219ms
+       out_torch_f16: [-241.125], time:0.01477059ms
+  out_warp_reduce_f16x8: [896.55297852], time:0.01101299ms
+  --
+  Running benchmark for shape: (2097152,)
+  elements_per_block: 256
+  out_torch_baseline_f32: [-967.17712402], time:0.01563146ms
+       out_basic_f32: [-967.14031982], time:3.68545264ms
+  out_warp_reduce_f32: [-967.17626953], time:0.11862563ms
+  out_warp_reduce_f32x4: [-2868.94726562], time:0.01886358ms
+       out_torch_f16: [-968.0], time:0.01459059ms
+  out_warp_reduce_f16x8: [-4120.27636719], time:0.01841658ms
+  --
+  Running benchmark for shape: (4194304,)
+  elements_per_block: 256
+  out_torch_baseline_f32: [77.10778809], time:0.01607683ms
+       out_basic_f32: [77.10027313], time:7.36760742ms
+  out_warp_reduce_f32: [77.10173798], time:0.23458269ms
+  out_warp_reduce_f32x4: [-608.85009766], time:0.03356355ms
+       out_torch_f16: [76.375], time:0.01473155ms
+  out_warp_reduce_f16x8: [-240.73999023], time:0.03255577ms
+  --
+  Running benchmark for shape: (8585216,)
+  elements_per_block: 256
+  out_torch_baseline_f32: [3599.40771484], time:0.03204659ms
+       out_basic_f32: [3599.63452148], time:15.07446680ms
+  out_warp_reduce_f32: [3599.40283203], time:0.47528552ms
+  out_warp_reduce_f32x4: [9250.5390625], time:0.06517831ms
+       out_torch_f16: [3600.0], time:0.01579350ms
+  out_warp_reduce_f16x8: [8938.34570312], time:0.06353658ms
+  --
+#+end_src
+
+* References
+- [[https://github.com/xlite-dev/LeetCUDA/tree/main/kernels][LeetCUDA]] on github
