@@ -1,0 +1,83 @@
+#+title: Matrix Transpose Kernel in CUDA
+#+author: Chunwei Yan
+#+date: 2025-08-23
+#+hugo_tags: "cuda" "basics" "tech"
+#+hugo_draft: true
+#+toc: nil
+
+In this post, I will go through the several implementations of a matrix transpose kernel in CUDA.
+
+* Background
+Matrix transpose is a common operation in linear algebra and is often used in various applications such as image processing and machine learning. In this post, I will discuss the implementation of a matrix transpose kernel in CUDA, which can significantly speed up the transpose operation by leveraging the parallel processing capabilities of GPUs.
+The algorithm is straightforward: for a given matrix A of size MxN, the transposed matrix B will be of size NxM, where each element ~B[j][i] = A[i][j]~.
+
+** Some common
+
+
+* Environment setting
+Just follow the LeetCUDA's settings, we will expose all the kernels to PyTorch and use its facilities to do performance and precession evaluation.
+
+** PyTorch
+The python version:
+
+#+begin_src python :file ./_torch_check.py :command python3 %f
+import torch
+print(torch.__version__)
+#+end_src
+#+RESULTS:
+  2.8.0a0+5228986c39.nv25.06
+
+** Hardware
+
+#+begin_src bash :file ./query_gpu_info.sh :key main :command bash ./query_gpu_info.sh
+nvidia-smi --query-gpu=gpu_name,memory.total,memory.free,memory.used,driver_version,temperature.gpu,utilization.gpu --format=csv,noheader
+#+end_src
+#+RESULTS:
+  NVIDIA H100 80GB HBM3, 81559 MiB, 81080 MiB, 0 MiB, 580.65.06, 41, 0 %
+
+** Kernel Launching Utils
+
+Common C++ header content:
+
+#+begin_src cuda :file dot_product.cu :id header
+#include <algorithm>
+#include <cuda_bf16.h>
+#include <cuda_fp16.h>
+#include <cuda_fp8.h>
+#include <cuda_runtime.h>
+#include <float.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <torch/extension.h>
+#include <torch/types.h>
+#include <vector>
+#+end_src
+
+There are some common code for launching kernel with torch facilities.
+
+#+begin_src cuda :file dot_product.cu :id lauching-utils
+#define CEIL(x, y) (((x) + (y) - 1) / (y))
+
+#define WARP_SIZE 32
+#define INT4(value) (reinterpret_cast<int4*>(&(value))[0])
+#define FLOAT4(value) (reinterpret_cast<float4*>(&(value))[0])
+#define FLOAT2(value) (reinterpret_cast<float2*>(&(value))[0])
+#define HALF2(value) (reinterpret_cast<half2*>(&(value))[0])
+#define BFLOAT2(value) (reinterpret_cast<__nv_bfloat162*>(&(value))[0])
+#define LDST128BITS(value) (reinterpret_cast<float4*>(&(value))[0])
+
+inline void check_torch_dtype(torch::Tensor tensor,
+                              torch::ScalarType expected_dtype) {
+  if (tensor.dtype() != expected_dtype) {
+    throw std::runtime_error("Tensor dtype mismatch");
+  }
+}
+
+#define TORCH_BINDING_COMMON_EXTENSION(func) m.def(#func, &func, #func);
+#+end_src
+
+
+* Kernels
+
+
+** Naive Kernel
