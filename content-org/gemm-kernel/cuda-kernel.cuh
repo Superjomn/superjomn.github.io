@@ -72,10 +72,10 @@ __global__ void gemm_naive_tiled_f32_kernel(const float* A, const float* B,
   for (int i = 0; i < CEIL(K, TILE_DIM); i++) {
     // 1. Load A and B tiles into shared memory
     int a_row = row;
-    int a_col = i * TILE_DIM + tx;   // K dim
+    int a_col = i * TILE_DIM + tx; // K dim
     sA[ty][tx] = (a_row < M && a_col < K) ? A[a_row * lda + a_col] : 0.0f;
 
-    int b_row = i * TILE_DIM + ty;   // K dim
+    int b_row = i * TILE_DIM + ty; // K dim
     int b_col = col;
     sB[ty][tx] = (b_row < K && b_col < N) ? B[b_row * ldb + b_col] : 0.0f;
 
@@ -101,101 +101,118 @@ using namespace nvcuda;
 #define WMMA_M 16
 #define WMMA_N 16
 #define WMMA_K 16
+#include <mma.h>
+#include <torch/extension.h>
 
 template <int TILE_M, int TILE_N, int TILE_K> class GemmTiledMmaF16 {
-  using FragmentA = wmma::fragment<wmma::matrix_a, //
-                                   WMMA_M,         //
-                                   WMMA_N,         //
-                                   WMMA_K,         //
-                                   half,           //
+  // Define the WMMA fragments for matrices A, B, and the accumulator
+  using FragmentA = wmma::fragment<wmma::matrix_a, WMMA_M, WMMA_N, WMMA_K, half,
                                    wmma::row_major>;
-
-  using FragmentB = wmma::fragment<wmma::matrix_b, //
-                                   WMMA_M,         //
-                                   WMMA_N,         //
-                                   WMMA_K,         //
-                                   half,           //
+  using FragmentB = wmma::fragment<wmma::matrix_b, WMMA_M, WMMA_N, WMMA_K, half,
                                    wmma::row_major>;
-
   using FragmentAcc =
-      wmma::fragment<wmma::accumulator, //
-                     WMMA_M,            //
-                     WMMA_N,            //
-                     WMMA_K,            //
-                     float>; // Note: float to ensure numerical stability
+      wmma::fragment<wmma::accumulator, WMMA_M, WMMA_N, WMMA_K, float>;
 
 public:
   __forceinline__ __device__ void compute(const half* A, const half* B,
                                           const float* C, float* D, int M,
                                           int N, int K, int lda, int ldb,
                                           int ldc) {
-    int warp_m = threadIdx.y / WMMA_M;
-    int warp_n = threadIdx.x / WMMA_N;
+    // Note the warp-uniform, which is a requirement for
+    // WMMA. All threads in a warp must have the same warp_m and warp_n values.
+    // This revised logic correctly maps each warp to a specific 16x16 output
+    // tile.
+    const int warpId = (threadIdx.y * blockDim.x + threadIdx.x) / 32;
+
+    // Number of 16x16 warps per tile dimension
+    constexpr int warpsPerTileN = TILE_N / WMMA_N;
+
+    // Each "MMA group" consists of multiple warps collaborating on one 16x16
+    // tile. Calculate how many physical warps form one logical MMA group.
+    constexpr int mmaWarpsPerTile = (TILE_M / WMMA_M) * (TILE_N / WMMA_N);
+    constexpr int warpsInBlock = (TILE_M * TILE_N) / 32;
+    constexpr int warpsPerMmaGroup = warpsInBlock / mmaWarpsPerTile;
+
+    const int mmaGroupId = warpId / warpsPerMmaGroup;
+    const int warp_m = mmaGroupId / warpsPerTileN;
+    const int warp_n = mmaGroupId % warpsPerTileN;
 
     FragmentA a_frag;
     FragmentB b_frag;
     FragmentAcc acc;
 
+    // Load initial accumulator values from matrix C
     int c_row_start = blockIdx.y * TILE_M + warp_m * WMMA_M;
     int c_col_start = blockIdx.x * TILE_N + warp_n * WMMA_N;
     if (c_row_start < M && c_col_start < N) {
-      // Note that, we ignore the case where M or N is not a multiple of TILE_M
-      // or TILE_N
-      wmma::load_matrix_sync(acc, C + c_row_start * ldc + c_col_start, N,
+      wmma::load_matrix_sync(acc, C + c_row_start * ldc + c_col_start, ldc,
                              wmma::mem_row_major);
     } else {
       wmma::fill_fragment(acc, 0.0f);
     }
 
+    // Shared memory for tiles of A and B
     __shared__ half sA[TILE_M][TILE_K];
     __shared__ half sB[TILE_K][TILE_N];
 
-    for (int i = 0; i < CEIL(K, TILE_K); i++) {
-      // 1. Load A and B tiles into shared memory
-      int a_row = warp_m * TILE_M + threadIdx.y;
-      int a_col = i * TILE_K + threadIdx.x;
-      int b_row = i * TILE_K + threadIdx.y;
-      int b_col = warp_n * TILE_N + threadIdx.x;
+    const int tx = threadIdx.x;
+    const int ty = threadIdx.y;
 
-      sA[threadIdx.y][threadIdx.x] =
-          (a_row < M && a_col < K) ? A[a_row * lda + a_col] : __float2half(0.0f);
-      sB[threadIdx.y][threadIdx.x] =
-          (b_row < K && b_col < N) ? B[b_row * ldb + b_col] : __float2half(0.0f);
+    // Loop over the K dimension in tile-sized steps
+    for (int k_tile = 0; k_tile < K; k_tile += TILE_K) {
+      // 1. Load A and B tiles from global to shared memory
+      int a_row = blockIdx.y * TILE_M + ty;
+      int a_col = k_tile + tx;
+      int b_row = k_tile + ty;
+      int b_col = blockIdx.x * TILE_N + tx;
+
+      // Load tile for A with boundary checks
+      if (tx < TILE_K && ty < TILE_M) {
+        sA[ty][tx] = (a_row < M && a_col < K) ? A[a_row * lda + a_col]
+                                              : __float2half(0.0f);
+      }
+
+      // Load tile for B with boundary checks
+      if (tx < TILE_N && ty < TILE_K) {
+        sB[ty][tx] = (b_row < K && b_col < N) ? B[b_row * ldb + b_col]
+                                              : __float2half(0.0f);
+      }
 
       __syncthreads();
 
-      // 2. Perform the matrix multiplication on the tiles
+      // 2. Perform matrix multiplication on tiles in shared memory
+      // This inner loop is generic; for 16x16x16, it runs once.
       for (int j = 0; j < TILE_K; j += WMMA_K) {
-        half* a_ptr = &sA[warp_m * TILE_M][j];
-        half* b_ptr = &sB[j][warp_n * TILE_N];
+        half* a_ptr = &sA[warp_m * WMMA_M][j];
+        half* b_ptr = &sB[j][warp_n * WMMA_N];
 
         // Load matrices into fragments
         wmma::load_matrix_sync(a_frag, a_ptr, TILE_K);
         wmma::load_matrix_sync(b_frag, b_ptr, TILE_N);
 
-        // Perform the matrix multiplication
+        // Perform matrix multiplication
         wmma::mma_sync(acc, a_frag, b_frag, acc);
       }
-
       __syncthreads();
     }
 
-    // 3. Store the result in D
-    int c_row = blockIdx.y * TILE_M + warp_m * WMMA_M;
-    int c_col = blockIdx.x * TILE_N + warp_n * WMMA_N;
+    // 3. Store the result from accumulator to D
+    int d_row = blockIdx.y * TILE_M + warp_m * WMMA_M;
+    int d_col = blockIdx.x * TILE_N + warp_n * WMMA_N;
 
-    if (c_row < M && c_col < N) {
-      wmma::store_matrix_sync(D + c_row * ldc + c_col, acc, N,
+    if (d_row < M && d_col < N) {
+      wmma::store_matrix_sync(D + d_row * ldc + d_col, acc, ldc,
                               wmma::mem_row_major);
     }
   }
 };
 
-// Global kernel wrapper for the GemmTiledMmaF16 class
+// Boilerplate kernel launcher
 template <int TILE_M, int TILE_N, int TILE_K>
-__global__ void gemm_tiled_mma_f16_kernel(const half* A, const half* B, const float* C, 
-                                           float* D, int M, int N, int K, int lda, int ldb, int ldc) {
-  GemmTiledMmaF16<TILE_M, TILE_N, TILE_K> gemm;
-  gemm.compute(A, B, C, D, M, N, K, lda, ldb, ldc);
+__global__ void gemm_tiled_mma_f16_kernel(const half* A, const half* B,
+                                          const float* C, float* D, int M,
+                                          int N, int K, int lda, int ldb,
+                                          int ldc) {
+  GemmTiledMmaF16<TILE_M, TILE_N, TILE_K> op;
+  op.compute(A, B, C, D, M, N, K, lda, ldb, ldc);
 }
-// @org-executor :code-block-end
