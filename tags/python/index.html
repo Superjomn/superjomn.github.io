@@ -13,99 +13,15 @@ About</a></nav></div><div class=container><main id=main><h1>Python</h1><p><h3><a
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/python>python</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/coroutine>coroutine</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><h2 id=the-most-basic-case>The Most Basic Case</h2><p>With corountines, we can define a produer and consumer without any need for threads. This simplifies our code and makes it more efficient.</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>import</span> <span style=color:#0e84b5;font-weight:700>asyncio</span>
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>async</span> <span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>producer</span>():
-</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>for</span> i <span style=color:#007020;font-weight:700>in</span> <span style=color:#007020>range</span>(<span style=color:#40a070>6</span>):
-</span></span><span style=display:flex><span>        <span style=color:#007020;font-weight:700>await</span> asyncio<span style=color:#666>.</span>sleep(<span style=color:#40a070>0.2</span>)
-</span></span><span style=display:flex><span>        <span style=color:#007020;font-weight:700>yield</span> i
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>async</span> <span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>consumer</span>():
-</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>async</span> <span style=color:#007020;font-weight:700>for</span> i <span style=color:#007020;font-weight:700>in</span> producer():
-</span></span><span style=display:flex><span>        <span style=color:#007020>print</span>(i)
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>async</span> <span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>main</span>():
-</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>await</span> asyncio<span style=color:#666>.</span>gather(consumer())
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>asyncio<span style=color:#666>.</span>run(main())
-</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>0
-</span></span><span style=display:flex><span>1
-</span></span><span style=display:flex><span>2
-</span></span><span style=display:flex><span>3
-</span></span><span style=display:flex><span>4
-</span></span><span style=display:flex><span>5
-</span></span></code></pre></div><h2 id=work-with-heavy-io>Work with Heavy IO</h2><p>When working with heavy IO operations, we need to be careful not to block the event loop. Running heavy IO operations can block the current event loop, which would slow down the scheduling of all coroutines.</p></p></p><p><h3><a class=title href=/posts/elisp-tutorial-for-pythoner/>Emacs Lisp Introduction for Python Programmers</a></h3><i data-feather=calendar></i> <time datetime=2024-04-28>Apr 28, 2024</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a></p><p><h3><a class=title href=/posts/elisp-tutorial-for-pythoner/>Emacs Lisp Introduction for Python Programmers</a></h3><i data-feather=calendar></i> <time datetime=2024-04-28>Apr 28, 2024</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/emacs>emacs</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/lisp>lisp</a>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/python>python</a><p><p>This is a brief introduction to Emacs Lisp for Python programmers, (although I am not an Elisp expert, and actually I am more familiar with Python than Elisp). Both languages have quite different syntaxes, it is interesting to see how can implement Python code with lisp code.</p><p>The content follows the strucutre from <a href=https://learnxinyminutes.com/docs/python/>Learn X in Y Minutes Where X is Python</a>, and we will touch all the topics.</p><h2 id=primitive-datatypes-and-operators>Primitive Datatypes and Operators</h2><h3 id=numbers>Numbers</h3><table><tr><td><b>Python</b><pre><code class=python-html>
-# Integer
-1
-# Float
-3.14
-# Math is what you would expect
-1 + 1   # => 2
-8 - 1   # => 7
-10 * 2  # => 20
-35 / 5  # => 7.0
-
-# Integer division rounds down for both positive and negative numbers.
-5 // 3       # => 1
--5 // 3      # => -2
-5.0 // 3.0   # => 1.0  # works on floats too
--5.0 // 3.0  # => -2.0
-
-# The result of division is always a float
-10.0 / 3  # => 3.3333333333333335
-
-# Modulo operation
-7 % 3   # => 1
-# i % j have the same sign as j, unlike C
--7 % 3  # => 2
-
-# Exponentiation (x**y, x to the yth power)
-2**3  # => 8
-
-# Enforce precedence with parentheses
-1 + 3 * 2    # => 7
-(1 + 3) * 2  # => 8
-</code></pre></td><td><b>Elisp</b><pre><code class=lisp-html>
-;; Integer
-1
-;; Float
-3.14
-;; Math is what you would expect
-(+ 1 1)   ; => 2
-(- 8 1)   ; => 7
-(* 10 2)  ; => 20
-(/ 35 5)  ; => 7
-
-;; Integer division rounds down for both positive and negative numbers.
-(truncate (/ 5 3))       ; => 1
-(truncate (/ -5 3))      ; => -2
-(truncate (/ 5.0 3.0))   ; => 1.0  ; works on floats too
-(truncate (/ -5.0 3.0))  ; => -2.0
-
-;; The result of division is always a float if the denominator or numerator is float
-(/ 10.0 3)  ; => 3.3333333333333335
-
-;; Modulo operation
-(% 7 3)   ; => 1
-;; different from Python
-(% -7 3)  ; => -1
-
-;; Exponentiation
-(expt 2 3)  ; => 8
-
-;; Enforce precedence with parentheses
-(+ 1 (* 3 2))    ; => 7
-(* (1+ 3) 2)  ; => 8
-
-</code></pre></td></table><h3 id=bools-and-comparasion>Bools and comparasion</h3><p>In Emacs Lisp, booleans are represented by the symbols <code>t</code> for true and <code>nil</code> for false.</p></p></p><p><h3><a class=title href=/posts/python-best-practices/>Best Practices for Python Programming (Continuously Updated)</a></h3><i data-feather=calendar></i> <time datetime=2023-02-22>Feb 22, 2023</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/python>python</a></p><p><h3><a class=title href=/posts/python-best-practices/>Best Practices for Python Programming (Continuously Updated)</a></h3><i data-feather=calendar></i> <time datetime=2023-02-22>Feb 22, 2023</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/python>python</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><p>When delving into the codebases of some successful large Python projects such as PyTorch, I am consistently impressed by their code &ndash; whether it&rsquo;s clean yet precise, or leveraging lesser-known built-in or third-party packages to significantly enhance functionality.</p><p>High-quality code snippets, handy packages, and modules have greatly facilitated my work. In this blog, I&rsquo;ll be sharing noteworthy findings and insights learned from the open-source codebase.</p></p></p><p class="footer text-center">Copyright (c) 2025 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a></p><p class="footer text-center">Copyright (c) 2025 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
 MathJax.Hub.Config({
   tex2jax: {
     inlineMath: [['\\(','\\)']],

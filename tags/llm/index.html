@@ -12,51 +12,13 @@ Tags
 About</a></nav></div><div class=container><main id=main><h1>LLM</h1><p><h3><a class=title href=/posts/flash-attention-usage/>flash-attention Usage: a Worknote for LLM inference</a></h3><i data-feather=calendar></i> <time datetime=2025-03-30>Mar 30, 2025</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/llm>llm</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><h2 id=background>Background</h2><p>The <a href=https://github.com/Dao-AILab/flash-attention/tree/main>flash-attention</a> project provides <code>flash_attn</code> package in Python, and it provides multiple APIs in the interface.
-As the APIs contains many LLM optimization concepts such as paged kv-cache, variant-length (continuous batching) and so on.
-This post tries to aggregate related information for the related concepts, and focus on inference only <span class=sidenote-wrapper><label for=inferece-only class=sidenote-label>⊕</label>
-<input type=checkbox id=inferece-only class=sidenote-checkbox>
-<span class=sidenote>We will not cover the modules defined for training, and only focus on several basic functional APIs used in inference</span>
-</span>, for using the <code>flash_attn</code> APIs.</p></p></p><p><h3><a class=title href=/posts/count-parameters-in-llama/>Count the parameters in LLaMA V1 model</a></h3><i data-feather=calendar></i> <time datetime=2024-03-21>Mar 21, 2024</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a></p><p><h3><a class=title href=/posts/count-parameters-in-llama/>Count the parameters in LLaMA V1 model</a></h3><i data-feather=calendar></i> <time datetime=2024-03-21>Mar 21, 2024</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/llm>LLM</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><p>Let&rsquo;s load the model</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#007020;font-weight:700>from</span> <span style=color:#0e84b5;font-weight:700>transformers</span> <span style=color:#007020;font-weight:700>import</span> LlamaModel, LlamaConfig
-</span></span><span style=display:flex><span>model <span style=color:#666>=</span> LlamaModel<span style=color:#666>.</span>from_pretrained(<span style=color:#4070a0>&#34;llama-7b-hf-path&#34;</span>)
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span><span style=color:#007020;font-weight:700>def</span> <span style=color:#06287e>count_params</span>(model, is_human: <span style=color:#007020>bool</span> <span style=color:#666>=</span> <span style=color:#007020;font-weight:700>False</span>):
-</span></span><span style=display:flex><span>    params: <span style=color:#007020>int</span> <span style=color:#666>=</span> <span style=color:#007020>sum</span>(p<span style=color:#666>.</span>numel() <span style=color:#007020;font-weight:700>for</span> p <span style=color:#007020;font-weight:700>in</span> model<span style=color:#666>.</span>parameters() <span style=color:#007020;font-weight:700>if</span> p<span style=color:#666>.</span>requires_grad)
-</span></span><span style=display:flex><span>    <span style=color:#007020;font-weight:700>return</span> <span style=color:#4070a0>f</span><span style=color:#4070a0>&#34;</span><span style=color:#70a0d0>{</span>params <span style=color:#666>/</span> <span style=color:#40a070>1e6</span><span style=color:#70a0d0>:</span><span style=color:#4070a0>.2f</span><span style=color:#70a0d0>}</span><span style=color:#4070a0>M&#34;</span> <span style=color:#007020;font-weight:700>if</span> is_human <span style=color:#007020;font-weight:700>else</span> params
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span><span style=color:#007020>print</span>(model)
-</span></span><span style=display:flex><span><span style=color:#007020>print</span>(<span style=color:#4070a0>&#34;Total # of params:&#34;</span>, count_params(model, is_human<span style=color:#666>=</span><span style=color:#007020;font-weight:700>True</span>))
-</span></span></code></pre></div><p>Print out the layers:</p><div class=highlight><pre tabindex=0 style=background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>LlamaModel(
-</span></span><span style=display:flex><span>  (embed_tokens): Embedding(32000, 4096, padding_idx=0)
-</span></span><span style=display:flex><span>  (layers): ModuleList(
-</span></span><span style=display:flex><span>    (0-31): 32 x LlamaDecoderLayer(
-</span></span><span style=display:flex><span>      (self_attn): LlamaSdpaAttention(
-</span></span><span style=display:flex><span>        (q_proj): Linear(in_features=4096, out_features=4096, bias=False)
-</span></span><span style=display:flex><span>        (k_proj): Linear(in_features=4096, out_features=4096, bias=False)
-</span></span><span style=display:flex><span>        (v_proj): Linear(in_features=4096, out_features=4096, bias=False)
-</span></span><span style=display:flex><span>        (o_proj): Linear(in_features=4096, out_features=4096, bias=False)
-</span></span><span style=display:flex><span>        (rotary_emb): LlamaRotaryEmbedding()
-</span></span><span style=display:flex><span>      )
-</span></span><span style=display:flex><span>      (mlp): LlamaMLP(
-</span></span><span style=display:flex><span>        (gate_proj): Linear(in_features=4096, out_features=11008, bias=False)
-</span></span><span style=display:flex><span>        (up_proj): Linear(in_features=4096, out_features=11008, bias=False)
-</span></span><span style=display:flex><span>        (down_proj): Linear(in_features=11008, out_features=4096, bias=False)
-</span></span><span style=display:flex><span>        (act_fn): SiLU()
-</span></span><span style=display:flex><span>      )
-</span></span><span style=display:flex><span>      (input_layernorm): LlamaRMSNorm()
-</span></span><span style=display:flex><span>      (post_attention_layernorm): LlamaRMSNorm()
-</span></span><span style=display:flex><span>    )
-</span></span><span style=display:flex><span>  )
-</span></span><span style=display:flex><span>  (norm): LlamaRMSNorm()
-</span></span><span style=display:flex><span>)
-</span></span><span style=display:flex><span>Total # of params: 6607.34M
-</span></span></code></pre></div><p>The Transformers shows that there are 6607.34M float16 parameters, roughly 13GB, that is aligned to the actual weight size.</p></p></p><p><h3><a class=title href=/posts/llm_notes/>Notes on LLM technologies (keep updating)</a></h3><i data-feather=calendar></i> <time datetime=2024-03-10>Mar 10, 2024</time>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a></p><p><h3><a class=title href=/posts/llm_notes/>Notes on LLM technologies (keep updating)</a></h3><i data-feather=calendar></i> <time datetime=2024-03-10>Mar 10, 2024</time>
 <span id=social></span><i data-feather=tag></i>
 <a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/llm>LLM</a>
-<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a><p><p>Brief notes on LLM technologies.</p><h2 id=models>Models</h2><h3 id=gpt2>GPT2</h3><h4 id=model-structure>Model structure</h4><figure><img src=/ox-hugo/GPT%20model%20structure.png></figure><p>The GPT model employs a repeated structure of Transformer Blocks, each containing two sub-layers: a Masked Multi-Head Attention (MMHA) layer and a Position-wise Feed-Forward Network.</p><p>The MMHA is a central component of the model. It operates by splitting the input into multiple &lsquo;heads&rsquo;, each of which learns to attend to different positions within the input sequence, allowing the model to focus on different aspects of the input simultaneously. The output of these heads is then concatenated and linearly transformed to produce the final output.</p></p></p><p class="footer text-center">Copyright (c) 2025 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
+<a class="btn btn-sm btn-outline-dark tag-btn" href=/tags/tech>tech</a></p><p class="footer text-center">Copyright (c) 2025 Chunwei Yan</p></main></div><script src=/js/feather.min.js></script><script>feather.replace()</script><script type=text/javascript id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script><script type=text/x-mathjax-config>
 MathJax.Hub.Config({
   tex2jax: {
     inlineMath: [['\\(','\\)']],
