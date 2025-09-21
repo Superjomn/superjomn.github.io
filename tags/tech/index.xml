@@ -97,29 +97,8 @@
 &lt;figure&gt;&lt;img src="/ox-hugo/2025-09-21_12-16-53_screenshot.png"&gt;
 &lt;/figure&gt;
 &lt;h4 id="1-dot-keyword-trigger"&gt;1. Keyword Trigger&lt;/h4&gt;
-&lt;p&gt;Add an &lt;strong&gt;Input → Keyword&lt;/strong&gt; object:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Keyword: &lt;code&gt;w&lt;/code&gt; (or any keyword you prefer)&lt;/li&gt;
-&lt;li&gt;Argument: Optional&lt;/li&gt;
-&lt;li&gt;Title: Jump to Window&lt;/li&gt;
-&lt;li&gt;Subtitle: Search for open windows&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h4 id="2-dot-script-filter"&gt;2. Script Filter&lt;/h4&gt;
-&lt;p&gt;Add an &lt;strong&gt;Input → Script Filter&lt;/strong&gt; object and connect it to the Keyword:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Language: &lt;code&gt;/bin/bash&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;Script:
-&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; /opt/homebrew/bin/hs -c &lt;span style="color:#4070a0"&gt;&amp;#39;return getWindowsForAlfred()&amp;#39;&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
-&lt;li&gt;Configure the following options:
-&lt;ul&gt;
-&lt;li&gt;☑ Argument Optional&lt;/li&gt;
-&lt;li&gt;☑ With space&lt;/li&gt;
-&lt;li&gt;☐ Alfred filters results (unchecked - let Hammerspoon handle all windows)&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h4 id="3-dot-run-script-action"&gt;3. Run Script Action&lt;/h4&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;/opt/homebrew/bin/hs -c &lt;span style="color:#4070a0"&gt;&amp;#39;return getWindowsForAlfred()&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id="3-dot-run-script-action"&gt;3. Run Script Action&lt;/h4&gt;
 &lt;p&gt;Add an &lt;strong&gt;Actions → Run Script&lt;/strong&gt; object and connect it to the Script Filter:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;Language: &lt;code&gt;/bin/bash&lt;/code&gt;&lt;/li&gt;
@@ -149,9 +128,6 @@
 &lt;li&gt;Filter results as you type&lt;/li&gt;
 &lt;li&gt;Switch to the selected window, even if it&amp;rsquo;s on a different Space or minimized&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;The final screenshot:&lt;/p&gt;
-&lt;figure&gt;&lt;img src="/ox-hugo/2025-09-21_12-32-33_screenshot.png"&gt;
-&lt;/figure&gt;
 &lt;h2 id="troubleshooting"&gt;Troubleshooting&lt;/h2&gt;
 &lt;p&gt;If the workflow isn&amp;rsquo;t working properly, here are some common issues and solutions:&lt;/p&gt;
 &lt;h3 id="hammerspoon-command-not-found"&gt;Hammerspoon command not found&lt;/h3&gt;
