@@ -1,0 +1,203 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Macos on Superjomn's blog</title><link>/tags/macos/</link><description>Recent content in Macos on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Sun, 21 Sep 2025 00:00:00 +0000</lastBuildDate><atom:link href="/tags/macos/index.xml" rel="self" type="application/rss+xml"/><item><title>Jump window workflow with Alfred and Hammerspoon</title><link>/posts/alfred-and-hammerspoon-to-jump-window/</link><pubDate>Sun, 21 Sep 2025 00:00:00 +0000</pubDate><guid>/posts/alfred-and-hammerspoon-to-jump-window/</guid><description>&lt;h2 id="introduction"&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;Managing multiple windows across different applications can be challenging, especially when you have dozens of windows open. While macOS provides Command+Tab for app switching and Mission Control for window overview, sometimes you need a more direct way to jump to a specific window.&lt;/p&gt;
+&lt;p&gt;This post shows how to create a powerful window switching workflow using &lt;a href="https://www.alfredapp.com/"&gt;Alfred&lt;/a&gt; and &lt;a href="https://www.hammerspoon.org/"&gt;Hammerspoon&lt;/a&gt;. With this setup, you can:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Search for any open window by title&lt;/li&gt;
+&lt;li&gt;See which app each window belongs to&lt;/li&gt;
+&lt;li&gt;Jump directly to any window with a single action&lt;/li&gt;
+&lt;li&gt;Use application icons for better visual recognition&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="prerequisites"&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;Before setting up this workflow, you&amp;rsquo;ll need:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Alfred Powerpack&lt;/strong&gt; - The paid version of Alfred that enables workflows&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Hammerspoon&lt;/strong&gt; - A powerful automation tool for macOS
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;# Install via Homebrew&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; brew install --cask hammerspoon
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="setting-up-hammerspoon"&gt;Setting up Hammerspoon&lt;/h2&gt;
+&lt;p&gt;First, we need to add two functions to your Hammerspoon configuration. Open your &lt;code&gt;~/.hammerspoon/init.lua&lt;/code&gt; file (create it if it doesn&amp;rsquo;t exist) and add the following code:&lt;/p&gt;
+&lt;h3 id="getting-window-list-for-alfred"&gt;Getting window list for Alfred&lt;/h3&gt;
+&lt;p&gt;This function retrieves all open windows and formats them for Alfred&amp;rsquo;s Script Filter:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-lua" data-lang="lua"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#60a0b0;font-style:italic"&gt;--[[
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#60a0b0;font-style:italic"&gt; Generates a JSON string of all open windows for Alfred.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#60a0b0;font-style:italic"&gt; Format: { &amp;#34;items&amp;#34;: [ { &amp;#34;title&amp;#34;: &amp;#34;...&amp;#34;, &amp;#34;subtitle&amp;#34;: &amp;#34;...&amp;#34;, &amp;#34;arg&amp;#34;: &amp;#34;...&amp;#34; } ] }
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#60a0b0;font-style:italic"&gt;--]]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;function&lt;/span&gt; &lt;span style="color:#06287e"&gt;getWindowsForAlfred&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;local&lt;/span&gt; windows &lt;span style="color:#666"&gt;=&lt;/span&gt; hs.window.allWindows()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;local&lt;/span&gt; alfredItems &lt;span style="color:#666"&gt;=&lt;/span&gt; {}
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;for&lt;/span&gt; _, win &lt;span style="color:#007020;font-weight:bold"&gt;in&lt;/span&gt; ipairs(windows) &lt;span style="color:#007020;font-weight:bold"&gt;do&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;-- Only include standard windows that are not minimized&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;if&lt;/span&gt; win:isStandard() &lt;span style="color:#007020;font-weight:bold"&gt;and&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;not&lt;/span&gt; win:isMinimized() &lt;span style="color:#007020;font-weight:bold"&gt;then&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;local&lt;/span&gt; app &lt;span style="color:#666"&gt;=&lt;/span&gt; win:application()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;if&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;not&lt;/span&gt; app &lt;span style="color:#007020;font-weight:bold"&gt;then&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;goto&lt;/span&gt; &lt;span style="color:#002070;font-weight:bold"&gt;continue&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;end&lt;/span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;-- Skip if the app is gone&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;local&lt;/span&gt; appName &lt;span style="color:#666"&gt;=&lt;/span&gt; app:name()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;local&lt;/span&gt; winTitle &lt;span style="color:#666"&gt;=&lt;/span&gt; win:title()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;-- Get the application&amp;#39;s path for the icon&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;local&lt;/span&gt; appPath &lt;span style="color:#666"&gt;=&lt;/span&gt; app:path()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;-- Exclude windows without titles and Alfred itself&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;if&lt;/span&gt; winTitle &lt;span style="color:#007020;font-weight:bold"&gt;and&lt;/span&gt; &lt;span style="color:#666"&gt;#&lt;/span&gt;winTitle &lt;span style="color:#666"&gt;&amp;gt;&lt;/span&gt; &lt;span style="color:#40a070"&gt;0&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;and&lt;/span&gt; appName &lt;span style="color:#666"&gt;~=&lt;/span&gt; &lt;span style="color:#4070a0"&gt;&amp;#34;Alfred&amp;#34;&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;then&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; table.insert(alfredItems, {
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; title &lt;span style="color:#666"&gt;=&lt;/span&gt; winTitle, &lt;span style="color:#60a0b0;font-style:italic"&gt;-- Window title shown as main text&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; subtitle &lt;span style="color:#666"&gt;=&lt;/span&gt; appName, &lt;span style="color:#60a0b0;font-style:italic"&gt;-- App name shown as subtitle&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; arg &lt;span style="color:#666"&gt;=&lt;/span&gt; tostring(win:id()), &lt;span style="color:#60a0b0;font-style:italic"&gt;-- Window ID passed to action&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; uid &lt;span style="color:#666"&gt;=&lt;/span&gt; tostring(win:id()), &lt;span style="color:#60a0b0;font-style:italic"&gt;-- Unique ID for Alfred&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;-- Add application icon for visual recognition&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; icon &lt;span style="color:#666"&gt;=&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; type &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#4070a0"&gt;&amp;#34;fileicon&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; path &lt;span style="color:#666"&gt;=&lt;/span&gt; appPath
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; })
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; ::&lt;span style="color:#002070;font-weight:bold"&gt;continue&lt;/span&gt;::
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;-- Return JSON formatted for Alfred&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; hs.json.encode({ items &lt;span style="color:#666"&gt;=&lt;/span&gt; alfredItems })
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id="focusing-a-window-by-id"&gt;Focusing a window by ID&lt;/h3&gt;
+&lt;p&gt;This function takes a window ID and brings that window to the foreground:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-lua" data-lang="lua"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#60a0b0;font-style:italic"&gt;--[[
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#60a0b0;font-style:italic"&gt; Finds a window by its ID and focuses it.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#60a0b0;font-style:italic"&gt; The ID is passed as a string from the command line.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#60a0b0;font-style:italic"&gt;--]]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;function&lt;/span&gt; &lt;span style="color:#06287e"&gt;focusWindowByID&lt;/span&gt;(winID)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;-- The argument from the command line is a string, so convert it to a number&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;local&lt;/span&gt; id &lt;span style="color:#666"&gt;=&lt;/span&gt; tonumber(winID)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;if&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;not&lt;/span&gt; id &lt;span style="color:#007020;font-weight:bold"&gt;then&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;-- Find the window by its ID&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;local&lt;/span&gt; win &lt;span style="color:#666"&gt;=&lt;/span&gt; hs.window.get(id)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;if&lt;/span&gt; win &lt;span style="color:#007020;font-weight:bold"&gt;then&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;-- Focus the window (brings it to front and switches to its Space)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; win:focus()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;After adding both functions to your &lt;code&gt;init.lua&lt;/code&gt;, reload Hammerspoon by:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Clicking the Hammerspoon menu bar icon and selecting &amp;ldquo;Reload Config&amp;rdquo;&lt;/li&gt;
+&lt;li&gt;Or pressing the reload hotkey if you&amp;rsquo;ve set one up&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="creating-the-alfred-workflow"&gt;Creating the Alfred Workflow&lt;/h2&gt;
+&lt;p&gt;Now let&amp;rsquo;s create the Alfred workflow that will use these Hammerspoon functions.&lt;/p&gt;
+&lt;h3 id="step-by-step-setup"&gt;Step-by-step Setup&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Open Alfred Preferences&lt;/strong&gt; (⌘,) and go to the Workflows tab&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Create a new workflow&lt;/strong&gt; by clicking the &amp;ldquo;+&amp;rdquo; button at the bottom&lt;/li&gt;
+&lt;li&gt;Give it a name like &amp;ldquo;Window Switcher&amp;rdquo; and optionally add a description and icon&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="workflow-components"&gt;Workflow Components&lt;/h3&gt;
+&lt;p&gt;The workflow consists of three main components connected in sequence:&lt;/p&gt;
+&lt;figure&gt;&lt;img src="/ox-hugo/2025-09-21_12-16-53_screenshot.png"&gt;
+&lt;/figure&gt;
+&lt;h4 id="1-dot-keyword-trigger"&gt;1. Keyword Trigger&lt;/h4&gt;
+&lt;p&gt;Add an &lt;strong&gt;Input → Keyword&lt;/strong&gt; object:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Keyword: &lt;code&gt;w&lt;/code&gt; (or any keyword you prefer)&lt;/li&gt;
+&lt;li&gt;Argument: Optional&lt;/li&gt;
+&lt;li&gt;Title: Jump to Window&lt;/li&gt;
+&lt;li&gt;Subtitle: Search for open windows&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="2-dot-script-filter"&gt;2. Script Filter&lt;/h4&gt;
+&lt;p&gt;Add an &lt;strong&gt;Input → Script Filter&lt;/strong&gt; object and connect it to the Keyword:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Language: &lt;code&gt;/bin/bash&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Script:
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; /opt/homebrew/bin/hs -c &lt;span style="color:#4070a0"&gt;&amp;#39;return getWindowsForAlfred()&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;Configure the following options:
+&lt;ul&gt;
+&lt;li&gt;☑ Argument Optional&lt;/li&gt;
+&lt;li&gt;☑ With space&lt;/li&gt;
+&lt;li&gt;☐ Alfred filters results (unchecked - let Hammerspoon handle all windows)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id="3-dot-run-script-action"&gt;3. Run Script Action&lt;/h4&gt;
+&lt;p&gt;Add an &lt;strong&gt;Actions → Run Script&lt;/strong&gt; object and connect it to the Script Filter:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Language: &lt;code&gt;/bin/bash&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Script:
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; /opt/homebrew/bin/hs -c &lt;span style="color:#4070a0"&gt;&amp;#34;focusWindowByID(&amp;#39;{query}&amp;#39;)&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;Configure:
+&lt;ul&gt;
+&lt;li&gt;☐ Escaping: All options should be unchecked&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The &lt;code&gt;{query}&lt;/code&gt; placeholder will be replaced with the window ID selected from the Script Filter.&lt;/p&gt;
+&lt;h2 id="using-the-workflow"&gt;Using the Workflow&lt;/h2&gt;
+&lt;p&gt;Once everything is set up, you can use the workflow as follows:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Trigger Alfred&lt;/strong&gt; with your hotkey (usually ⌘Space or ⌥Space)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Type your keyword&lt;/strong&gt; (e.g., &lt;code&gt;w&lt;/code&gt;) followed by a space&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Start typing&lt;/strong&gt; to search for windows by title&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Select a window&lt;/strong&gt; using arrow keys or by continuing to type&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Press Enter&lt;/strong&gt; to jump to that window&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;The workflow will:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Show all open windows with their titles and app names&lt;/li&gt;
+&lt;li&gt;Display the application icon for easy recognition&lt;/li&gt;
+&lt;li&gt;Filter results as you type&lt;/li&gt;
+&lt;li&gt;Switch to the selected window, even if it&amp;rsquo;s on a different Space or minimized&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The final screenshot:&lt;/p&gt;
+&lt;figure&gt;&lt;img src="/ox-hugo/2025-09-21_12-32-33_screenshot.png"&gt;
+&lt;/figure&gt;
+&lt;h2 id="troubleshooting"&gt;Troubleshooting&lt;/h2&gt;
+&lt;p&gt;If the workflow isn&amp;rsquo;t working properly, here are some common issues and solutions:&lt;/p&gt;
+&lt;h3 id="hammerspoon-command-not-found"&gt;Hammerspoon command not found&lt;/h3&gt;
+&lt;p&gt;If you get an error about &lt;code&gt;hs&lt;/code&gt; command not found:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Make sure Hammerspoon is installed and running&lt;/li&gt;
+&lt;li&gt;Check the path to the &lt;code&gt;hs&lt;/code&gt; command:
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; which hs
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;Update the paths in the Alfred workflow scripts if necessary&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="no-windows-appearing"&gt;No windows appearing&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Ensure Hammerspoon has accessibility permissions:
+&lt;ul&gt;
+&lt;li&gt;System Preferences → Security &amp;amp; Privacy → Privacy → Accessibility&lt;/li&gt;
+&lt;li&gt;Make sure Hammerspoon is checked&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Reload your Hammerspoon config&lt;/li&gt;
+&lt;li&gt;Check Hammerspoon console for errors (click the menu bar icon → Console)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="window-not-focusing"&gt;Window not focusing&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Some apps may require additional permissions&lt;/li&gt;
+&lt;li&gt;Try giving both Alfred and Hammerspoon full disk access&lt;/li&gt;
+&lt;li&gt;Certain system windows or protected apps may not be focusable&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="enhancements-and-customization"&gt;Enhancements and Customization&lt;/h2&gt;
+&lt;p&gt;Here are some ideas to extend this workflow:&lt;/p&gt;
+&lt;h3 id="filter-by-application"&gt;Filter by application&lt;/h3&gt;
+&lt;p&gt;You could modify &lt;code&gt;getWindowsForAlfred()&lt;/code&gt; to accept an app name parameter and only return windows from that app.&lt;/p&gt;
+&lt;h3 id="add-window-preview"&gt;Add window preview&lt;/h3&gt;
+&lt;p&gt;Using Hammerspoon&amp;rsquo;s screenshot capabilities, you could add window thumbnails to the Alfred results.&lt;/p&gt;
+&lt;h3 id="keyboard-shortcuts-for-specific-apps"&gt;Keyboard shortcuts for specific apps&lt;/h3&gt;
+&lt;p&gt;Create separate workflows with different keywords for specific apps (e.g., &lt;code&gt;s&lt;/code&gt; for Safari windows, &lt;code&gt;c&lt;/code&gt; for Chrome).&lt;/p&gt;
+&lt;h3 id="recent-windows"&gt;Recent windows&lt;/h3&gt;
+&lt;p&gt;Track window focus history and sort results by most recently used.&lt;/p&gt;
+&lt;h3 id="window-actions"&gt;Window actions&lt;/h3&gt;
+&lt;p&gt;Instead of just focusing, add additional actions like:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Close window&lt;/li&gt;
+&lt;li&gt;Minimize/maximize&lt;/li&gt;
+&lt;li&gt;Move to different Space&lt;/li&gt;
+&lt;li&gt;Resize window&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="conclusion"&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;This Alfred + Hammerspoon workflow provides a powerful and fast way to navigate between windows. It&amp;rsquo;s especially useful when you have many windows open across different Spaces and applications. The combination of Alfred&amp;rsquo;s excellent search interface and Hammerspoon&amp;rsquo;s window management capabilities creates a tool that&amp;rsquo;s both powerful and easy to use.&lt;/p&gt;
+&lt;p&gt;The beauty of this setup is its extensibility - both Alfred and Hammerspoon are highly customizable, so you can adapt this workflow to match your specific needs and workflow preferences.&lt;/p&gt;</description></item></channel></rss>

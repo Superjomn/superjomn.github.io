@@ -1,22 +1,22 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Gpu on Superjomn's blog</title><link>/tags/gpu/</link><description>Recent content in Gpu on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Mon, 11 Mar 2024 00:00:00 +0000</lastBuildDate><atom:link href="/tags/gpu/index.xml" rel="self" type="application/rss+xml"/><item><title>Get GPU Properties</title><link>/posts/gpu-get-props/</link><pubDate>Mon, 11 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/gpu-get-props/</guid><description>&lt;p>In `cuda_runtime.h`, there are several APIs for retrieving properties for the installed GPU.&lt;/p>
-&lt;ul>
-&lt;li>&lt;a href="https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gb22e8256592b836df9a9cc36c9db7151">cudaDeviceGetAttribute(int* value, cudaDeviceAttr attr, int device)&lt;/a>: a C api&lt;/li>
-&lt;li>&lt;a href="https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1g1bf9d625a931d657e08db2b4391170f0">cudaGetDeviceProperties ( cudaDeviceProp* prop, int device ) &lt;/a>: a C++ api&lt;/li>
-&lt;/ul>
-&lt;p>&lt;a href="https://github.com/Superjomn/cuda-from-scratch/blob/dev/dump-gpu-props.cpp">Here&lt;/a> is the code of the example.&lt;/p>
-&lt;p>On a Nvidia GTX 3080 GPU, the properties are as below:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>Device 0 properties:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Max block dimensions: 1024 x 1024 x 64
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Max grid dimensions: 2147483647 x 65535 x 65535
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Shared memory bank size: 4 bytes
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Max shared memory per block: 49152 bytes
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Max registers per block: 65536
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Warp size: 32
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Multiprocessor count: 68
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Max resident threads per multiprocessor: 1536 = 48 warps
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> L2 cache size: 5242880 bytes
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Global L1 cache supported: yes
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Total global memory: 9 GB
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Processor clock: 1 MHZ
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Memory clock: 9 MHZ
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item></channel></rss>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Gpu on Superjomn's blog</title><link>/tags/gpu/</link><description>Recent content in Gpu on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Mon, 11 Mar 2024 00:00:00 +0000</lastBuildDate><atom:link href="/tags/gpu/index.xml" rel="self" type="application/rss+xml"/><item><title>Get GPU Properties</title><link>/posts/gpu-get-props/</link><pubDate>Mon, 11 Mar 2024 00:00:00 +0000</pubDate><guid>/posts/gpu-get-props/</guid><description>&lt;p&gt;In `cuda_runtime.h`, there are several APIs for retrieving properties for the installed GPU.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1gb22e8256592b836df9a9cc36c9db7151"&gt;cudaDeviceGetAttribute(int* value, cudaDeviceAttr attr, int device)&lt;/a&gt;: a C api&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1g1bf9d625a931d657e08db2b4391170f0"&gt;cudaGetDeviceProperties ( cudaDeviceProp* prop, int device ) &lt;/a&gt;: a C++ api&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;a href="https://github.com/Superjomn/cuda-from-scratch/blob/dev/dump-gpu-props.cpp"&gt;Here&lt;/a&gt; is the code of the example.&lt;/p&gt;
+&lt;p&gt;On a Nvidia GTX 3080 GPU, the properties are as below:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Device 0 properties:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Max block dimensions: 1024 x 1024 x 64
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Max grid dimensions: 2147483647 x 65535 x 65535
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Shared memory bank size: 4 bytes
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Max shared memory per block: 49152 bytes
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Max registers per block: 65536
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Warp size: 32
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Multiprocessor count: 68
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Max resident threads per multiprocessor: 1536 = 48 warps
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; L2 cache size: 5242880 bytes
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Global L1 cache supported: yes
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Total global memory: 9 GB
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Processor clock: 1 MHZ
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Memory clock: 9 MHZ
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item></channel></rss>

@@ -1,374 +1,374 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Python on Superjomn's blog</title><link>/tags/python/</link><description>Recent content in Python on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Tue, 09 Jul 2024 00:00:00 +0000</lastBuildDate><atom:link href="/tags/python/index.xml" rel="self" type="application/rss+xml"/><item><title>Asyncio By Example: Implementing the Producer-Consumer Pattern</title><link>/posts/python-asyncio/</link><pubDate>Tue, 09 Jul 2024 00:00:00 +0000</pubDate><guid>/posts/python-asyncio/</guid><description>&lt;h2 id="the-most-basic-case">The Most Basic Case&lt;/h2>
-&lt;p>With corountines, we can define a produer and consumer without any need for threads. This simplifies our code and makes it more efficient.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">asyncio&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">producer&lt;/span>():
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> i &lt;span style="color:#007020;font-weight:bold">in&lt;/span> &lt;span style="color:#007020">range&lt;/span>(&lt;span style="color:#40a070">6&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>sleep(&lt;span style="color:#40a070">0.2&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">yield&lt;/span> i
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">consumer&lt;/span>():
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> i &lt;span style="color:#007020;font-weight:bold">in&lt;/span> producer():
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(i)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">main&lt;/span>():
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>gather(consumer())
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>asyncio&lt;span style="color:#666">.&lt;/span>run(main())
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>0
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>1
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>2
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>3
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>4
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>5
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="work-with-heavy-io">Work with Heavy IO&lt;/h2>
-&lt;p>When working with heavy IO operations, we need to be careful not to block the event loop. Running heavy IO operations can block the current event loop, which would slow down the scheduling of all coroutines.&lt;/p>
-&lt;p>We can use &lt;code>asyncio.to_thread&lt;/code> to run the operation in another thread, thus avoiding the schedule being affected.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">asyncio&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">time&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">blocking_io&lt;/span>():
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> time&lt;span style="color:#666">.&lt;/span>sleep(&lt;span style="color:#40a070">0.1&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#39;Blocking IO complete&amp;#39;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">producer&lt;/span>(queue):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> i &lt;span style="color:#007020;font-weight:bold">in&lt;/span> &lt;span style="color:#007020">range&lt;/span>(&lt;span style="color:#40a070">4&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> request &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>to_thread(blocking_io)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> queue&lt;span style="color:#666">.&lt;/span>put(request)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#39;Produced 1 item&amp;#39;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">consumer&lt;/span>(queue):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> i &lt;span style="color:#007020;font-weight:bold">in&lt;/span> &lt;span style="color:#007020">range&lt;/span>(&lt;span style="color:#40a070">4&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> item &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> queue&lt;span style="color:#666">.&lt;/span>get()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#39;Consumed 1 item&amp;#39;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> queue&lt;span style="color:#666">.&lt;/span>task_done()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">main&lt;/span>():
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> queue &lt;span style="color:#666">=&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>Queue()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> producer_task &lt;span style="color:#666">=&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>create_task(producer(queue))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> consumer_task &lt;span style="color:#666">=&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>create_task(consumer(queue))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>gather(producer_task, consumer_task)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>asyncio&lt;span style="color:#666">.&lt;/span>run(main())
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>Blocking IO complete
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Produced 1 item
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Consumed 1 item
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Blocking IO complete
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Produced 1 item
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Consumed 1 item
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Blocking IO complete
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Produced 1 item
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Consumed 1 item
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Blocking IO complete
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Produced 1 item
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Consumed 1 item
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="event-driven">Event driven&lt;/h2>
-&lt;p>When the producer is not a coutine, we can utilize &lt;code>asyncio.Event&lt;/code> to connect it with coutine world.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">asyncio&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">asyncio&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> Queue, Event
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># NOTE: add_request is a traditional function&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">add_request&lt;/span>(event:Event, queue:Queue, request:&lt;span style="color:#007020">int&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;add_request: &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>request&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> queue&lt;span style="color:#666">.&lt;/span>put_nowait(request)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> event&lt;span style="color:#666">.&lt;/span>set()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">consumer&lt;/span>(event:Event, queue:Queue):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> i &lt;span style="color:#007020;font-weight:bold">in&lt;/span> &lt;span style="color:#007020">range&lt;/span>(&lt;span style="color:#40a070">6&lt;/span>): &lt;span style="color:#60a0b0;font-style:italic"># loop&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> event&lt;span style="color:#666">.&lt;/span>wait()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> event&lt;span style="color:#666">.&lt;/span>clear()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> request &lt;span style="color:#666">=&lt;/span> queue&lt;span style="color:#666">.&lt;/span>get_nowait()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;consume: &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>request&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">main&lt;/span>():
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> event &lt;span style="color:#666">=&lt;/span> Event()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> queue &lt;span style="color:#666">=&lt;/span> Queue()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> consumer_task &lt;span style="color:#666">=&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>create_task(consumer(event, queue))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">for&lt;/span> i &lt;span style="color:#007020;font-weight:bold">in&lt;/span> &lt;span style="color:#007020">range&lt;/span>(&lt;span style="color:#40a070">6&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> add_request(event, queue, i)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>sleep(&lt;span style="color:#40a070">1&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> consumer_task
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>asyncio&lt;span style="color:#666">.&lt;/span>run(main())
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>add_request: 0
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>consume: 0
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>add_request: 1
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>consume: 1
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>add_request: 2
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>consume: 2
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>add_request: 3
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>consume: 3
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>add_request: 4
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>consume: 4
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>add_request: 5
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>consume: 5
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="take-away">Take away&lt;/h2>
-&lt;p>Python coroutine can simplify the code for producer-consumer pattern, and reduce the necessary for threads or other inter-thread collaboration.&lt;/p>
-&lt;p>Use &lt;code>asyncio.to_thread&lt;/code> to dispatch blocking IO to another thread and avoid slow down the current &lt;code>event_loop&lt;/code>.&lt;/p>
-&lt;p>Use &lt;code>asyncio.Event&lt;/code> and &lt;code>asyncio.Queue&lt;/code> to connect real-world code with coroutines.&lt;/p></description></item><item><title>Emacs Lisp Introduction for Python Programmers</title><link>/posts/elisp-tutorial-for-pythoner/</link><pubDate>Sun, 28 Apr 2024 00:00:00 +0000</pubDate><guid>/posts/elisp-tutorial-for-pythoner/</guid><description>&lt;p>This is a brief introduction to Emacs Lisp for Python programmers, (although I am not an Elisp expert, and actually I am more familiar with Python than Elisp). Both languages have quite different syntaxes, it is interesting to see how can implement Python code with lisp code.&lt;/p>
-&lt;p>The content follows the strucutre from &lt;a href="https://learnxinyminutes.com/docs/python/">Learn X in Y Minutes Where X is Python&lt;/a>, and we will touch all the topics.&lt;/p>
-&lt;h2 id="primitive-datatypes-and-operators">Primitive Datatypes and Operators&lt;/h2>
-&lt;h3 id="numbers">Numbers&lt;/h3>
-&lt;table>
-&lt;tr>
-&lt;td>
-&lt;b>Python&lt;/b>
-&lt;pre>&lt;code class="python-html">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Python on Superjomn's blog</title><link>/tags/python/</link><description>Recent content in Python on Superjomn's blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Tue, 09 Jul 2024 00:00:00 +0000</lastBuildDate><atom:link href="/tags/python/index.xml" rel="self" type="application/rss+xml"/><item><title>Asyncio By Example: Implementing the Producer-Consumer Pattern</title><link>/posts/python-asyncio/</link><pubDate>Tue, 09 Jul 2024 00:00:00 +0000</pubDate><guid>/posts/python-asyncio/</guid><description>&lt;h2 id="the-most-basic-case"&gt;The Most Basic Case&lt;/h2&gt;
+&lt;p&gt;With corountines, we can define a produer and consumer without any need for threads. This simplifies our code and makes it more efficient.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;asyncio&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;async&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;producer&lt;/span&gt;():
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;for&lt;/span&gt; i &lt;span style="color:#007020;font-weight:bold"&gt;in&lt;/span&gt; &lt;span style="color:#007020"&gt;range&lt;/span&gt;(&lt;span style="color:#40a070"&gt;6&lt;/span&gt;):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;await&lt;/span&gt; asyncio&lt;span style="color:#666"&gt;.&lt;/span&gt;sleep(&lt;span style="color:#40a070"&gt;0.2&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;yield&lt;/span&gt; i
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;async&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;consumer&lt;/span&gt;():
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;async&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;for&lt;/span&gt; i &lt;span style="color:#007020;font-weight:bold"&gt;in&lt;/span&gt; producer():
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;print&lt;/span&gt;(i)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;async&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;main&lt;/span&gt;():
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;await&lt;/span&gt; asyncio&lt;span style="color:#666"&gt;.&lt;/span&gt;gather(consumer())
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;asyncio&lt;span style="color:#666"&gt;.&lt;/span&gt;run(main())
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;0
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;1
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;2
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;3
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;4
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;5
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="work-with-heavy-io"&gt;Work with Heavy IO&lt;/h2&gt;
+&lt;p&gt;When working with heavy IO operations, we need to be careful not to block the event loop. Running heavy IO operations can block the current event loop, which would slow down the scheduling of all coroutines.&lt;/p&gt;
+&lt;p&gt;We can use &lt;code&gt;asyncio.to_thread&lt;/code&gt; to run the operation in another thread, thus avoiding the schedule being affected.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;asyncio&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;time&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;blocking_io&lt;/span&gt;():
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; time&lt;span style="color:#666"&gt;.&lt;/span&gt;sleep(&lt;span style="color:#40a070"&gt;0.1&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;&amp;#39;Blocking IO complete&amp;#39;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;async&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;producer&lt;/span&gt;(queue):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;for&lt;/span&gt; i &lt;span style="color:#007020;font-weight:bold"&gt;in&lt;/span&gt; &lt;span style="color:#007020"&gt;range&lt;/span&gt;(&lt;span style="color:#40a070"&gt;4&lt;/span&gt;):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; request &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;await&lt;/span&gt; asyncio&lt;span style="color:#666"&gt;.&lt;/span&gt;to_thread(blocking_io)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;await&lt;/span&gt; queue&lt;span style="color:#666"&gt;.&lt;/span&gt;put(request)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;&amp;#39;Produced 1 item&amp;#39;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;async&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;consumer&lt;/span&gt;(queue):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;for&lt;/span&gt; i &lt;span style="color:#007020;font-weight:bold"&gt;in&lt;/span&gt; &lt;span style="color:#007020"&gt;range&lt;/span&gt;(&lt;span style="color:#40a070"&gt;4&lt;/span&gt;):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; item &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;await&lt;/span&gt; queue&lt;span style="color:#666"&gt;.&lt;/span&gt;get()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;&amp;#39;Consumed 1 item&amp;#39;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; queue&lt;span style="color:#666"&gt;.&lt;/span&gt;task_done()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;async&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;main&lt;/span&gt;():
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; queue &lt;span style="color:#666"&gt;=&lt;/span&gt; asyncio&lt;span style="color:#666"&gt;.&lt;/span&gt;Queue()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; producer_task &lt;span style="color:#666"&gt;=&lt;/span&gt; asyncio&lt;span style="color:#666"&gt;.&lt;/span&gt;create_task(producer(queue))
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; consumer_task &lt;span style="color:#666"&gt;=&lt;/span&gt; asyncio&lt;span style="color:#666"&gt;.&lt;/span&gt;create_task(consumer(queue))
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;await&lt;/span&gt; asyncio&lt;span style="color:#666"&gt;.&lt;/span&gt;gather(producer_task, consumer_task)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;asyncio&lt;span style="color:#666"&gt;.&lt;/span&gt;run(main())
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Blocking IO complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Produced 1 item
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Consumed 1 item
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Blocking IO complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Produced 1 item
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Consumed 1 item
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Blocking IO complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Produced 1 item
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Consumed 1 item
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Blocking IO complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Produced 1 item
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Consumed 1 item
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="event-driven"&gt;Event driven&lt;/h2&gt;
+&lt;p&gt;When the producer is not a coutine, we can utilize &lt;code&gt;asyncio.Event&lt;/code&gt; to connect it with coutine world.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;asyncio&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;from&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;asyncio&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; Queue, Event
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#60a0b0;font-style:italic"&gt;# NOTE: add_request is a traditional function&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;add_request&lt;/span&gt;(event:Event, queue:Queue, request:&lt;span style="color:#007020"&gt;int&lt;/span&gt;):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;f&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;add_request: &lt;/span&gt;&lt;span style="color:#70a0d0"&gt;{&lt;/span&gt;request&lt;span style="color:#70a0d0"&gt;}&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; queue&lt;span style="color:#666"&gt;.&lt;/span&gt;put_nowait(request)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; event&lt;span style="color:#666"&gt;.&lt;/span&gt;set()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;async&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;consumer&lt;/span&gt;(event:Event, queue:Queue):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;for&lt;/span&gt; i &lt;span style="color:#007020;font-weight:bold"&gt;in&lt;/span&gt; &lt;span style="color:#007020"&gt;range&lt;/span&gt;(&lt;span style="color:#40a070"&gt;6&lt;/span&gt;): &lt;span style="color:#60a0b0;font-style:italic"&gt;# loop&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;await&lt;/span&gt; event&lt;span style="color:#666"&gt;.&lt;/span&gt;wait()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; event&lt;span style="color:#666"&gt;.&lt;/span&gt;clear()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; request &lt;span style="color:#666"&gt;=&lt;/span&gt; queue&lt;span style="color:#666"&gt;.&lt;/span&gt;get_nowait()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;f&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;consume: &lt;/span&gt;&lt;span style="color:#70a0d0"&gt;{&lt;/span&gt;request&lt;span style="color:#70a0d0"&gt;}&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;async&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;main&lt;/span&gt;():
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; event &lt;span style="color:#666"&gt;=&lt;/span&gt; Event()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; queue &lt;span style="color:#666"&gt;=&lt;/span&gt; Queue()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; consumer_task &lt;span style="color:#666"&gt;=&lt;/span&gt; asyncio&lt;span style="color:#666"&gt;.&lt;/span&gt;create_task(consumer(event, queue))
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;for&lt;/span&gt; i &lt;span style="color:#007020;font-weight:bold"&gt;in&lt;/span&gt; &lt;span style="color:#007020"&gt;range&lt;/span&gt;(&lt;span style="color:#40a070"&gt;6&lt;/span&gt;):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; add_request(event, queue, i)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;await&lt;/span&gt; asyncio&lt;span style="color:#666"&gt;.&lt;/span&gt;sleep(&lt;span style="color:#40a070"&gt;1&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;await&lt;/span&gt; consumer_task
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;asyncio&lt;span style="color:#666"&gt;.&lt;/span&gt;run(main())
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;add_request: 0
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;consume: 0
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;add_request: 1
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;consume: 1
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;add_request: 2
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;consume: 2
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;add_request: 3
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;consume: 3
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;add_request: 4
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;consume: 4
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;add_request: 5
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;consume: 5
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="take-away"&gt;Take away&lt;/h2&gt;
+&lt;p&gt;Python coroutine can simplify the code for producer-consumer pattern, and reduce the necessary for threads or other inter-thread collaboration.&lt;/p&gt;
+&lt;p&gt;Use &lt;code&gt;asyncio.to_thread&lt;/code&gt; to dispatch blocking IO to another thread and avoid slow down the current &lt;code&gt;event_loop&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Use &lt;code&gt;asyncio.Event&lt;/code&gt; and &lt;code&gt;asyncio.Queue&lt;/code&gt; to connect real-world code with coroutines.&lt;/p&gt;</description></item><item><title>Emacs Lisp Introduction for Python Programmers</title><link>/posts/elisp-tutorial-for-pythoner/</link><pubDate>Sun, 28 Apr 2024 00:00:00 +0000</pubDate><guid>/posts/elisp-tutorial-for-pythoner/</guid><description>&lt;p&gt;This is a brief introduction to Emacs Lisp for Python programmers, (although I am not an Elisp expert, and actually I am more familiar with Python than Elisp). Both languages have quite different syntaxes, it is interesting to see how can implement Python code with lisp code.&lt;/p&gt;
+&lt;p&gt;The content follows the strucutre from &lt;a href="https://learnxinyminutes.com/docs/python/"&gt;Learn X in Y Minutes Where X is Python&lt;/a&gt;, and we will touch all the topics.&lt;/p&gt;
+&lt;h2 id="primitive-datatypes-and-operators"&gt;Primitive Datatypes and Operators&lt;/h2&gt;
+&lt;h3 id="numbers"&gt;Numbers&lt;/h3&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td&gt;
+&lt;b&gt;Python&lt;/b&gt;
+&lt;pre&gt;&lt;code class="python-html"&gt;
 # Integer
 1
 # Float
 3.14
 # Math is what you would expect
-1 + 1 # => 2
-8 - 1 # => 7
-10 * 2 # => 20
-35 / 5 # => 7.0
+1 + 1 # =&gt; 2
+8 - 1 # =&gt; 7
+10 * 2 # =&gt; 20
+35 / 5 # =&gt; 7.0
 # Integer division rounds down for both positive and negative numbers.
-5 // 3 # => 1
--5 // 3 # => -2
-5.0 // 3.0 # => 1.0 # works on floats too
--5.0 // 3.0 # => -2.0
+5 // 3 # =&gt; 1
+-5 // 3 # =&gt; -2
+5.0 // 3.0 # =&gt; 1.0 # works on floats too
+-5.0 // 3.0 # =&gt; -2.0
 # The result of division is always a float
-10.0 / 3 # => 3.3333333333333335
+10.0 / 3 # =&gt; 3.3333333333333335
 # Modulo operation
-7 % 3 # => 1
+7 % 3 # =&gt; 1
 # i % j have the same sign as j, unlike C
--7 % 3 # => 2
+-7 % 3 # =&gt; 2
 # Exponentiation (x**y, x to the yth power)
-2**3 # => 8
+2**3 # =&gt; 8
 # Enforce precedence with parentheses
-1 + 3 * 2 # => 7
-(1 + 3) * 2 # => 8
-&lt;/code>&lt;/pre>
-&lt;/td>
-&lt;td>
-&lt;b>Elisp&lt;/b>
-&lt;pre>&lt;code class="lisp-html">
+1 + 3 * 2 # =&gt; 7
+(1 + 3) * 2 # =&gt; 8
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;b&gt;Elisp&lt;/b&gt;
+&lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Integer
 1
 ;; Float
 3.14
 ;; Math is what you would expect
-(+ 1 1) ; => 2
-(- 8 1) ; => 7
-(* 10 2) ; => 20
-(/ 35 5) ; => 7
+(+ 1 1) ; =&gt; 2
+(- 8 1) ; =&gt; 7
+(* 10 2) ; =&gt; 20
+(/ 35 5) ; =&gt; 7
 ;; Integer division rounds down for both positive and negative numbers.
-(truncate (/ 5 3)) ; => 1
-(truncate (/ -5 3)) ; => -2
-(truncate (/ 5.0 3.0)) ; => 1.0 ; works on floats too
-(truncate (/ -5.0 3.0)) ; => -2.0
+(truncate (/ 5 3)) ; =&gt; 1
+(truncate (/ -5 3)) ; =&gt; -2
+(truncate (/ 5.0 3.0)) ; =&gt; 1.0 ; works on floats too
+(truncate (/ -5.0 3.0)) ; =&gt; -2.0
 ;; The result of division is always a float if the denominator or numerator is float
-(/ 10.0 3) ; => 3.3333333333333335
+(/ 10.0 3) ; =&gt; 3.3333333333333335
 ;; Modulo operation
-(% 7 3) ; => 1
+(% 7 3) ; =&gt; 1
 ;; different from Python
-(% -7 3) ; => -1
+(% -7 3) ; =&gt; -1
 ;; Exponentiation
-(expt 2 3) ; => 8
+(expt 2 3) ; =&gt; 8
 ;; Enforce precedence with parentheses
-(+ 1 (* 3 2)) ; => 7
-(* (1+ 3) 2) ; => 8
-&lt;/code>&lt;/pre>
-&lt;/td>
-&lt;/table>
-&lt;h3 id="bools-and-comparasion">Bools and comparasion&lt;/h3>
-&lt;p>In Emacs Lisp, booleans are represented by the symbols &lt;code>t&lt;/code> for true and &lt;code>nil&lt;/code> for false.&lt;/p>
-&lt;table>
-&lt;tr> &lt;td>
-&lt;pre>&lt;code class="python-html">
+(+ 1 (* 3 2)) ; =&gt; 7
+(* (1+ 3) 2) ; =&gt; 8
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/td&gt;
+&lt;/table&gt;
+&lt;h3 id="bools-and-comparasion"&gt;Bools and comparasion&lt;/h3&gt;
+&lt;p&gt;In Emacs Lisp, booleans are represented by the symbols &lt;code&gt;t&lt;/code&gt; for true and &lt;code&gt;nil&lt;/code&gt; for false.&lt;/p&gt;
+&lt;table&gt;
+&lt;tr&gt; &lt;td&gt;
+&lt;pre&gt;&lt;code class="python-html"&gt;
 # Boolean values are primitives (Note: the capitalization)
-True # => True
-False # => False
+True # =&gt; True
+False # =&gt; False
 # negate with not
-not True # => False
-not False # => True
+not True # =&gt; False
+not False # =&gt; True
 # Boolean Operators
 # Note "and" and "or" are case-sensitive
-True and False # => False
-False or True # => True
+True and False # =&gt; False
+False or True # =&gt; True
 # True and False are actually 1 and 0 but with different keywords
-True + True # => 2
-True * 8 # => 8
-False - 5 # => -5
+True + True # =&gt; 2
+True * 8 # =&gt; 8
+False - 5 # =&gt; -5
 # Comparison operators look at the numerical value of True and False
-0 == False # => True
-2 > True # => True
-2 == True # => False
--5 != False # => True
+0 == False # =&gt; True
+2 &gt; True # =&gt; True
+2 == True # =&gt; False
+-5 != False # =&gt; True
 # None, 0, and empty strings/lists/dicts/tuples/sets all evaluate to False.
 # All other values are True
-bool(0) # => False
-bool("") # => False
-bool([]) # => False
-bool({}) # => False
-bool(()) # => False
-bool(set()) # => False
-bool(4) # => True
-bool(-6) # => True
-bool(0) # => False
-bool(2) # => True
-0 and 2 # => 0
-bool(-5) # => True
-bool(2) # => True
--5 or 0 # => -5
+bool(0) # =&gt; False
+bool("") # =&gt; False
+bool([]) # =&gt; False
+bool({}) # =&gt; False
+bool(()) # =&gt; False
+bool(set()) # =&gt; False
+bool(4) # =&gt; True
+bool(-6) # =&gt; True
+bool(0) # =&gt; False
+bool(2) # =&gt; True
+0 and 2 # =&gt; 0
+bool(-5) # =&gt; True
+bool(2) # =&gt; True
+-5 or 0 # =&gt; -5
 # Equality is ==
-1 == 1 # => True
-2 == 1 # => False
+1 == 1 # =&gt; True
+2 == 1 # =&gt; False
 # Inequality is !=
-1 != 1 # => False
-2 != 1 # => True
+1 != 1 # =&gt; False
+2 != 1 # =&gt; True
 # More comparisons
-1 &lt; 10 # => True
-1 > 10 # => False
-2 &lt;= 2 # => True
-2 >= 2 # => True
+1 &lt; 10 # =&gt; True
+1 &gt; 10 # =&gt; False
+2 &lt;= 2 # =&gt; True
+2 &gt;= 2 # =&gt; True
 # Seeing whether a value is in a range
-1 &lt; 2 and 2 &lt; 3 # => True
-2 &lt; 3 and 3 &lt; 2 # => False
+1 &lt; 2 and 2 &lt; 3 # =&gt; True
+2 &lt; 3 and 3 &lt; 2 # =&gt; False
 # Chaining makes this look nicer
-1 &lt; 2 &lt; 3 # => True
-2 &lt; 3 &lt; 2 # => False
+1 &lt; 2 &lt; 3 # =&gt; True
+2 &lt; 3 &lt; 2 # =&gt; False
 # (is vs. ==) is checks if two variables refer to the same object, but == checks
 # if the objects pointed to have the same values.
 a = [1, 2, 3, 4] # Point a at a new list, [1, 2, 3, 4]
 b = a # Point b at what a is pointing to
-b is a # => True, a and b refer to the same object
-b == a # => True, a's and b's objects are equal
+b is a # =&gt; True, a and b refer to the same object
+b == a # =&gt; True, a's and b's objects are equal
 b = [1, 2, 3, 4] # Point b at a new list, [1, 2, 3, 4]
-b is a # => False, a and b do not refer to the same object
-b == a # => True, a's and b's objects are equal
-&lt;/code>&lt;/pre>
-&lt;/td>
-&lt;td>
-&lt;pre>&lt;code class="lisp-html">
+b is a # =&gt; False, a and b do not refer to the same object
+b == a # =&gt; True, a's and b's objects are equal
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Boolean values are symbols
-t ; => t
-nil ; => nil
+t ; =&gt; t
+nil ; =&gt; nil
 ;; negate with not
-(not t) ; => nil
-(not nil) ; => t
+(not t) ; =&gt; nil
+(not nil) ; =&gt; t
 ;; Boolean Operators
 ;; Use `and` and `or` for logical operations
-(and t nil) ; => nil
-(or nil t) ; => t
+(and t nil) ; =&gt; nil
+(or nil t) ; =&gt; t
 ;; In Elisp, `t` or `nil` is not numeric, so numerical operations will fail
 (+ t t) ; error
 (* t 8) ; error
 (- nil 5) ; error
 ;; Comparison operators
-(= 0 nil) ; => error, since nil is not a numerical value
-(eq 0 nil) ; => nil, because `eq` is used for checking equality of objects
+(= 0 nil) ; =&gt; error, since nil is not a numerical value
+(eq 0 nil) ; =&gt; nil, because `eq` is used for checking equality of objects
 ; similar to Python's `is`
-(eq 1.0 1.0) ; => nil, both are different objects
-(= 1.0 1.0) ; => t, numerical equal
-(eq 1 1) ; => t, constant integers of same value share the same object
+(eq 1.0 1.0) ; =&gt; nil, both are different objects
+(= 1.0 1.0) ; =&gt; t, numerical equal
+(eq 1 1) ; =&gt; t, constant integers of same value share the same object
 ;; In Elisp, `nil` is the only false value. All other values are true.
-(not 0) ; => nil
-(not "") ; => nil
-(not '()) ; => nil
-(not (make-hash-table)) ; => nil
-(not nil) ; => t
-(not 4) ; => nil
-(not -6) ; => nil
-(and nil 2) ; => nil
-(or -5 nil) ; => -5
+(not 0) ; =&gt; nil
+(not "") ; =&gt; nil
+(not '()) ; =&gt; nil
+(not (make-hash-table)) ; =&gt; nil
+(not nil) ; =&gt; t
+(not 4) ; =&gt; nil
+(not -6) ; =&gt; nil
+(and nil 2) ; =&gt; nil
+(or -5 nil) ; =&gt; -5
 ;; Equality is checked with `eq` for objects
 ;; and `equal` for value comparison, or `=` for numbers
-(= 1 1) ; => t
-(= 2 1) ; => nil
+(= 1 1) ; =&gt; t
+(= 2 1) ; =&gt; nil
 ;; Inequality with `/=`
-(/= 1 1) ; => nil
-(/= 2 1) ; => t
+(/= 1 1) ; =&gt; nil
+(/= 2 1) ; =&gt; t
 ;; More comparisons
-(&lt; 1 10) ; => t
-(> 1 10) ; => nil
-(&lt;= 2 2) ; => t
-(>= 2 2) ; => t
+(&lt; 1 10) ; =&gt; t
+(&gt; 1 10) ; =&gt; nil
+(&lt;= 2 2) ; =&gt; t
+(&gt;= 2 2) ; =&gt; t
 ;; Logical combinations for range checking
 ;; Chaining like Python's `1 &lt; 2 &lt; 3` doesn't directly translate
-(and (&lt; 1 2) (&lt; 2 3)) ; => t
-(and (&lt; 2 3) (&lt; 3 2)) ; => nil
+(and (&lt; 1 2) (&lt; 2 3)) ; =&gt; t
+(and (&lt; 2 3) (&lt; 3 2)) ; =&gt; nil
 ;; Setting up variables and lists
 (setq a '(1 2 3 4)) ; Set 'a' to a new list
 (setq b a) ; Point 'b' at what 'a' is pointing to
-(eq b a) ; => t, 'a' and 'b' refer to the same object
-(equal b a) ; => t, 'a's and 'b's objects are equal
+(eq b a) ; =&gt; t, 'a' and 'b' refer to the same object
+(equal b a) ; =&gt; t, 'a's and 'b's objects are equal
 (setq b '(1 2 3 4)) ; Set 'b' to a new, but identical list
-(eq b a) ; => nil, 'a' and 'b' do not refer to the same object
-(equal b a) ; => t, 'a's and 'b's objects are equal
-&lt;/code>&lt;/pre>
-&lt;/td> &lt;/tr>
-&lt;/table>
-&lt;ul>
-&lt;li>&lt;code>eq&lt;/code> checks if two symbols or objects refer to the same memory address (identical objects).&lt;/li>
-&lt;li>&lt;code>equal&lt;/code> tests for structural equality without considering if the two are the exact same object.&lt;/li>
-&lt;/ul>
-&lt;h3 id="string-related">String related&lt;/h3>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+(eq b a) ; =&gt; nil, 'a' and 'b' do not refer to the same object
+(equal b a) ; =&gt; t, 'a's and 'b's objects are equal
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/td&gt; &lt;/tr&gt;
+&lt;/table&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;eq&lt;/code&gt; checks if two symbols or objects refer to the same memory address (identical objects).&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;equal&lt;/code&gt; tests for structural equality without considering if the two are the exact same object.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="string-related"&gt;String related&lt;/h3&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 # Strings are created with " or '
 "This is a string."
 'This is also a string.'
 # Strings can be added too
-"Hello " + "world!" # => "Hello world!"
+"Hello " + "world!" # =&gt; "Hello world!"
 # String literals (but not variables) can be concatenated without using '+'
-"Hello " "world!" # => "Hello world!"
+"Hello " "world!" # =&gt; "Hello world!"
 # A string can be treated like a list of characters
-"Hello world!"[0] # => 'H'
+"Hello world!"[0] # =&gt; 'H'
 # You can find the length of a string
-len("This is a string") # => 16
+len("This is a string") # =&gt; 16
 # Since Python 3.6, you can use f-strings or formatted string literals.
 name = "Reiko"
-f"She said her name is {name}." # => "She said her name is Reiko"
+f"She said her name is {name}." # =&gt; "She said her name is Reiko"
 # Any valid Python expression inside these braces is returned to the string.
-f"{name} is {len(name)} characters long." # => "Reiko is 5 characters long."
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+f"{name} is {len(name)} characters long." # =&gt; "Reiko is 5 characters long."
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Strings are created with double quotes
 "This is a string."
 "This is also a string."
 ;; Strings can be concatenated using `concat`
-(concat "Hello " "world!") ; => "Hello world!"
+(concat "Hello " "world!") ; =&gt; "Hello world!"
 ;; In Elisp, there is no automatic concatenation without using a function like `concat`.
 ;; Accessing a character in a string
-(aref "Hello world!" 0) ; => 72 (returns the ASCII value of 'H')
+(aref "Hello world!" 0) ; =&gt; 72 (returns the ASCII value of 'H')
 ;; You can convert the ASCII value to a character if needed
-(char-to-string (aref "Hello world!" 0)) ; => "H"
+(char-to-string (aref "Hello world!" 0)) ; =&gt; "H"
 ;; Finding the length of a string
-(length "This is a string") ; => 16
+(length "This is a string") ; =&gt; 16
 ;; Emacs Lisp doesn't have a built-in feature exactly like Python's f-strings,
 ;; but you can use `format` to achieve similar results.
 (setq name "Reiko")
-(format "She said her name is %s." name) ; => "She said her name is Reiko."
+(format "She said her name is %s." name) ; =&gt; "She said her name is Reiko."
 ;; Using `format` for more complex expressions
-(format "%s is %d characters long." name (length name)) ; => "Reiko is 5 characters long."
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h3 id="variables-and-collections">Variables and Collections&lt;/h3>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="language-python">
-print("I'm Python. Nice to meet you!") # => I'm Python. Nice to meet you!
+(format "%s is %d characters long." name (length name)) ; =&gt; "Reiko is 5 characters long."
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h3 id="variables-and-collections"&gt;Variables and Collections&lt;/h3&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="language-python"&gt;
+print("I'm Python. Nice to meet you!") # =&gt; I'm Python. Nice to meet you!
 # By default the print function also prints out a newline at the end.
 # Use the optional argument end to change the end string.
-print("Hello, World", end="!") # => Hello, World!
+print("Hello, World", end="!") # =&gt; Hello, World!
 # Simple way to get input data from console
 input_string_var = input("Enter some data: ") # Returns the data as a string
 # There are no declarations, only assignments.
 # Convention in naming variables is snake_case style
 some_var = 5
-some_var # => 5
+some_var # =&gt; 5
 # Accessing a previously unassigned variable is an exception.
 # See Control Flow to learn more about exception handling.
 some_unknown_var # Raises a NameError
 # if can be used as an expression
 # Equivalent of C's '?:' ternary operator
-"yay!" if 0 > 1 else "nay!" # => "nay!"
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+"yay!" if 0 &gt; 1 else "nay!" # =&gt; "nay!"
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Emacs Lisp has a print function, `message`, commonly used for displaying output in the echo area.
 (message "I'm Emacs Lisp. Nice to meet you!") ; Prints: I'm Emacs Lisp. Nice to meet you!
 ;; By default, `message` also outputs a newline at the end. You can concatenate strings to simulate different endings.
@@ -377,16 +377,16 @@ some_unknown_var # Raises a NameError
 (setq input-string-var (read-string "Enter some data: ")) ; Prompts user and returns the data as a string
 ;; Variables are set with `setq`, and Emacs Lisp uses lower-case with dashes (lisp-case).
 (setq some-var 5)
-some-var ; => 5
+some-var ; =&gt; 5
 ;; Accessing a previously unassigned variable results in `nil` if not set, not an exception.
-some-unknown-var ; => nil unless previously set, does not raise an error
+some-unknown-var ; =&gt; nil unless previously set, does not raise an error
 ;; `if` can be used similarly to the ternary operator
-(if (> 0 1) "yay!" "nay!") ; => "nay!"
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h4 id="list">list&lt;/h4>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+(if (&gt; 0 1) "yay!" "nay!") ; =&gt; "nay!"
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h4 id="list"&gt;list&lt;/h4&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 # Lists store sequences
 li = []
 # You can start with a prefilled list
@@ -397,17 +397,17 @@ li.append(2) # li is now [1, 2]
 li.append(4) # li is now [1, 2, 4]
 li.append(3) # li is now [1, 2, 4, 3]
 # Remove from the end with pop
-li.pop() # => 3 and li is now [1, 2, 4]
+li.pop() # =&gt; 3 and li is now [1, 2, 4]
 # Let's put it back
 li.append(3) # li is now [1, 2, 4, 3] again.
 # Access a list like you would any array
-li[0] # => 1
+li[0] # =&gt; 1
 # Look at the last element
-li[-1] # => 3
+li[-1] # =&gt; 3
 # Looking out of bounds is an IndexError
 li[4] # Raises an IndexError
 # Make a one layer deep copy using slices
-li2 = li[:] # => li2 = [1, 2, 4, 3] but (li2 is li) will result in false.
+li2 = li[:] # =&gt; li2 = [1, 2, 4, 3] but (li2 is li) will result in false.
 # Remove arbitrary elements from a list with "del"
 del li[2] # li is now [1, 2, 3]
 # Remove first occurrence of a value
@@ -416,19 +416,19 @@ li.remove(2) # Raises a ValueError as 2 is not in the list
 # Insert an element at a specific index
 li.insert(1, 2) # li is now [1, 2, 3] again
 # Get the index of the first item found matching the argument
-li.index(2) # => 1
+li.index(2) # =&gt; 1
 li.index(4) # Raises a ValueError as 4 is not in the list
 # You can add lists
 # Note: values for li and for other_li are not modified.
-li + other_li # => [1, 2, 3, 4, 5, 6]
+li + other_li # =&gt; [1, 2, 3, 4, 5, 6]
 # Concatenate lists with "extend()"
 li.extend(other_li) # Now li is [1, 2, 3, 4, 5, 6]
 # Check for existence in a list with "in"
-1 in li # => True
+1 in li # =&gt; True
 # Examine the length with "len()"
-len(li) # => 6
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+len(li) # =&gt; 6
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Lists store sequences
 (setq li '())
 ;; You can start with a prefilled list
@@ -441,15 +441,15 @@ len(li) # => 6
 (setq li (append li '(4))) ; li is now (1 2 4)
 (setq li (append li '(3))) ; li is now (1 2 4 3)
 ;; Remove from the end with `pop`
-(pop li) ; => 3 and li is now (1 2 4)
+(pop li) ; =&gt; 3 and li is now (1 2 4)
 ;; Let's put it back
 (setq li (append li '(3))) ; li is now (1 2 4 3) again.
 ;; Access a list like you would any array (using `nth`)
-(nth 0 li) ; => 1
+(nth 0 li) ; =&gt; 1
 ;; Look at the last element (using `car` on the reversed list)
-(car (last li)) ; => 3
+(car (last li)) ; =&gt; 3
 ;; Looking out of bounds does not raise an error by default, returns nil
-(nth 4 li) ; => nil, does not raise an IndexError
+(nth 4 li) ; =&gt; nil, does not raise an IndexError
 ;; Make a one layer deep copy using `copy-sequence`
 (setq li2 (copy-sequence li)) ;; li2 equals [1 2 4 3] but (eq li2 li) will result in nil.
 ;; Remove arbitrary elements from a list with `setf` and `nthcdr`
@@ -464,23 +464,23 @@ len(li) # => 6
 ;; Insert an element at a specific index
 (setq li (cl-list* 1 2 (cdr li))) ;; li is now [1 2 3] again, using `cl-list*` to splice
 ;; Get the index of the first item found matching the argument
-(position 2 li) ;; => 1
+(position 2 li) ;; =&gt; 1
 (condition-case nil
 (position 4 li)
 (error (message "ValueError: 4 is not in the list")))
 ;; You can add lists
-(setq result (append li other_li)) ;; => [1 2 3 4 5 6]
+(setq result (append li other_li)) ;; =&gt; [1 2 3 4 5 6]
 ;; Concatenate lists with `append` (destructively with `nconc`)
 (setq li (append li other_li)) ;; Now li is [1 2 3 4 5 6]
 ;; Check for existence in a list with `member`
-(member 1 li) ;; => (1 2 3 4 5 6) which is true-ish in Lisp (non-nil means true)
+(member 1 li) ;; =&gt; (1 2 3 4 5 6) which is true-ish in Lisp (non-nil means true)
 ;; Examine the length with `length`
-(length li) ;; => 6
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h4 id="dict">Dict&lt;/h4>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+(length li) ;; =&gt; 6
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h4 id="dict"&gt;Dict&lt;/h4&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 # Dictionaries store mappings from keys to values
 empty_dict = {}
 # Here is a prefilled dictionary
@@ -488,46 +488,46 @@ filled_dict = {"one": 1, "two": 2, "three": 3}
 # Note keys for dictionaries have to be immutable types. This is to ensure that
 # the key can be converted to a constant hash value for quick look-ups.
 # Immutable types include ints, floats, strings, tuples.
-invalid_dict = {[1,2,3]: "123"} # => Yield a TypeError: unhashable type: 'list'
+invalid_dict = {[1,2,3]: "123"} # =&gt; Yield a TypeError: unhashable type: 'list'
 valid_dict = {(1,2,3):[1,2,3]} # Values can be of any type, however.
 # Look up values with []
-filled_dict["one"] # => 1
+filled_dict["one"] # =&gt; 1
 # Get all keys as an iterable with "keys()". We need to wrap the call in list()
 # to turn it into a list. We'll talk about those later. Note - for Python
 # versions &lt;3.7, dictionary key ordering is not guaranteed. Your results might
 # not match the example below exactly. However, as of Python 3.7, dictionary
 # items maintain the order at which they are inserted into the dictionary.
-list(filled_dict.keys()) # => ["three", "two", "one"] in Python &lt;3.7
-list(filled_dict.keys()) # => ["one", "two", "three"] in Python 3.7+
+list(filled_dict.keys()) # =&gt; ["three", "two", "one"] in Python &lt;3.7
+list(filled_dict.keys()) # =&gt; ["one", "two", "three"] in Python 3.7+
 # Get all values as an iterable with "values()". Once again we need to wrap it
 # in list() to get it out of the iterable. Note - Same as above regarding key
 # ordering.
-list(filled_dict.values()) # => [3, 2, 1] in Python &lt;3.7
-list(filled_dict.values()) # => [1, 2, 3] in Python 3.7+
+list(filled_dict.values()) # =&gt; [3, 2, 1] in Python &lt;3.7
+list(filled_dict.values()) # =&gt; [1, 2, 3] in Python 3.7+
 # Check for existence of keys in a dictionary with "in"
-"one" in filled_dict # => True
-1 in filled_dict # => False
+"one" in filled_dict # =&gt; True
+1 in filled_dict # =&gt; False
 # Looking up a non-existing key is a KeyError
 filled_dict["four"] # KeyError
 # Use "get()" method to avoid the KeyError
-filled_dict.get("one") # => 1
-filled_dict.get("four") # => None
+filled_dict.get("one") # =&gt; 1
+filled_dict.get("four") # =&gt; None
 # The get method supports a default argument when the value is missing
-filled_dict.get("one", 4) # => 1
-filled_dict.get("four", 4) # => 4
+filled_dict.get("one", 4) # =&gt; 1
+filled_dict.get("four", 4) # =&gt; 4
 # "setdefault()" inserts into a dictionary only if the given key isn't present
 filled_dict.setdefault("five", 5) # filled_dict["five"] is set to 5
 filled_dict.setdefault("five", 6) # filled_dict["five"] is still 5
 # Adding to a dictionary
-filled_dict.update({"four":4}) # => {"one": 1, "two": 2, "three": 3, "four": 4}
+filled_dict.update({"four":4}) # =&gt; {"one": 1, "two": 2, "three": 3, "four": 4}
 filled_dict["four"] = 4 # another way to add to dict
 # Remove keys from a dictionary with del
 del filled_dict["one"] # Removes the key "one" from filled dict
 # From Python 3.5 you can also use the additional unpacking options
-{"a": 1, **{"b": 2}} # => {'a': 1, 'b': 2}
-{"a": 1, **{"a": 2}} # => {'a': 2}
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+{"a": 1, **{"b": 2}} # =&gt; {'a': 1, 'b': 2}
+{"a": 1, **{"a": 2}} # =&gt; {'a': 2}
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Hash tables store mappings from keys to values
 (setq empty-dict (make-hash-table))
 ;; Here is a prefilled hash table
@@ -539,24 +539,24 @@ del filled_dict["one"] # Removes the key "one" from filled dict
 ;; Emacs Lisp hash tables do not restrict key types as strictly as Python does by default.
 ;; Attempt to use mutable types such as lists can be handled but requires careful consideration of equality testing.
 ;; Look up values with `gethash`
-(gethash "one" filled-dict) ;; => 1
+(gethash "one" filled-dict) ;; =&gt; 1
 ;; Get all keys as a list
-(hash-table-keys filled-dict) ;; => '("one" "two" "three") in Emacs Lisp, ordering depends on hash function
+(hash-table-keys filled-dict) ;; =&gt; '("one" "two" "three") in Emacs Lisp, ordering depends on hash function
 ;; Get all values as a list
-(hash-table-values filled-dict) ;; => '(1 2 3)
+(hash-table-values filled-dict) ;; =&gt; '(1 2 3)
 ;; Check for existence of keys in a hash table with `gethash`
-(when (gethash "one" filled-dict) t) ;; => t (true)
-(when (gethash 1 filled-dict) t) ;; => nil (false)
+(when (gethash "one" filled-dict) t) ;; =&gt; t (true)
+(when (gethash 1 filled-dict) t) ;; =&gt; nil (false)
 ;; Looking up a non-existing key returns nil by default, no error
-(gethash "four" filled-dict) ;; => nil
+(gethash "four" filled-dict) ;; =&gt; nil
 ;; Use `gethash` with a default value to avoid nil for non-existing keys
-(gethash "one" filled-dict 4) ;; => 1
-(gethash "four" filled-dict 4) ;; => 4
+(gethash "one" filled-dict 4) ;; =&gt; 1
+(gethash "four" filled-dict 4) ;; =&gt; 4
 ;; `sethash` inserts into a hash table, replacing any existing value for the key
 (puthash "five" 5 filled-dict) ;; filled-dict now has key "five" set to 5
 (puthash "five" 6 filled-dict) ;; filled-dict["five"] is updated to 6
 ;; Adding to a hash table
-(puthash "four" 4 filled-dict) ;; filled-dict now includes "four" => 4
+(puthash "four" 4 filled-dict) ;; filled-dict now includes "four" =&gt; 4
 ;; Remove keys from a hash table with `remhash`
 (remhash "one" filled-dict) ;; Removes the key "one" from filled-dict
 ;; Unpacking and merging hash tables isn't a direct feature in Emacs Lisp,
@@ -569,17 +569,17 @@ del filled_dict["one"] # Removes the key "one" from filled dict
 ;; Simulating Python's dict unpacking:
 (maphash (lambda (k v) (puthash k v a)) b)
 ;; Now, 'a' contains the contents of both 'a' and 'b'
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h4 id="set">Set&lt;/h4>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h4 id="set"&gt;Set&lt;/h4&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 # Sets store ... well sets
 empty_set = set()
 # Initialize a set with a bunch of values.
 some_set = {1, 1, 2, 2, 3, 4} # some_set is now {1, 2, 3, 4}
 # Similar to keys of a dictionary, elements of a set have to be immutable.
-invalid_set = {[1], 1} # => Raises a TypeError: unhashable type: 'list'
+invalid_set = {[1], 1} # =&gt; Raises a TypeError: unhashable type: 'list'
 valid_set = {(1,), 1}
 # Add one more item to the set
 filled_set = some_set
@@ -588,25 +588,25 @@ filled_set.add(5) # filled_set is now {1, 2, 3, 4, 5}
 filled_set.add(5) # it remains as before {1, 2, 3, 4, 5}
 # Do set intersection with &amp;
 other_set = {3, 4, 5, 6}
-filled_set &amp; other_set # => {3, 4, 5}
+filled_set &amp; other_set # =&gt; {3, 4, 5}
 # Do set union with |
-filled_set | other_set # => {1, 2, 3, 4, 5, 6}
+filled_set | other_set # =&gt; {1, 2, 3, 4, 5, 6}
 # Do set difference with -
-{1, 2, 3, 4} - {2, 3, 5} # => {1, 4}
+{1, 2, 3, 4} - {2, 3, 5} # =&gt; {1, 4}
 # Do set symmetric difference with ^
-{1, 2, 3, 4} ^ {2, 3, 5} # => {1, 4, 5}
+{1, 2, 3, 4} ^ {2, 3, 5} # =&gt; {1, 4, 5}
 # Check if set on the left is a superset of set on the right
-{1, 2} >= {1, 2, 3} # => False
+{1, 2} &gt;= {1, 2, 3} # =&gt; False
 # Check if set on the left is a subset of set on the right
-{1, 2} &lt;= {1, 2, 3} # => True
+{1, 2} &lt;= {1, 2, 3} # =&gt; True
 # Check for existence in a set with in
-2 in filled_set # => True
-10 in filled_set # => False
+2 in filled_set # =&gt; True
+10 in filled_set # =&gt; False
 # Make a one layer deep copy
 filled_set = some_set.copy() # filled_set is {1, 2, 3, 4, 5}
-filled_set is some_set # => False
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+filled_set is some_set # =&gt; False
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Sets store ... well, something akin to sets using hash tables
 (setq empty-set (make-hash-table :test 'equal))
 ;; Initialize a "set" with a bunch of values
@@ -636,48 +636,48 @@ filled_set is some_set # => False
 ;; Symmetric Difference (set1 ^ set2)
 (setq symmetric-difference-set (cl-set-exclusive-or (hash-table-keys filled-set) (hash-table-keys other-set) :test 'equal))
 ;; Superset check
-(cl-subsetp (hash-table-keys other-set) (hash-table-keys filled-set) :test 'equal) ;; => nil (false, filled-set is not a superset)
+(cl-subsetp (hash-table-keys other-set) (hash-table-keys filled-set) :test 'equal) ;; =&gt; nil (false, filled-set is not a superset)
 ;; Subset check
-(cl-subsetp (hash-table-keys '(1 2)) (hash-table-keys '(1 2 3)) :test 'equal) ;; => t (true, {1, 2} is a subset of {1, 2, 3})
+(cl-subsetp (hash-table-keys '(1 2)) (hash-table-keys '(1 2 3)) :test 'equal) ;; =&gt; t (true, {1, 2} is a subset of {1, 2, 3})
 ;; Check for existence in a "set" with `gethash`
-(gethash 2 filled-set) ;; => t (true)
-(gethash 10 filled-set) ;; => nil (false)
+(gethash 2 filled-set) ;; =&gt; t (true)
+(gethash 10 filled-set) ;; =&gt; nil (false)
 ;; Make a one layer deep copy
 (setq filled-set-copy (make-hash-table :test 'equal))
 (maphash (lambda (k v) (puthash k v filled-set-copy)) filled-set)
-(eq filled-set filled-set-copy) ;; => nil
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h2 id="control-flow-and-iterables">Control Flow and Iterables&lt;/h2>
-&lt;h3 id="if">if&lt;/h3>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+(eq filled-set filled-set-copy) ;; =&gt; nil
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h2 id="control-flow-and-iterables"&gt;Control Flow and Iterables&lt;/h2&gt;
+&lt;h3 id="if"&gt;if&lt;/h3&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 # Let's just make a variable
 some_var = 5
 # Here is an if statement. Indentation is significant in Python!
 # Convention is to use four spaces, not tabs.
 # This prints "some_var is smaller than 10"
-if some_var > 10:
+if some_var &gt; 10:
 print("some_var is totally bigger than 10.")
 elif some_var &lt; 10: # This elif clause is optional.
 print("some_var is smaller than 10.")
 else: # This is optional too.
 print("some_var is indeed 10.")
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Let's just make a variable
 (setq some-var 5)
 ;; Here is an if statement
 ;; This prints "some_var is smaller than 10"
-(if (> some-var 10)
+(if (&gt; some-var 10)
 (message "some_var is totally bigger than 10.")
 (if (&lt; some-var 10) ;; This is like the elif in Python
 (message "some_var is smaller than 10.")
 (message "some_var is indeed 10."))) ;; This is the else part
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 """
 For loops iterate over lists
 prints:
@@ -737,8 +737,8 @@ prints:
 2
 3
 """
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; For loops iterate over lists
 (dolist (animal '("dog" "cat" "mouse"))
 ;; You can use `format` to interpolate formatted strings
@@ -767,11 +767,11 @@ prints:
 (while (&lt; i 4)
 (message "%d" i)
 (setq i (1+ i))))
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h3 id="while">While&lt;/h3>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h3 id="while"&gt;While&lt;/h3&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 """
 While loops go until a condition is no longer met.
 prints:
@@ -784,8 +784,8 @@ x = 0
 while x &lt; 4:
 print(x)
 x += 1 # Shorthand for x = x + 1
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; For loops iterate over lists
 (dolist (animal '("dog" "cat" "mouse"))
 ;; You can use `format` to interpolate formatted strings
@@ -814,11 +814,11 @@ x += 1 # Shorthand for x = x + 1
 (while (&lt; i 4)
 (message "%d" i)
 (setq i (1+ i))))
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h3 id="try-dot-dot-dot-catch">try &amp;hellip; catch&lt;/h3>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h3 id="try-dot-dot-dot-catch"&gt;try &amp;hellip; catch&lt;/h3&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 # Handle exceptions with a try/except block
 try:
 # Use "raise" to raise an error
@@ -832,8 +832,8 @@ else: # Optional clause to the try/except block. Must follow
 print("All good!") # Runs only if the code in try raises no exceptions
 finally: # Execute under all circumstances
 print("We can clean up resources here")
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Handle exceptions with a condition-case
 (condition-case err
 ;; Use `error` to raise an error
@@ -857,11 +857,11 @@ print("We can clean up resources here")
 (message "All good!"))) ;; This runs only if no error was raised
 ;; Finally, code that runs regardless of error presence
 (message "This always runs, simulating 'finally'")
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h3 id="with-statement">with statement&lt;/h3>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h3 id="with-statement"&gt;with statement&lt;/h3&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 # Instead of try/finally to cleanup resources you can use a with statement
 with open("myfile.txt") as f:
 for line in f:
@@ -882,8 +882,8 @@ with open("myfile2.txt", "r") as file:
 contents = json.load(file) # reads a json object from a file
 print(contents)
 # print: {"aa": 12, "bb": 21}
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Reading from a file
 (with-temp-buffer
 (insert-file-contents "myfile.txt")
@@ -913,31 +913,31 @@ print(contents)
 (insert-file-contents "myfile2.txt")
 (setq contents (json-read-from-string (buffer-string))))
 (message "Contents of myfile2.txt: %s" contents))
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h2 id="functions">Functions&lt;/h2>
-&lt;h3 id="define-a-function">Define a function&lt;/h3>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h2 id="functions"&gt;Functions&lt;/h2&gt;
+&lt;h3 id="define-a-function"&gt;Define a function&lt;/h3&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 # Use "def" to create new functions
 def add(x, y):
 print("x is {} and y is {}".format(x, y))
 return x + y # Return values with a return statement
 # Calling functions with parameters
-add(5, 6) # => prints out "x is 5 and y is 6" and returns 11
+add(5, 6) # =&gt; prints out "x is 5 and y is 6" and returns 11
 # Another way to call functions is with keyword arguments
 add(y=6, x=5) # Keyword arguments can arrive in any order.
 # You can define functions that take a variable number of
 # positional arguments
 def varargs(*args):
 return args
-varargs(1, 2, 3) # => (1, 2, 3)
+varargs(1, 2, 3) # =&gt; (1, 2, 3)
 # You can define functions that take a variable number of
 # keyword arguments, as well
 def keyword_args(**kwargs):
 return kwargs
 # Let's call it to see what happens
-keyword_args(big="foot", loch="ness") # => {"big": "foot", "loch": "ness"}
+keyword_args(big="foot", loch="ness") # =&gt; {"big": "foot", "loch": "ness"}
 # You can do both at once, if you like
 def all_the_args(*args, **kwargs):
 print(args)
@@ -954,14 +954,14 @@ kwargs = {"a": 3, "b": 4}
 all_the_args(*args) # equivalent: all_the_args(1, 2, 3, 4)
 all_the_args(**kwargs) # equivalent: all_the_args(a=3, b=4)
 all_the_args(*args, **kwargs) # equivalent: all_the_args(1, 2, 3, 4, a=3, b=4)
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Use `defun` to create new functions
 (defun add (x y)
 (message "x is %d and y is %d" x y)
 (+ x y)) ;; Return values with an implicit return (last expression evaluated)
 ;; Calling functions with parameters
-(add 5 6) ;; => prints out "x is 5 and y is 6" and returns 11
+(add 5 6) ;; =&gt; prints out "x is 5 and y is 6" and returns 11
 ;; Emacs Lisp does not support keyword arguments in the same way Python does,
 ;; but you can simulate them using a plist (property list).
 (defun add-keywords (&amp;rest args)
@@ -974,13 +974,13 @@ all_the_args(*args, **kwargs) # equivalent: all_the_args(1, 2, 3, 4, a=3, b=4)
 ;; positional arguments
 (defun varargs (&amp;rest args)
 args)
-(varargs 1 2 3) ;; => (1 2 3)
+(varargs 1 2 3) ;; =&gt; (1 2 3)
 ;; You can define functions that take a variable number of
 ;; keyword arguments, as well
 (defun keyword-args (&amp;rest args)
 args)
 ;; Let's call it to see what happens
-(keyword-args :big "foot" :loch "ness") ;; => (:big "foot" :loch "ness")
+(keyword-args :big "foot" :loch "ness") ;; =&gt; (:big "foot" :loch "ness")
 ;; You can do both at once, if you like
 (defun all-the-args (&amp;rest args)
 (message "args: %s" (prin1-to-string (cl-remove-if (lambda (x) (keywordp x)) args)))
@@ -993,24 +993,24 @@ args)
 (setq kwargs '(:a 3 :b 4))
 (apply 'all-the-args args) ;; equivalent: all_the_args(1, 2, 3, 4)
 (apply 'all-the-args (append args kwargs)) ;; equivalent: all_the_args(1, 2, 3, 4, :a 3, :b 4)
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h3 id="global-scopes">Global scopes&lt;/h3>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h3 id="global-scopes"&gt;Global scopes&lt;/h3&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 # global scope
 x = 5
 def set_x(num):
 # local scope begins here
 # local var x not the same as global var x
-x = num # => 43
-print(x) # => 43
+x = num # =&gt; 43
+print(x) # =&gt; 43
 def set_global_x(num):
 # global indicates that particular var lives in the global scope
 global x
-print(x) # => 5
+print(x) # =&gt; 5
 x = num # global var x is now set to 6
-print(x) # => 6
+print(x) # =&gt; 6
 set_x(43)
 set_global_x(6)
 """
@@ -1019,8 +1019,8 @@ prints:
 5
 6
 """
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Global scope
 (defvar x 5)
 ;; `let` or `let*` is a safe way to get a local scope without altering
@@ -1028,30 +1028,30 @@ prints:
 (defun set-x (num)
 ;; Local scope begins here
 (let ((x num)) ;; Local var x, not the same as global var x
-(message "%d" x))) ;; => 43
+(message "%d" x))) ;; =&gt; 43
 (defun set-global-x (num)
 ;; This function uses the global x, if no `let` wrap a local scope
-(message "%d" x) ;; => 5 (initial global value)
+(message "%d" x) ;; =&gt; 5 (initial global value)
 (setq x num) ;; Global var x is now set to 6
-(message "%d" x)) ;; => 6
+(message "%d" x)) ;; =&gt; 6
 (set-x 43)
 (set-global-x 6)
 ;; This will print:
 ;; 43
 ;; 5
 ;; 6
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h3 id="closures">Closures&lt;/h3>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h3 id="closures"&gt;Closures&lt;/h3&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 # Python has first class functions
 def create_adder(x):
 def adder(y):
 return x + y
 return adder
 add_10 = create_adder(10)
-add_10(3) # => 13
+add_10(3) # =&gt; 13
 # Closures in nested functions:
 # We can use the nonlocal keyword to work with variables in nested scope which shouldn't be declared in the inner functions.
 def create_avg():
@@ -1064,16 +1064,16 @@ count += 1
 return total/count
 return avg
 avg = create_avg()
-avg(3) # => 3.0
-avg(5) # (3+5)/2 => 4.0
-avg(7) # (8+7)/3 => 5.0
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+avg(3) # =&gt; 3.0
+avg(5) # (3+5)/2 =&gt; 4.0
+avg(7) # (8+7)/3 =&gt; 5.0
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Emacs Lisp has first-class functions
 (defun create-adder (x)
 (lambda (y) (+ x y)))
 (setq add-10 (create-adder 10))
-(funcall add-10 3) ;; => 13
+(funcall add-10 3) ;; =&gt; 13
 ;; Closures in nested functions
 (defun create-avg ()
 (let ((total 0) (count 0))
@@ -1082,51 +1082,51 @@ avg(7) # (8+7)/3 => 5.0
 (setq count (1+ count))
 (/ (float total) count))))
 (setq avg (create-avg))
-(funcall avg 3) ;; => 3.0
-(funcall avg 5) ;; => 4.0
-(funcall avg 7) ;; => 5.0
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h3 id="lambda-function">lambda function&lt;/h3>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+(funcall avg 3) ;; =&gt; 3.0
+(funcall avg 5) ;; =&gt; 4.0
+(funcall avg 7) ;; =&gt; 5.0
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h3 id="lambda-function"&gt;lambda function&lt;/h3&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 # There are also anonymous functions
-(lambda x: x > 2)(3) # => True
-(lambda x, y: x ** 2 + y ** 2)(2, 1) # => 5
+(lambda x: x &gt; 2)(3) # =&gt; True
+(lambda x, y: x ** 2 + y ** 2)(2, 1) # =&gt; 5
 # There are built-in higher order functions
-list(map(add_10, [1, 2, 3])) # => [11, 12, 13]
-list(map(max, [1, 2, 3], [4, 2, 1])) # => [4, 2, 3]
-list(filter(lambda x: x > 5, [3, 4, 5, 6, 7])) # => [6, 7]
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+list(map(add_10, [1, 2, 3])) # =&gt; [11, 12, 13]
+list(map(max, [1, 2, 3], [4, 2, 1])) # =&gt; [4, 2, 3]
+list(filter(lambda x: x &gt; 5, [3, 4, 5, 6, 7])) # =&gt; [6, 7]
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; Anonymous functions
-(funcall (lambda (x) (> x 2)) 3) ;; => t (true in Emacs Lisp)
-(funcall (lambda (x y) (+ (* x x) (* y y))) 2 1) ;; => 5
+(funcall (lambda (x) (&gt; x 2)) 3) ;; =&gt; t (true in Emacs Lisp)
+(funcall (lambda (x y) (+ (* x x) (* y y))) 2 1) ;; =&gt; 5
 ;; First, let's assume 'add-10' is already defined as in the previous example
 (setq add-10 (create-adder 10))
 ;; There are built-in higher order functions
-(mapcar add-10 '(1 2 3)) ;; => (11 12 13)
-(mapcar #'max '(1 2 3) '(4 2 1)) ;; => (4 2 3)
+(mapcar add-10 '(1 2 3)) ;; =&gt; (11 12 13)
+(mapcar #'max '(1 2 3) '(4 2 1)) ;; =&gt; (4 2 3)
 ;; Filter using a lambda
-(remove-if-not (lambda (x) (> x 5)) '(3 4 5 6 7)) ;; => (6 7)
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h2 id="modules">Modules&lt;/h2>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+(remove-if-not (lambda (x) (&gt; x 5)) '(3 4 5 6 7)) ;; =&gt; (6 7)
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h2 id="modules"&gt;Modules&lt;/h2&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 # You can import modules
 import math
-print(math.sqrt(16)) # => 4.0
+print(math.sqrt(16)) # =&gt; 4.0
 # You can get specific functions from a module
 from math import ceil, floor
-print(ceil(3.7)) # => 4
-print(floor(3.7)) # => 3
+print(ceil(3.7)) # =&gt; 4
+print(floor(3.7)) # =&gt; 3
 # You can import all functions from a module.
 # Warning: this is not recommended
 from math import *
 # You can shorten module names
 import math as m
-math.sqrt(16) == m.sqrt(16) # => True
+math.sqrt(16) == m.sqrt(16) # =&gt; True
 # Python modules are just ordinary Python files. You
 # can write your own, and import them. The name of the
 # module is the same as the name of the file.
@@ -1139,11 +1139,11 @@ dir(math)
 # be loaded instead of the built-in Python module.
 # This happens because the local folder has priority
 # over Python's built-in libraries.
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; You can require built-in "modules" (libraries in Emacs terms)
 (require 'calc) ;; Emacs's built-in calculator library, similar to importing 'math'
-(message "%s" (calc-eval "sqrt(16)")) ;; => "4.0"
+(message "%s" (calc-eval "sqrt(16)")) ;; =&gt; "4.0"
 ;; In Emacs, you generally use `require` for modules and access functions directly.
 ;; There isn't a direct equivalent of Python's `from module import specific_function`,
 ;; but you access everything directly once the library is loaded.
@@ -1164,11 +1164,11 @@ dir(math)
 (message "%s" (cl-lib-version)) ;; Access a specific function or variable from `cl-lib`
 ;; Note: In practice, Emacs Lisp files (.el) when loaded or required, are typically
 ;; not referred to with an alias like Python's `as` but are loaded and
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h2 id="class">Class&lt;/h2>
-&lt;table> &lt;tr>
-&lt;td> &lt;pre>&lt;code class="python-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h2 id="class"&gt;Class&lt;/h2&gt;
+&lt;table&gt; &lt;tr&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="python-html"&gt;
 # We use the "class" statement to create a class
 class Human:
 # A class attribute. It is shared by all instances of this class
@@ -1215,8 +1215,8 @@ self._age = age
 @age.deleter
 def age(self):
 del self._age
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;td> &lt;pre>&lt;code class="lisp-html">
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;td&gt; &lt;pre&gt;&lt;code class="lisp-html"&gt;
 ;; There is no built-in approach to define a struct.
 ;; The cl-lib extension brings `cl-defstruct` from Common Lisp.
 ;; Define a struct to mimic a class
@@ -1247,291 +1247,291 @@ name ;; This will create human-name accessor
 (message "Static call: %s" (human-grunt))) ;; Static call: *grunt*
 ;; Properties as getters/setters are handled by the `cl-defstruct` accessors and mutators
 ;; `age` property management is already provided by the struct definition
-&lt;/code>&lt;/pre> &lt;/td>
-&lt;/tr> &lt;/table>
-&lt;h2 id="references">References&lt;/h2>
-&lt;ul>
-&lt;li>&lt;a href="https://learnxinyminutes.com/docs/python/">Learn Python in Y Minutes&lt;/a>&lt;/li>
-&lt;li>ChatGPT helps to generate most of the code examples&lt;/li>
-&lt;/ul>
-&lt;link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
-&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js">&lt;/script>
-&lt;!-- and it's easy to individually load additional languages -->
-&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js">&lt;/script>
-&lt;script>hljs.highlightAll();&lt;/script>
-&lt;style>
+&lt;/code&gt;&lt;/pre&gt; &lt;/td&gt;
+&lt;/tr&gt; &lt;/table&gt;
+&lt;h2 id="references"&gt;References&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="https://learnxinyminutes.com/docs/python/"&gt;Learn Python in Y Minutes&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;ChatGPT helps to generate most of the code examples&lt;/li&gt;
+&lt;/ul&gt;
+&lt;link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css"&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"&gt;&lt;/script&gt;
+&lt;!-- and it's easy to individually load additional languages --&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;hljs.highlightAll();&lt;/script&gt;
+&lt;style&gt;
 table td {
 display: block;
 float: left;
 width: 50%;
 }
-&lt;/style></description></item><item><title>Best Practices for Python Programming (Continuously Updated)</title><link>/posts/python-best-practices/</link><pubDate>Wed, 22 Feb 2023 00:00:00 +0000</pubDate><guid>/posts/python-best-practices/</guid><description>&lt;p>When delving into the codebases of some successful large Python projects such as PyTorch, I am consistently impressed by their code &amp;ndash; whether it&amp;rsquo;s clean yet precise, or leveraging lesser-known built-in or third-party packages to significantly enhance functionality.&lt;/p>
-&lt;p>High-quality code snippets, handy packages, and modules have greatly facilitated my work. In this blog, I&amp;rsquo;ll be sharing noteworthy findings and insights learned from the open-source codebase.&lt;/p>
-&lt;h2 id="basics">Basics&lt;/h2>
-&lt;h3 id="new">&lt;code>__new__&lt;/code>&lt;/h3>
-&lt;p>The &lt;code>__new__&lt;/code> method is used for creating a new instance of a class. It is a static method that gets called before the &lt;code>__init__&lt;/code> method.&lt;/p>
-&lt;p>The default &lt;code>__new__&lt;/code> method could be&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">MyClass&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>, &lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> instance &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020">super&lt;/span>(MyClass, &lt;span style="color:#007020">cls&lt;/span>)&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>, &lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> instance
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Note that, different from &lt;code>__init__&lt;/code>, whose first argument is an instance &lt;code>self&lt;/code>, &lt;code>__new__&lt;/code>&amp;rsquo;s first argument is a class.&lt;/p>
-&lt;p>You can override &lt;code>__new__&lt;/code> if something special need to be done with the object creation.&lt;/p>
-&lt;p>There are some classical use cases for the &lt;code>__new__&lt;/code> method:&lt;/p>
-&lt;h4 id="singleton-pattern">Singleton Pattern&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Singleton&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> _instance &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020;font-weight:bold">None&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> &lt;span style="color:#007020">cls&lt;/span>&lt;span style="color:#666">.&lt;/span>_instance &lt;span style="color:#007020;font-weight:bold">is&lt;/span> &lt;span style="color:#007020;font-weight:bold">None&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">cls&lt;/span>&lt;span style="color:#666">.&lt;/span>_instance &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020">super&lt;/span>()&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">cls&lt;/span>&lt;span style="color:#666">.&lt;/span>_instance
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># Usage&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>singleton1 &lt;span style="color:#666">=&lt;/span> Singleton()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>singleton2 &lt;span style="color:#666">=&lt;/span> Singleton()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(singleton1 &lt;span style="color:#007020;font-weight:bold">is&lt;/span> singleton2)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>True
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="subclassing-immutable-types">Subclassing Immutable Types&lt;/h4>
-&lt;p>When subclassing immutable types like &lt;code>str&lt;/code>, &lt;code>int&lt;/code>, &lt;code>unicode&lt;/code> or &lt;code>tuple&lt;/code>, the properties of immutable cannot be changed after they are created, you can override &lt;code>__new__&lt;/code> instead:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">UpperStr&lt;/span>(&lt;span style="color:#007020">str&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>, value):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">str&lt;/span>&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>, value&lt;span style="color:#666">.&lt;/span>upper())
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># Usage&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>upper_string &lt;span style="color:#666">=&lt;/span> UpperStr(&lt;span style="color:#4070a0">&amp;#34;hello&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(upper_string) &lt;span style="color:#60a0b0;font-style:italic"># Output: HELLO&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>HELLO
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="factory-methods">Factory Methods&lt;/h4>
-&lt;p>&lt;code>__new__&lt;/code> can be used to implement factory methods that return instances of different classes based on input parameters.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Shape&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>, &lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> &lt;span style="color:#007020">cls&lt;/span> &lt;span style="color:#007020;font-weight:bold">is&lt;/span> Shape:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> shape_type &lt;span style="color:#666">=&lt;/span> args[&lt;span style="color:#40a070">0&lt;/span>]
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> shape_type &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#4070a0">&amp;#39;circle&amp;#39;&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> Circle()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">elif&lt;/span> shape_type &lt;span style="color:#666">==&lt;/span> &lt;span style="color:#4070a0">&amp;#39;square&amp;#39;&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> Square()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">super&lt;/span>(Shape, &lt;span style="color:#007020">cls&lt;/span>)&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#06287e">__new__&lt;/span>(&lt;span style="color:#007020">cls&lt;/span>, &lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Circle&lt;/span>(Shape):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">pass&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Square&lt;/span>(Shape):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">pass&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># Usage&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>shape &lt;span style="color:#666">=&lt;/span> Shape(&lt;span style="color:#4070a0">&amp;#39;circle&amp;#39;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#007020">isinstance&lt;/span>(shape, Circle)) &lt;span style="color:#60a0b0;font-style:italic"># Output: True&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>True
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="iter-and-next">&lt;code>__iter__&lt;/code> and &lt;code>__next__&lt;/code>&lt;/h3>
-&lt;p>The &lt;code>__iter__&lt;/code> is a magic method that allows an object to be iterable, its result should be an iterable, and the &lt;code>__next__&lt;/code> method returns the next element of the iterable.&lt;/p>
-&lt;p>A naive example:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Counter&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__init__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>, n):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>n &lt;span style="color:#666">=&lt;/span> n
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__iter__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Return the iterator object (self)&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">self&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__next__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">&amp;lt;&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>n:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">+=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">else&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># signal the end&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">raise&lt;/span> &lt;span style="color:#007020">StopIteration&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="aiter-and-anext">&lt;code>__aiter__&lt;/code> and &lt;code>__anext__&lt;/code>&lt;/h3>
-&lt;p>Similar to &lt;code>__iter__&lt;/code> and &lt;code>__next__&lt;/code>, the &lt;code>__aiter__&lt;/code> and &lt;code>__anext__&lt;/code> are the asynchronous version.
-The &lt;code>__aiter__&lt;/code> allows an object to be an asynchronous iterator object, which is an object that has an &lt;code>__anext__&lt;/code> method that returns an awaitable object that yields the next element of the sequence.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">import&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">asyncio&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">AsyncCounter&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__init__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>, n):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>n &lt;span style="color:#666">=&lt;/span> n
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__aiter__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Return the iterator object (self)&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">self&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">async&lt;/span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__anext__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">&amp;lt;&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>n:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i &lt;span style="color:#666">+=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Simulate some delay&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">await&lt;/span> asyncio&lt;span style="color:#666">.&lt;/span>sleep(&lt;span style="color:#40a070">1&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>i
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">else&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># Signal the end&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">raise&lt;/span> &lt;span style="color:#007020">StopAsyncIteration&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="handy-builtin-utilities">Handy builtin utilities&lt;/h2>
-&lt;h3 id="setter-and-getter">setter and getter&lt;/h3>
-&lt;p>When there is some logic bound to a member when it is got or updated, then the getter and setter could be used.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">App&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">__init__&lt;/span>(&lt;span style="color:#007020">self&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>update_count &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>_name &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#4070a0">&amp;#34;&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#555;font-weight:bold">@property&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">name&lt;/span>(&lt;span style="color:#007020">self&lt;/span>) &lt;span style="color:#666">-&amp;gt;&lt;/span> &lt;span style="color:#007020">str&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>_name
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#555;font-weight:bold">@name.setter&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">name&lt;/span>(&lt;span style="color:#007020">self&lt;/span>, v:&lt;span style="color:#007020">str&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>_name &lt;span style="color:#666">=&lt;/span> v
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">self&lt;/span>&lt;span style="color:#666">.&lt;/span>update_count &lt;span style="color:#666">+=&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>app &lt;span style="color:#666">=&lt;/span> App()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>app&lt;span style="color:#666">.&lt;/span>name &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#4070a0">&amp;#39;a&amp;#39;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>app&lt;span style="color:#666">.&lt;/span>name &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#4070a0">&amp;#39;b&amp;#39;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#39;name:&amp;#39;&lt;/span>, app&lt;span style="color:#666">.&lt;/span>name) &lt;span style="color:#60a0b0;font-style:italic"># b&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">&amp;#39;update_count:&amp;#39;&lt;/span>, app&lt;span style="color:#666">.&lt;/span>update_count) &lt;span style="color:#60a0b0;font-style:italic"># 2&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>name: b
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>update_count: 2
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="dataclass">&lt;code>@dataclass&lt;/code>&lt;/h3>
-&lt;p>&lt;code>@dataclass&lt;/code> is a decorator that can be used to create classes that &lt;strong>mainly store data&lt;/strong>.
-It can automatically generate some common methods for the class, such as &lt;code>__init__&lt;/code>, &lt;code>__repr__&lt;/code>, and &lt;code>__eq__&lt;/code>, based on the type hints of the class attributes.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">dataclasses&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> dataclass
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@dataclass&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Point&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> x: &lt;span style="color:#007020">float&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> y: &lt;span style="color:#007020">float&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>p &lt;span style="color:#666">=&lt;/span> Point(&lt;span style="color:#40a070">1.&lt;/span>, &lt;span style="color:#40a070">2.&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(p)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>Point(x=1.0, y=2.0)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>There are several classical practices using &lt;code>@dataclass&lt;/code>&lt;/p>
-&lt;h4 id="use-default-values-or-default-factories">Use default values or default factories&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">dataclasses&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> dataclass, field
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">random&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> randint
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">typing&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> List
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@dataclass&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">DummyContainer&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sides: &lt;span style="color:#007020">int&lt;/span> &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">6&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> value: &lt;span style="color:#007020">int&lt;/span> &lt;span style="color:#666">=&lt;/span> field(default_factory&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020;font-weight:bold">lambda&lt;/span>: randint(&lt;span style="color:#40a070">1&lt;/span>, &lt;span style="color:#40a070">6&lt;/span>))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> alist: List[&lt;span style="color:#007020">int&lt;/span>] &lt;span style="color:#666">=&lt;/span> field(default_factory&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020">list&lt;/span>) &lt;span style="color:#60a0b0;font-style:italic"># avoid assign [] directly&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>dummy &lt;span style="color:#666">=&lt;/span> DummyContainer()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(dummy)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>DummyContainer(sides=6, value=2, alist=[])
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="use-frozen-true-to-make-the-class-immutable">Use &lt;code>frozen=True&lt;/code> to make the class immutable&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">dataclasses&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> dataclass
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@dataclass&lt;/span>(frozen&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020;font-weight:bold">True&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Circle&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> radius: &lt;span style="color:#007020">float&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>const_circle &lt;span style="color:#666">=&lt;/span> Circle(&lt;span style="color:#40a070">2.0&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="use-order-true-to-enable-comparison-operators-based-on-the-class-attributes">Use &lt;code>order=True&lt;/code> to enable comparison operators based on the class attributes&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">dataclasses&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> dataclass
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@dataclass&lt;/span>(order&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020;font-weight:bold">True&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Circle&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> radius: &lt;span style="color:#007020">float&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>c0 &lt;span style="color:#666">=&lt;/span> Circle(&lt;span style="color:#40a070">1.&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>c1 &lt;span style="color:#666">=&lt;/span> Circle(&lt;span style="color:#40a070">2&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(c0 &lt;span style="color:#666">&amp;gt;&lt;/span> c1)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>False
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="use-inheritance-to-create-subclasses-of-data-classes">Use inheritance to create subclasses of data classes&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">dataclasses&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> dataclass
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@dataclass&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Animal&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> name: &lt;span style="color:#007020">str&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sound: &lt;span style="color:#007020">str&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@dataclass&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">class&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">Dog&lt;/span>(Animal):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#60a0b0;font-style:italic"># inherits name and sound from Animal&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> watch_house: &lt;span style="color:#007020">bool&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>dog &lt;span style="color:#666">=&lt;/span> Dog(name&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Huang&amp;#34;&lt;/span>, sound&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Wang&amp;#34;&lt;/span>, watch_house&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#007020;font-weight:bold">False&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(dog)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>Dog(name=&amp;#39;Huang&amp;#39;, sound=&amp;#39;Wang&amp;#39;, watch_house=False)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="functools-partial-to-get-new-function-by-partially-fixing-some-arguments-of-an-existing-one">functools &lt;code>partial&lt;/code> to get new function by partially fixing some arguments of an existing one&lt;/h3>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">functools&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> partial
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">func0&lt;/span>(a, b):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;a:&lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>a&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">, b:&lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>b&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>func1 &lt;span style="color:#666">=&lt;/span> partial(func0, a &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#40a070">0&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(func1)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>func1(b&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">10&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#60a0b0;font-style:italic"># reset argument a&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>func1(a&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">1&lt;/span>, b&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">10&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>functools.partial(&amp;lt;function func0 at 0x7fccb00e31e0&amp;gt;, a=0)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>a:0, b:10
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>a:1, b:10
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="functools-warps-to-help-define-better-decorators">functools &lt;code>@warps&lt;/code> to help define better decorators&lt;/h3>
-&lt;p>Below is a classical way to define an decorator&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">decorator&lt;/span>(func):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">actual_func&lt;/span>(&lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#39;&amp;#39;&amp;#39; The actual func. &amp;#39;&amp;#39;&amp;#39;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Before Calling &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>func&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__name__&lt;/span>&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> func(&lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;After Calling &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>func&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__name__&lt;/span>&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> actual_func
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@decorator&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">greet&lt;/span>(name):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#39;&amp;#39;&amp;#39; The greet func. &amp;#39;&amp;#39;&amp;#39;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Hello, &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>name&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">!&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>greet(&lt;span style="color:#4070a0">&amp;#34;Martin&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>Before Calling greet
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Hello, Martin!
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>After Calling greet
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The name and docstring of the decorated function will be hidden in the decorator function, and this makes the usage a bit opaque when debugging.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__name__&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__doc__&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>actual_func
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>The actual func.
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>In other words, the name and the docstring of the decorated function is overwritten by the decorator, which is not expected.&lt;/p>
-&lt;p>We can fix such issue with &lt;code>@wraps&lt;/code>, for example, the original code could be replaced with&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">from&lt;/span> &lt;span style="color:#0e84b5;font-weight:bold">functools&lt;/span> &lt;span style="color:#007020;font-weight:bold">import&lt;/span> wraps
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">decorator&lt;/span>(func):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#555;font-weight:bold">@wraps&lt;/span>(func)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">actual_func&lt;/span>(&lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Before Calling &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>func&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__name__&lt;/span>&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> func(&lt;span style="color:#666">*&lt;/span>args, &lt;span style="color:#666">**&lt;/span>kwargs)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;After Calling &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>func&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__name__&lt;/span>&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> actual_func
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@decorator&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">greet&lt;/span>(name):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#4070a0">&amp;#39;&amp;#39;&amp;#39; The greet func. &amp;#39;&amp;#39;&amp;#39;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020">print&lt;/span>(&lt;span style="color:#4070a0">f&lt;/span>&lt;span style="color:#4070a0">&amp;#34;Hello, &lt;/span>&lt;span style="color:#70a0d0">{&lt;/span>name&lt;span style="color:#70a0d0">}&lt;/span>&lt;span style="color:#4070a0">!&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__name__&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020">print&lt;/span>(greet&lt;span style="color:#666">.&lt;/span>&lt;span style="color:#bb60d5">__doc__&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-text" data-lang="text">&lt;span style="display:flex;">&lt;span>greet
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> The greet func.
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="functools-lru-cache-decorator-to-wrap-a-function-with-a-lru-cache">functools &lt;code>@lru_cache&lt;/code> : decorator to wrap a function with a LRU cache&lt;/h3>
-&lt;h4 id="accelerating-dp-like-recursive-function-call">Accelerating DP-like recursive function call&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@functools.lru_cache&lt;/span>(maxsize&lt;span style="color:#666">=&lt;/span>&lt;span style="color:#40a070">1000&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">factorial&lt;/span>(n):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> n &lt;span style="color:#666">*&lt;/span> factorial(n&lt;span style="color:#666">-&lt;/span>&lt;span style="color:#40a070">1&lt;/span>) &lt;span style="color:#007020;font-weight:bold">if&lt;/span> n &lt;span style="color:#007020;font-weight:bold">else&lt;/span> &lt;span style="color:#40a070">1&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="initialization-for-some-heavy-states-without-introducing-global-variables">Initialization for some heavy states without introducing global variables&lt;/h4>
-&lt;p>Suppose we have some global states that should be initialized only once, the naive way to do it is by introducing some global variables,&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>state &lt;span style="color:#666">=&lt;/span> &lt;span style="color:#007020;font-weight:bold">None&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">get_state&lt;/span>(args):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">if&lt;/span> state &lt;span style="color:#007020;font-weight:bold">is&lt;/span> &lt;span style="color:#007020;font-weight:bold">None&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> state &lt;span style="color:#666">=&lt;/span> construct_state(args)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> state
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>We can eliminate the need for a global variable with a cache:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#555;font-weight:bold">@lru_cache&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#007020;font-weight:bold">def&lt;/span> &lt;span style="color:#06287e">get_state&lt;/span>(args):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#007020;font-weight:bold">return&lt;/span> construct_state(args)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item></channel></rss>
+&lt;/style&gt;</description></item><item><title>Best Practices for Python Programming (Continuously Updated)</title><link>/posts/python-best-practices/</link><pubDate>Wed, 22 Feb 2023 00:00:00 +0000</pubDate><guid>/posts/python-best-practices/</guid><description>&lt;p&gt;When delving into the codebases of some successful large Python projects such as PyTorch, I am consistently impressed by their code &amp;ndash; whether it&amp;rsquo;s clean yet precise, or leveraging lesser-known built-in or third-party packages to significantly enhance functionality.&lt;/p&gt;
+&lt;p&gt;High-quality code snippets, handy packages, and modules have greatly facilitated my work. In this blog, I&amp;rsquo;ll be sharing noteworthy findings and insights learned from the open-source codebase.&lt;/p&gt;
+&lt;h2 id="basics"&gt;Basics&lt;/h2&gt;
+&lt;h3 id="new"&gt;&lt;code&gt;__new__&lt;/code&gt;&lt;/h3&gt;
+&lt;p&gt;The &lt;code&gt;__new__&lt;/code&gt; method is used for creating a new instance of a class. It is a static method that gets called before the &lt;code&gt;__init__&lt;/code&gt; method.&lt;/p&gt;
+&lt;p&gt;The default &lt;code&gt;__new__&lt;/code&gt; method could be&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;MyClass&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;__new__&lt;/span&gt;(&lt;span style="color:#007020"&gt;cls&lt;/span&gt;, &lt;span style="color:#666"&gt;*&lt;/span&gt;args, &lt;span style="color:#666"&gt;**&lt;/span&gt;kwargs):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; instance &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#007020"&gt;super&lt;/span&gt;(MyClass, &lt;span style="color:#007020"&gt;cls&lt;/span&gt;)&lt;span style="color:#666"&gt;.&lt;/span&gt;&lt;span style="color:#06287e"&gt;__new__&lt;/span&gt;(&lt;span style="color:#007020"&gt;cls&lt;/span&gt;, &lt;span style="color:#666"&gt;*&lt;/span&gt;args, &lt;span style="color:#666"&gt;**&lt;/span&gt;kwargs)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; instance
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Note that, different from &lt;code&gt;__init__&lt;/code&gt;, whose first argument is an instance &lt;code&gt;self&lt;/code&gt;, &lt;code&gt;__new__&lt;/code&gt;&amp;rsquo;s first argument is a class.&lt;/p&gt;
+&lt;p&gt;You can override &lt;code&gt;__new__&lt;/code&gt; if something special need to be done with the object creation.&lt;/p&gt;
+&lt;p&gt;There are some classical use cases for the &lt;code&gt;__new__&lt;/code&gt; method:&lt;/p&gt;
+&lt;h4 id="singleton-pattern"&gt;Singleton Pattern&lt;/h4&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;Singleton&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; _instance &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;None&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;__new__&lt;/span&gt;(&lt;span style="color:#007020"&gt;cls&lt;/span&gt;):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;if&lt;/span&gt; &lt;span style="color:#007020"&gt;cls&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;_instance &lt;span style="color:#007020;font-weight:bold"&gt;is&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;None&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;cls&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;_instance &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#007020"&gt;super&lt;/span&gt;()&lt;span style="color:#666"&gt;.&lt;/span&gt;&lt;span style="color:#06287e"&gt;__new__&lt;/span&gt;(&lt;span style="color:#007020"&gt;cls&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; &lt;span style="color:#007020"&gt;cls&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;_instance
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#60a0b0;font-style:italic"&gt;# Usage&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;singleton1 &lt;span style="color:#666"&gt;=&lt;/span&gt; Singleton()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;singleton2 &lt;span style="color:#666"&gt;=&lt;/span&gt; Singleton()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(singleton1 &lt;span style="color:#007020;font-weight:bold"&gt;is&lt;/span&gt; singleton2)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;True
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id="subclassing-immutable-types"&gt;Subclassing Immutable Types&lt;/h4&gt;
+&lt;p&gt;When subclassing immutable types like &lt;code&gt;str&lt;/code&gt;, &lt;code&gt;int&lt;/code&gt;, &lt;code&gt;unicode&lt;/code&gt; or &lt;code&gt;tuple&lt;/code&gt;, the properties of immutable cannot be changed after they are created, you can override &lt;code&gt;__new__&lt;/code&gt; instead:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;UpperStr&lt;/span&gt;(&lt;span style="color:#007020"&gt;str&lt;/span&gt;):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;__new__&lt;/span&gt;(&lt;span style="color:#007020"&gt;cls&lt;/span&gt;, value):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; &lt;span style="color:#007020"&gt;str&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;&lt;span style="color:#06287e"&gt;__new__&lt;/span&gt;(&lt;span style="color:#007020"&gt;cls&lt;/span&gt;, value&lt;span style="color:#666"&gt;.&lt;/span&gt;upper())
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#60a0b0;font-style:italic"&gt;# Usage&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;upper_string &lt;span style="color:#666"&gt;=&lt;/span&gt; UpperStr(&lt;span style="color:#4070a0"&gt;&amp;#34;hello&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(upper_string) &lt;span style="color:#60a0b0;font-style:italic"&gt;# Output: HELLO&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;HELLO
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id="factory-methods"&gt;Factory Methods&lt;/h4&gt;
+&lt;p&gt;&lt;code&gt;__new__&lt;/code&gt; can be used to implement factory methods that return instances of different classes based on input parameters.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;Shape&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;__new__&lt;/span&gt;(&lt;span style="color:#007020"&gt;cls&lt;/span&gt;, &lt;span style="color:#666"&gt;*&lt;/span&gt;args, &lt;span style="color:#666"&gt;**&lt;/span&gt;kwargs):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;if&lt;/span&gt; &lt;span style="color:#007020"&gt;cls&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;is&lt;/span&gt; Shape:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; shape_type &lt;span style="color:#666"&gt;=&lt;/span&gt; args[&lt;span style="color:#40a070"&gt;0&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;if&lt;/span&gt; shape_type &lt;span style="color:#666"&gt;==&lt;/span&gt; &lt;span style="color:#4070a0"&gt;&amp;#39;circle&amp;#39;&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; Circle()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;elif&lt;/span&gt; shape_type &lt;span style="color:#666"&gt;==&lt;/span&gt; &lt;span style="color:#4070a0"&gt;&amp;#39;square&amp;#39;&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; Square()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; &lt;span style="color:#007020"&gt;super&lt;/span&gt;(Shape, &lt;span style="color:#007020"&gt;cls&lt;/span&gt;)&lt;span style="color:#666"&gt;.&lt;/span&gt;&lt;span style="color:#06287e"&gt;__new__&lt;/span&gt;(&lt;span style="color:#007020"&gt;cls&lt;/span&gt;, &lt;span style="color:#666"&gt;*&lt;/span&gt;args, &lt;span style="color:#666"&gt;**&lt;/span&gt;kwargs)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;Circle&lt;/span&gt;(Shape):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;pass&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;Square&lt;/span&gt;(Shape):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;pass&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#60a0b0;font-style:italic"&gt;# Usage&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;shape &lt;span style="color:#666"&gt;=&lt;/span&gt; Shape(&lt;span style="color:#4070a0"&gt;&amp;#39;circle&amp;#39;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#007020"&gt;isinstance&lt;/span&gt;(shape, Circle)) &lt;span style="color:#60a0b0;font-style:italic"&gt;# Output: True&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;True
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id="iter-and-next"&gt;&lt;code&gt;__iter__&lt;/code&gt; and &lt;code&gt;__next__&lt;/code&gt;&lt;/h3&gt;
+&lt;p&gt;The &lt;code&gt;__iter__&lt;/code&gt; is a magic method that allows an object to be iterable, its result should be an iterable, and the &lt;code&gt;__next__&lt;/code&gt; method returns the next element of the iterable.&lt;/p&gt;
+&lt;p&gt;A naive example:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;Counter&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;__init__&lt;/span&gt;(&lt;span style="color:#007020"&gt;self&lt;/span&gt;, n):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;n &lt;span style="color:#666"&gt;=&lt;/span&gt; n
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;i &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#40a070"&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;__iter__&lt;/span&gt;(&lt;span style="color:#007020"&gt;self&lt;/span&gt;):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;# Return the iterator object (self)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;__next__&lt;/span&gt;(&lt;span style="color:#007020"&gt;self&lt;/span&gt;):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;if&lt;/span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;i &lt;span style="color:#666"&gt;&amp;lt;&lt;/span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;n:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;i &lt;span style="color:#666"&gt;+=&lt;/span&gt; &lt;span style="color:#40a070"&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;i
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;else&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;# signal the end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;raise&lt;/span&gt; &lt;span style="color:#007020"&gt;StopIteration&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id="aiter-and-anext"&gt;&lt;code&gt;__aiter__&lt;/code&gt; and &lt;code&gt;__anext__&lt;/code&gt;&lt;/h3&gt;
+&lt;p&gt;Similar to &lt;code&gt;__iter__&lt;/code&gt; and &lt;code&gt;__next__&lt;/code&gt;, the &lt;code&gt;__aiter__&lt;/code&gt; and &lt;code&gt;__anext__&lt;/code&gt; are the asynchronous version.
+The &lt;code&gt;__aiter__&lt;/code&gt; allows an object to be an asynchronous iterator object, which is an object that has an &lt;code&gt;__anext__&lt;/code&gt; method that returns an awaitable object that yields the next element of the sequence.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;asyncio&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;AsyncCounter&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;__init__&lt;/span&gt;(&lt;span style="color:#007020"&gt;self&lt;/span&gt;, n):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;n &lt;span style="color:#666"&gt;=&lt;/span&gt; n
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;i &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#40a070"&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;__aiter__&lt;/span&gt;(&lt;span style="color:#007020"&gt;self&lt;/span&gt;):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;# Return the iterator object (self)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;async&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;__anext__&lt;/span&gt;(&lt;span style="color:#007020"&gt;self&lt;/span&gt;):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;if&lt;/span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;i &lt;span style="color:#666"&gt;&amp;lt;&lt;/span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;n:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;i &lt;span style="color:#666"&gt;+=&lt;/span&gt; &lt;span style="color:#40a070"&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;# Simulate some delay&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;await&lt;/span&gt; asyncio&lt;span style="color:#666"&gt;.&lt;/span&gt;sleep(&lt;span style="color:#40a070"&gt;1&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;i
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;else&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;# Signal the end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;raise&lt;/span&gt; &lt;span style="color:#007020"&gt;StopAsyncIteration&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="handy-builtin-utilities"&gt;Handy builtin utilities&lt;/h2&gt;
+&lt;h3 id="setter-and-getter"&gt;setter and getter&lt;/h3&gt;
+&lt;p&gt;When there is some logic bound to a member when it is got or updated, then the getter and setter could be used.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;App&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;__init__&lt;/span&gt;(&lt;span style="color:#007020"&gt;self&lt;/span&gt;):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;update_count &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#40a070"&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;_name &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#4070a0"&gt;&amp;#34;&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#555;font-weight:bold"&gt;@property&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;name&lt;/span&gt;(&lt;span style="color:#007020"&gt;self&lt;/span&gt;) &lt;span style="color:#666"&gt;-&amp;gt;&lt;/span&gt; &lt;span style="color:#007020"&gt;str&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;_name
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#555;font-weight:bold"&gt;@name.setter&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;name&lt;/span&gt;(&lt;span style="color:#007020"&gt;self&lt;/span&gt;, v:&lt;span style="color:#007020"&gt;str&lt;/span&gt;):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;_name &lt;span style="color:#666"&gt;=&lt;/span&gt; v
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;self&lt;/span&gt;&lt;span style="color:#666"&gt;.&lt;/span&gt;update_count &lt;span style="color:#666"&gt;+=&lt;/span&gt; &lt;span style="color:#40a070"&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;app &lt;span style="color:#666"&gt;=&lt;/span&gt; App()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;app&lt;span style="color:#666"&gt;.&lt;/span&gt;name &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#4070a0"&gt;&amp;#39;a&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;app&lt;span style="color:#666"&gt;.&lt;/span&gt;name &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#4070a0"&gt;&amp;#39;b&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;&amp;#39;name:&amp;#39;&lt;/span&gt;, app&lt;span style="color:#666"&gt;.&lt;/span&gt;name) &lt;span style="color:#60a0b0;font-style:italic"&gt;# b&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;&amp;#39;update_count:&amp;#39;&lt;/span&gt;, app&lt;span style="color:#666"&gt;.&lt;/span&gt;update_count) &lt;span style="color:#60a0b0;font-style:italic"&gt;# 2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;name: b
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;update_count: 2
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id="dataclass"&gt;&lt;code&gt;@dataclass&lt;/code&gt;&lt;/h3&gt;
+&lt;p&gt;&lt;code&gt;@dataclass&lt;/code&gt; is a decorator that can be used to create classes that &lt;strong&gt;mainly store data&lt;/strong&gt;.
+It can automatically generate some common methods for the class, such as &lt;code&gt;__init__&lt;/code&gt;, &lt;code&gt;__repr__&lt;/code&gt;, and &lt;code&gt;__eq__&lt;/code&gt;, based on the type hints of the class attributes.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;from&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;dataclasses&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; dataclass
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#555;font-weight:bold"&gt;@dataclass&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;Point&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; x: &lt;span style="color:#007020"&gt;float&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; y: &lt;span style="color:#007020"&gt;float&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;p &lt;span style="color:#666"&gt;=&lt;/span&gt; Point(&lt;span style="color:#40a070"&gt;1.&lt;/span&gt;, &lt;span style="color:#40a070"&gt;2.&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(p)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Point(x=1.0, y=2.0)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;There are several classical practices using &lt;code&gt;@dataclass&lt;/code&gt;&lt;/p&gt;
+&lt;h4 id="use-default-values-or-default-factories"&gt;Use default values or default factories&lt;/h4&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;from&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;dataclasses&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; dataclass, field
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;from&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;random&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; randint
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;from&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;typing&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; List
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#555;font-weight:bold"&gt;@dataclass&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;DummyContainer&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; sides: &lt;span style="color:#007020"&gt;int&lt;/span&gt; &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#40a070"&gt;6&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; value: &lt;span style="color:#007020"&gt;int&lt;/span&gt; &lt;span style="color:#666"&gt;=&lt;/span&gt; field(default_factory&lt;span style="color:#666"&gt;=&lt;/span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;lambda&lt;/span&gt;: randint(&lt;span style="color:#40a070"&gt;1&lt;/span&gt;, &lt;span style="color:#40a070"&gt;6&lt;/span&gt;))
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; alist: List[&lt;span style="color:#007020"&gt;int&lt;/span&gt;] &lt;span style="color:#666"&gt;=&lt;/span&gt; field(default_factory&lt;span style="color:#666"&gt;=&lt;/span&gt;&lt;span style="color:#007020"&gt;list&lt;/span&gt;) &lt;span style="color:#60a0b0;font-style:italic"&gt;# avoid assign [] directly&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;dummy &lt;span style="color:#666"&gt;=&lt;/span&gt; DummyContainer()
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(dummy)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;DummyContainer(sides=6, value=2, alist=[])
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id="use-frozen-true-to-make-the-class-immutable"&gt;Use &lt;code&gt;frozen=True&lt;/code&gt; to make the class immutable&lt;/h4&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;from&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;dataclasses&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; dataclass
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#555;font-weight:bold"&gt;@dataclass&lt;/span&gt;(frozen&lt;span style="color:#666"&gt;=&lt;/span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;True&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;Circle&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; radius: &lt;span style="color:#007020"&gt;float&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;const_circle &lt;span style="color:#666"&gt;=&lt;/span&gt; Circle(&lt;span style="color:#40a070"&gt;2.0&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id="use-order-true-to-enable-comparison-operators-based-on-the-class-attributes"&gt;Use &lt;code&gt;order=True&lt;/code&gt; to enable comparison operators based on the class attributes&lt;/h4&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;from&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;dataclasses&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; dataclass
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#555;font-weight:bold"&gt;@dataclass&lt;/span&gt;(order&lt;span style="color:#666"&gt;=&lt;/span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;True&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;Circle&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; radius: &lt;span style="color:#007020"&gt;float&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;c0 &lt;span style="color:#666"&gt;=&lt;/span&gt; Circle(&lt;span style="color:#40a070"&gt;1.&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;c1 &lt;span style="color:#666"&gt;=&lt;/span&gt; Circle(&lt;span style="color:#40a070"&gt;2&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(c0 &lt;span style="color:#666"&gt;&amp;gt;&lt;/span&gt; c1)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;False
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id="use-inheritance-to-create-subclasses-of-data-classes"&gt;Use inheritance to create subclasses of data classes&lt;/h4&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;from&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;dataclasses&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; dataclass
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#555;font-weight:bold"&gt;@dataclass&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;Animal&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; name: &lt;span style="color:#007020"&gt;str&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; sound: &lt;span style="color:#007020"&gt;str&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#555;font-weight:bold"&gt;@dataclass&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;class&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;Dog&lt;/span&gt;(Animal):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#60a0b0;font-style:italic"&gt;# inherits name and sound from Animal&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; watch_house: &lt;span style="color:#007020"&gt;bool&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;dog &lt;span style="color:#666"&gt;=&lt;/span&gt; Dog(name&lt;span style="color:#666"&gt;=&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;Huang&amp;#34;&lt;/span&gt;, sound&lt;span style="color:#666"&gt;=&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;Wang&amp;#34;&lt;/span&gt;, watch_house&lt;span style="color:#666"&gt;=&lt;/span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;False&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(dog)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Dog(name=&amp;#39;Huang&amp;#39;, sound=&amp;#39;Wang&amp;#39;, watch_house=False)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id="functools-partial-to-get-new-function-by-partially-fixing-some-arguments-of-an-existing-one"&gt;functools &lt;code&gt;partial&lt;/code&gt; to get new function by partially fixing some arguments of an existing one&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;from&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;functools&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; partial
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;func0&lt;/span&gt;(a, b):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;f&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;a:&lt;/span&gt;&lt;span style="color:#70a0d0"&gt;{&lt;/span&gt;a&lt;span style="color:#70a0d0"&gt;}&lt;/span&gt;&lt;span style="color:#4070a0"&gt;, b:&lt;/span&gt;&lt;span style="color:#70a0d0"&gt;{&lt;/span&gt;b&lt;span style="color:#70a0d0"&gt;}&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;func1 &lt;span style="color:#666"&gt;=&lt;/span&gt; partial(func0, a &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#40a070"&gt;0&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(func1)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;func1(b&lt;span style="color:#666"&gt;=&lt;/span&gt;&lt;span style="color:#40a070"&gt;10&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#60a0b0;font-style:italic"&gt;# reset argument a&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;func1(a&lt;span style="color:#666"&gt;=&lt;/span&gt;&lt;span style="color:#40a070"&gt;1&lt;/span&gt;, b&lt;span style="color:#666"&gt;=&lt;/span&gt;&lt;span style="color:#40a070"&gt;10&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;functools.partial(&amp;lt;function func0 at 0x7fccb00e31e0&amp;gt;, a=0)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;a:0, b:10
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;a:1, b:10
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id="functools-warps-to-help-define-better-decorators"&gt;functools &lt;code&gt;@warps&lt;/code&gt; to help define better decorators&lt;/h3&gt;
+&lt;p&gt;Below is a classical way to define an decorator&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;decorator&lt;/span&gt;(func):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;actual_func&lt;/span&gt;(&lt;span style="color:#666"&gt;*&lt;/span&gt;args, &lt;span style="color:#666"&gt;**&lt;/span&gt;kwargs):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#4070a0"&gt;&amp;#39;&amp;#39;&amp;#39; The actual func. &amp;#39;&amp;#39;&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;f&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;Before Calling &lt;/span&gt;&lt;span style="color:#70a0d0"&gt;{&lt;/span&gt;func&lt;span style="color:#666"&gt;.&lt;/span&gt;&lt;span style="color:#bb60d5"&gt;__name__&lt;/span&gt;&lt;span style="color:#70a0d0"&gt;}&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; func(&lt;span style="color:#666"&gt;*&lt;/span&gt;args, &lt;span style="color:#666"&gt;**&lt;/span&gt;kwargs)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;f&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;After Calling &lt;/span&gt;&lt;span style="color:#70a0d0"&gt;{&lt;/span&gt;func&lt;span style="color:#666"&gt;.&lt;/span&gt;&lt;span style="color:#bb60d5"&gt;__name__&lt;/span&gt;&lt;span style="color:#70a0d0"&gt;}&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; actual_func
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#555;font-weight:bold"&gt;@decorator&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;greet&lt;/span&gt;(name):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#4070a0"&gt;&amp;#39;&amp;#39;&amp;#39; The greet func. &amp;#39;&amp;#39;&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;f&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;Hello, &lt;/span&gt;&lt;span style="color:#70a0d0"&gt;{&lt;/span&gt;name&lt;span style="color:#70a0d0"&gt;}&lt;/span&gt;&lt;span style="color:#4070a0"&gt;!&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;greet(&lt;span style="color:#4070a0"&gt;&amp;#34;Martin&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Before Calling greet
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Hello, Martin!
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;After Calling greet
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;The name and docstring of the decorated function will be hidden in the decorator function, and this makes the usage a bit opaque when debugging.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(greet&lt;span style="color:#666"&gt;.&lt;/span&gt;&lt;span style="color:#bb60d5"&gt;__name__&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(greet&lt;span style="color:#666"&gt;.&lt;/span&gt;&lt;span style="color:#bb60d5"&gt;__doc__&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;actual_func
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;The actual func.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;In other words, the name and the docstring of the decorated function is overwritten by the decorator, which is not expected.&lt;/p&gt;
+&lt;p&gt;We can fix such issue with &lt;code&gt;@wraps&lt;/code&gt;, for example, the original code could be replaced with&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;from&lt;/span&gt; &lt;span style="color:#0e84b5;font-weight:bold"&gt;functools&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;import&lt;/span&gt; wraps
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;decorator&lt;/span&gt;(func):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#555;font-weight:bold"&gt;@wraps&lt;/span&gt;(func)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;actual_func&lt;/span&gt;(&lt;span style="color:#666"&gt;*&lt;/span&gt;args, &lt;span style="color:#666"&gt;**&lt;/span&gt;kwargs):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;f&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;Before Calling &lt;/span&gt;&lt;span style="color:#70a0d0"&gt;{&lt;/span&gt;func&lt;span style="color:#666"&gt;.&lt;/span&gt;&lt;span style="color:#bb60d5"&gt;__name__&lt;/span&gt;&lt;span style="color:#70a0d0"&gt;}&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; func(&lt;span style="color:#666"&gt;*&lt;/span&gt;args, &lt;span style="color:#666"&gt;**&lt;/span&gt;kwargs)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;f&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;After Calling &lt;/span&gt;&lt;span style="color:#70a0d0"&gt;{&lt;/span&gt;func&lt;span style="color:#666"&gt;.&lt;/span&gt;&lt;span style="color:#bb60d5"&gt;__name__&lt;/span&gt;&lt;span style="color:#70a0d0"&gt;}&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; actual_func
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#555;font-weight:bold"&gt;@decorator&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;greet&lt;/span&gt;(name):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#4070a0"&gt;&amp;#39;&amp;#39;&amp;#39; The greet func. &amp;#39;&amp;#39;&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020"&gt;print&lt;/span&gt;(&lt;span style="color:#4070a0"&gt;f&lt;/span&gt;&lt;span style="color:#4070a0"&gt;&amp;#34;Hello, &lt;/span&gt;&lt;span style="color:#70a0d0"&gt;{&lt;/span&gt;name&lt;span style="color:#70a0d0"&gt;}&lt;/span&gt;&lt;span style="color:#4070a0"&gt;!&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(greet&lt;span style="color:#666"&gt;.&lt;/span&gt;&lt;span style="color:#bb60d5"&gt;__name__&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020"&gt;print&lt;/span&gt;(greet&lt;span style="color:#666"&gt;.&lt;/span&gt;&lt;span style="color:#bb60d5"&gt;__doc__&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;greet
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; The greet func.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id="functools-lru-cache-decorator-to-wrap-a-function-with-a-lru-cache"&gt;functools &lt;code&gt;@lru_cache&lt;/code&gt; : decorator to wrap a function with a LRU cache&lt;/h3&gt;
+&lt;h4 id="accelerating-dp-like-recursive-function-call"&gt;Accelerating DP-like recursive function call&lt;/h4&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#555;font-weight:bold"&gt;@functools.lru_cache&lt;/span&gt;(maxsize&lt;span style="color:#666"&gt;=&lt;/span&gt;&lt;span style="color:#40a070"&gt;1000&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;factorial&lt;/span&gt;(n):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; n &lt;span style="color:#666"&gt;*&lt;/span&gt; factorial(n&lt;span style="color:#666"&gt;-&lt;/span&gt;&lt;span style="color:#40a070"&gt;1&lt;/span&gt;) &lt;span style="color:#007020;font-weight:bold"&gt;if&lt;/span&gt; n &lt;span style="color:#007020;font-weight:bold"&gt;else&lt;/span&gt; &lt;span style="color:#40a070"&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id="initialization-for-some-heavy-states-without-introducing-global-variables"&gt;Initialization for some heavy states without introducing global variables&lt;/h4&gt;
+&lt;p&gt;Suppose we have some global states that should be initialized only once, the naive way to do it is by introducing some global variables,&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;state &lt;span style="color:#666"&gt;=&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;None&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;get_state&lt;/span&gt;(args):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;if&lt;/span&gt; state &lt;span style="color:#007020;font-weight:bold"&gt;is&lt;/span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;None&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; state &lt;span style="color:#666"&gt;=&lt;/span&gt; construct_state(args)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; state
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;We can eliminate the need for a global variable with a cache:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#555;font-weight:bold"&gt;@lru_cache&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#007020;font-weight:bold"&gt;def&lt;/span&gt; &lt;span style="color:#06287e"&gt;get_state&lt;/span&gt;(args):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#007020;font-weight:bold"&gt;return&lt;/span&gt; construct_state(args)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item></channel></rss>
