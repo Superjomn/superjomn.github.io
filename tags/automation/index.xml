@@ -128,6 +128,9 @@
 &lt;li&gt;Filter results as you type&lt;/li&gt;
 &lt;li&gt;Switch to the selected window, even if it&amp;rsquo;s on a different Space or minimized&lt;/li&gt;
 &lt;/ul&gt;
+&lt;p&gt;The final screenshot:&lt;/p&gt;
+&lt;figure&gt;&lt;img src="/ox-hugo/2025-09-21_13-09-48_screenshot.png"&gt;
+&lt;/figure&gt;
 &lt;h2 id="troubleshooting"&gt;Troubleshooting&lt;/h2&gt;
 &lt;p&gt;If the workflow isn&amp;rsquo;t working properly, here are some common issues and solutions:&lt;/p&gt;
 &lt;h3 id="hammerspoon-command-not-found"&gt;Hammerspoon command not found&lt;/h3&gt;
